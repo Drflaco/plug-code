@@ -1,6 +1,7 @@
 #include "PlugProcessor.h"
 #include "StateSchema.h"
 #include "skills/Skills.h"
+#include "BuildStamp.h"
 
 #ifndef PLUG_J2_TIMING
  #define PLUG_J2_TIMING 0
@@ -174,10 +175,39 @@ namespace plug
        #endif
     }
 
+   #if PLUG_J2_GENERIC_EDITOR
+    namespace
+    {
+        // Échafaudage J2 : la liste de curseurs de JUCE, surmontée du bandeau
+        // d'identité du binaire. Le bandeau est du texte, rien d'autre : aucun
+        // paramètre, rien dans l'état, rien que l'hôte puisse automatiser.
+        class StampedGenericEditor : public juce::GenericAudioProcessorEditor
+        {
+        public:
+            explicit StampedGenericEditor (juce::AudioProcessor& p)
+                : GenericAudioProcessorEditor (p)
+            {
+                addAndMakeVisible (bar);
+                bar.setAlwaysOnTop (true);
+                setSize (juce::jmax (560, getWidth()), getHeight() + BuildStampBar::kHeight);
+            }
+
+            void resized() override
+            {
+                GenericAudioProcessorEditor::resized();      // la liste occupe tout…
+                bar.setBounds (getLocalBounds().removeFromTop (BuildStampBar::kHeight));  // …le bandeau la coiffe
+            }
+
+        private:
+            BuildStampBar bar;
+        };
+    }
+   #endif
+
     juce::AudioProcessorEditor* PlugProcessor::createEditor()
     {
        #if PLUG_J2_GENERIC_EDITOR
-        return new juce::GenericAudioProcessorEditor (*this);
+        return new StampedGenericEditor (*this);
        #else
         return nullptr;
        #endif

@@ -1,4 +1,4 @@
-# Installe les presets d'état livrés dans la bibliothèque de l'utilisateur, là où
+﻿# Installe les presets d'état livrés dans la bibliothèque de l'utilisateur, là où
 # le plugin les cherche en premier (%APPDATA%\LascauxLab\Plug\presets).
 # Usage : powershell -ExecutionPolicy Bypass -File scripts/install_presets.ps1
 $ErrorActionPreference = "Stop"

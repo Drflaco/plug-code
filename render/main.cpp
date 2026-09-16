@@ -20,6 +20,7 @@
 #include "StateSchema.h"
 #include "StepValue.h"
 #include "dummies/DummySkills.h"
+#include "skills/Skills.h"
 #include <cstdio>
 #include <cmath>
 
@@ -547,6 +548,7 @@ namespace
 int main (int argc, char* argv[])
 {
     juce::ScopedJuceInitialiser_GUI init;
+    registerAllSkills();          // le catalogue avant toute lecture d'état, y compris hors moteur
     juce::StringArray a;
     for (int i = 1; i < argc; ++i) a.add (argv[i]);
     const auto cwd = juce::File::getCurrentWorkingDirectory();
@@ -631,30 +633,102 @@ int main (int argc, char* argv[])
         state::setParam (s, "seq.swing",    0.0f);
         state::setParam (s, "master.mix",   1.0f);
 
+        // Réglages de départ : posés pour que le geste s'entende dès le chargement,
+        // pas pour être justes. Le CdC §2 dit que le caractère de chaque geste se
+        // décide à l'écoute ; ces valeurs sont un point de départ, pas une cible.
+        // Rappel des entrées : main=0, paramA=1, paramB=2, paramC=3, paramD=4, stereo=9.
+        auto set = [&] (int slot, const char* name, float v)
+        {
+            state::setParam (s, "slot" + juce::String (slot).paddedLeft ('0', 2) + "." + name, v);
+        };
+
         if (geste == 1)
         {
-            // Le gate découpe, la réverbe laisse mourir sa queue (§3.3.2, défaut proposé).
+            // FM → pitch → gate → réverbe. La FM épaissit, le grain transpose, le gate
+            // découpe, la réverbe tient l'espace. Le risque nommé au §2 est que la FM
+            // parte hors tonalité : profondeur tenue courte, rapport laissé au verrou.
+            set (1, "main", 0.25f); set (1, "paramA", 0.30f); set (1, "paramB", 0.45f); set (1, "mix", 0.60f);
+            set (2, "main", 0.50f); set (2, "paramA", 0.45f); set (2, "paramB", 0.20f); set (2, "mix", 0.55f);
+            set (3, "main", 0.35f); set (3, "paramA", 0.06f); set (3, "paramB", 0.20f); set (3, "paramC", 0.25f); set (3, "paramD", 0.15f);
+            set (4, "main", 0.55f); set (4, "paramA", 0.45f); set (4, "paramC", 0.60f); set (4, "paramD", 0.35f); set (4, "mix", 0.40f);
+            set (4, "fade", 0.25f);
+
+            // Le gate découpe un pas sur quatre ; la réverbe laisse mourir sa queue (§3.3.2).
             for (int st = 1; st <= 16; ++st) if (st % 4 != 1) state::setStepOn (s, 3, st, false, nullptr);
             state::setTail (s, 4, true, nullptr);
-            state::setRange (s, 1, "main", 0.2f, 0.7f, nullptr);
+            state::setTail (s, 2, true, nullptr);
+
+            // La variation porte sur la profondeur de FM, bornée : c'est la zone de
+            // l'accident, et elle est bornée pour rester harmoniquement tenable (§1).
+            state::setRange (s, 1, "main", 0.15f, 0.45f, nullptr);
+            state::setProb  (s, 1, "main", 0.7f, nullptr);
             state::generate (s, 1, 1, 16, 0.6f, nullptr);
+
+            // Macros (§3.5) : trois gestes de la main, chacune sur plusieurs destinations.
+            state::addMacroRoute (s, 1, 1, "main",   0.0f, 0.35f, 0.0f, nullptr);   // 1 — épaisseur : FM…
+            state::addMacroRoute (s, 1, 2, "paramB", 0.0f, 0.30f, 0.0f, nullptr);   //     …et réinjection du grain
+            state::addMacroRoute (s, 2, 4, "mix",    0.0f, 0.45f, 0.0f, nullptr);   // 2 — espace : réverbe…
+            state::addMacroRoute (s, 2, 4, "main",   0.0f, 0.30f, 0.0f, nullptr);   //     …et sa décroissance
+            state::addMacroRoute (s, 3, 3, "main",  -0.25f, 0.0f, 0.0f, nullptr);   // 3 — ouvrir le gate (seuil qui descend)
+            state::setParam (s, "macro1", 0.35f);
+            state::setParam (s, "macro2", 0.40f);
+            state::setParam (s, "macro3", 0.20f);
+            // Un preset livré ne sature pas au chargement : volume posé pour une crête
+            // sous l'unité sur la source de test (§3.7, le volume sert à rattraper).
+            state::setParam (s, "master.volume", 0.27f);
         }
         else if (geste == 2)
         {
-            // Texture : grains lents et dispersés, pas de grille nette (§2, geste 2).
+            // Pitch granulaire → délai. Texture, pas rythme (§2) : grains longs, peu de
+            // pas actifs, délai long à réinjection tenue.
+            set (1, "main", 0.60f); set (1, "paramA", 0.75f); set (1, "paramB", 0.35f); set (1, "stereo", 0.70f); set (1, "mix", 0.75f);
+            set (2, "main", 0.55f); set (2, "paramA", 0.55f); set (2, "paramB", 0.45f); set (2, "stereo", 0.65f); set (2, "mix", 0.50f);
+            set (1, "fade", 0.35f);
+
             state::setTail (s, 2, true, nullptr);
-            state::setRange (s, 1, "main", 0.3f, 0.8f, nullptr);
-            state::setProb  (s, 1, "main", 0.4f, nullptr);
-            state::generate (s, 1, 1, 16, 0.5f, nullptr);
+            for (int st = 1; st <= 16; ++st) if (st % 8 != 1 && st % 8 != 4) state::setStepOn (s, 1, st, false, nullptr);
+
+            // Hauteur libérée de son verrou pour ce geste : c'est elle qui fait la texture.
+            state::setLocked (s, 1, "main", false, nullptr);
+            state::setRange  (s, 1, "main", 0.42f, 0.70f, nullptr);
+            state::setProb   (s, 1, "main", 0.5f, nullptr);
+            state::setTransition (s, 1, "main", false, nullptr);
+            state::generate  (s, 1, 1, 16, 0.5f, nullptr);
+            state::setRange  (s, 1, "paramA", 0.55f, 0.95f, nullptr);
+
+            state::addMacroRoute (s, 1, 1, "paramA", 0.0f,  0.30f, 0.0f, nullptr);  // 1 — grain : plus long
+            state::addMacroRoute (s, 1, 1, "paramB", 0.0f,  0.25f, 0.0f, nullptr);  //     et plus nourri
+            state::addMacroRoute (s, 2, 2, "mix",    0.0f,  0.40f, 0.0f, nullptr);  // 2 — profondeur du délai
+            state::addMacroRoute (s, 2, 2, "paramA", 0.0f,  0.30f, 0.0f, nullptr);
+            state::addMacroRoute (s, 3, 1, "stereo", -0.20f, 0.20f, 0.0f, nullptr); // 3 — écartement stéréo
+            state::setParam (s, "macro1", 0.45f);
+            state::setParam (s, "macro2", 0.35f);
+            state::setParam (s, "macro3", 0.50f);
+            state::setParam (s, "master.volume", 0.40f);
         }
         else
         {
-            // Geste 3 : le fondu agit sur le repitch lui-même, donc glissement sur sa hauteur.
+            // Repitch → écho → passe-haut. Le fondu agit sur le repitch lui-même (§2) :
+            // hauteur en glissement, glide long, c'est tout le geste.
+            set (1, "main", 0.50f); set (1, "paramA", 0.55f); set (1, "paramB", 0.45f); set (1, "mix", 0.85f);
+            set (2, "main", 0.45f); set (2, "paramA", 0.50f); set (2, "paramB", 0.40f); set (2, "mix", 0.45f);
+            set (3, "main", 0.30f); set (3, "paramA", 0.25f); set (3, "paramB", 0.85f);   // paramB : type, palier passe-haut
+            set (1, "glide", 0.5f);
+
             state::setTransition (s, 1, "main", true, nullptr);
-            state::setParam (s, "slot01.glide", 0.5f);
-            state::setRange (s, 1, "main", 0.25f, 0.75f, nullptr);
+            state::setRange (s, 1, "main", 0.30f, 0.70f, nullptr);
+            state::setProb  (s, 1, "main", 0.6f, nullptr);
             state::generate (s, 1, 1, 16, 0.7f, nullptr);
             state::setTail (s, 2, true, nullptr);
+
+            state::addMacroRoute (s, 1, 1, "main",  -0.25f, 0.25f, 0.0f, nullptr);  // 1 — plongée / montée
+            state::addMacroRoute (s, 2, 2, "paramA", 0.0f,  0.40f, 0.0f, nullptr);  // 2 — longueur de l'écho
+            state::addMacroRoute (s, 2, 2, "mix",    0.0f,  0.30f, 0.0f, nullptr);
+            state::addMacroRoute (s, 3, 3, "main",   0.0f,  0.45f, 0.0f, nullptr);  // 3 — remonter le passe-haut
+            state::setParam (s, "macro1", 0.50f);
+            state::setParam (s, "macro2", 0.40f);
+            state::setParam (s, "macro3", 0.15f);
+            state::setParam (s, "master.volume", 0.36f);
         }
 
         const bool ok = PresetLibrary::write (out, s);

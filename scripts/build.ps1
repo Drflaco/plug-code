@@ -1,4 +1,4 @@
-# Construction reproductible — MSVC 2022 x64, Release.
+﻿# Construction reproductible — MSVC 2022 x64, Release.
 # Usage : powershell -ExecutionPolicy Bypass -File scripts/build.ps1 [-Config Release|Debug]
 param([string]$Config = "Release")
 

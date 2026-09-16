@@ -1,4 +1,4 @@
-# Validation pluginval — niveau de sévérité 5 (compatibilité hôte).
+﻿# Validation pluginval — niveau de sévérité 5 (compatibilité hôte).
 # Usage : powershell -ExecutionPolicy Bypass -File scripts/validate.ps1 [-Strictness 5] [-Config Release]
 param([int]$Strictness = 5, [string]$Config = "Release")
 

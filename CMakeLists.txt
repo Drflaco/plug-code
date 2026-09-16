@@ -29,6 +29,22 @@ if(GIT_FOUND)
     endif()
 endif()
 
+# Identité du binaire : le commit d'où il sort. Affichée en tête de l'éditeur,
+# pour qu'on ne puisse plus écouter un binaire sans savoir lequel (incident 17/09).
+set(PLUG_GIT_COMMIT "inconnu")
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse --short HEAD
+        OUTPUT_VARIABLE PLUG_GIT_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} -C "${CMAKE_CURRENT_SOURCE_DIR}" status --porcelain --untracked-files=no
+        OUTPUT_VARIABLE PLUG_GIT_DIRTY OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    if(NOT PLUG_GIT_DIRTY STREQUAL "")
+        set(PLUG_GIT_COMMIT "${PLUG_GIT_COMMIT}+")   # le « + » dit : des modifications non commitées
+    endif()
+endif()
+message(STATUS "commit : ${PLUG_GIT_COMMIT}")
+
 add_subdirectory(external/JUCE)
 
 # Échafaudage J2 : éditeur générique JUCE pour que Live puisse « configurer »
@@ -86,6 +102,7 @@ set(PLUG_ENGINE_SOURCES
     src/PresetLibrary.h
     src/PresetLibrary.cpp
     ${PLUG_SKILL_SOURCES}
+    src/BuildStamp.h
     src/BlockTimer.h)
 
 set(PLUG_CORE_SOURCES
@@ -94,6 +111,7 @@ set(PLUG_CORE_SOURCES
     src/PlugProcessor.cpp)
 
 set(PLUG_COMMON_DEFS
+    PLUG_GIT_COMMIT="${PLUG_GIT_COMMIT}"
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_MODAL_LOOPS_PERMITTED=0
