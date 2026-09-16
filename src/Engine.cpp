@@ -5,6 +5,7 @@
 #include "StateSchema.h"
 #include "StepValue.h"
 #include "dummies/DummySkills.h"
+#include "skills/Skills.h"
 #include <atomic>
 #include <array>
 #include <cmath>
@@ -167,7 +168,11 @@ namespace plug
         std::array<Seg, 64> segs {};
         int segCount = 0;
 
-        Impl() { dummies::registerAll(); }
+        // Le catalogue existe avant tout état : un moteur sans registre peuplé verrait
+        // toutes les skills comme inconnues et laisserait passer l'audio (§3.9), ce qui
+        // ressemble à un succès et n'en est pas. Mesuré le 16/09 : la chaîne de référence
+        // affichait le coût d'un socle vide parce que PlugRender ne peuplait rien.
+        Impl() { dummies::registerAll(); registerAllSkills(); }
 
         ~Impl()
         {

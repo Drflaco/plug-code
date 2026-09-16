@@ -41,18 +41,16 @@ namespace plug
         bool isMidiEffect() const override { return false; }
         double getTailLengthSeconds() const override { return 0.0; }
 
-        // Presets d'état (§3.6, décision pilote J4a) : chaque .plugstate de la
-        // bibliothèque porte l'état COMPLET, identités de skill comprises.
+        // Presets d'état (§3.6, décision pilote J4a) : chaque .plugstate porte l'état
+        // COMPLET, identités de skill comprises.
         //
-        // INVARIANT DE GRILLE : exposer ces presets comme PROGRAMMES de l'hôte est
-        // suspendu. Mesuré le 16/09 dans JUCE 8.0.15 (juce_audio_plugin_client_VST3.cpp,
-        // « if (numPrograms > 1) ») : dès qu'un plugin annonce plus d'un programme,
-        // l'enveloppe VST3 ajoute un paramètre caché « Program » à la liste vue par
-        // l'hôte. Il porte un identifiant fixe ('prst') et ne décale donc aucune
-        // automation, mais il ajoute une entrée à ce que Live affiche — ce que le J2
-        // a gravé comme « 284 plus le Bypass imposé par la norme » (ETAT Rév. 2).
-        // Décision en attente du pilote ; d'ici là le plugin annonce un seul
-        // programme et les presets se chargent par le menu preset natif VST3.
+        // LE PLUGIN N'EXPOSE JAMAIS DE PROGRAMMES À L'HÔTE (décision pilote, 16/09).
+        // Mesuré dans JUCE 8.0.15 (juce_audio_plugin_client_VST3.cpp, « if (numPrograms > 1) ») :
+        // au-delà d'un programme, l'enveloppe VST3 ajoute un paramètre caché « Program ».
+        // Même à identifiant fixe, c'est une entrée de plus dans ce que Live voit, et la
+        // règle est qu'il n'y en a pas : la grille reste 284 + le Bypass imposé par la
+        // norme, tel que gravé au J2 (ETAT Rév. 2). Les presets se chargent par fichier —
+        // .vstpreset côté hôte, et le menu [Preset ▾] de l'interface au J4b (§3.7).
         int getNumPrograms() override { return 1; }
         int getCurrentProgram() override { return 0; }
         void setCurrentProgram (int index) override;

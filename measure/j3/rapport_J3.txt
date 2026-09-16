@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 16 Sep 2026 10:34:48pm
+PlugRender — matrice J3 — 16 Sep 2026 11:21:11pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -30,6 +30,62 @@ PlugRender — matrice J3 — 16 Sep 2026 10:34:48pm
   [OK] factice.gain : main 0,25 → gain 0,5
   [OK] factice.delay : impulsion retardée de 10 échantillons (10)
   [OK] factice.latent : impulsion retardée de 256 = latence déclarée 256
+  [OK] core.filter : passe-bas 200 Hz, sinus 6 kHz attÃ©nuÃ© de 60.0 dB (≥ 40 attendus)
+  [OK] core.filter : passe-bas 200 Hz, sinus 50 Hz Ã  0.05 dB (|g| ≤ 1,5)
+  [OK] core.filter : passe-haut 200 Hz : 50 Hz Ã  -24.0 dB, 6 kHz à -0.00 dB
+  [OK] core.filter : passe-bande 1 kHz : -0.01 dB à la coupure, -24.8 dB à 8 kHz
+  [OK] core.filter : rÃ©sonance : 27.6 dB entre Q 0,5 et Q 12 (≥ 15)
+  [OK] core.filter : dÃ©calage stÃ©rÃ©o Ã  1 : droite 9.3 dB au-dessus de la gauche (≥ 5)
+  [OK] core.gain : gain 0 / 0,25 / 1 â facteurs 0 / 0,5 / 2 (lus : 0.000 / 0.500 / 2.000), saut net quand les temps sont à zéro
+  [OK] core.gain : montÃ©e 5 ms : 0.9000 à 2,5 ms (0,90), 0.9900 à 5 ms (0,99)
+  [OK] core.gain : descente 20 ms : 0.1000 à 10 ms (0,10), 0.0100 à 20 ms (0,01), montée restée franche
+  [OK] core.gain : dÃ©coupe adoucie : plus grande marche entre deux Ã©chantillons 0.00479 (< 0,01)
+  [OK] core.gate : signal Ã  -48 dB sous un seuil Ã  -30 dB : sortie nulle (crÃªte 0.000000000000)
+  [OK] core.gate : signal Ã  -6 dB au-dessus du mÃªme seuil : sortie 0.500000 = entrée
+  [OK] core.gate : attaque 10 ms : gain 0.5000 à 5 ms (0,50), 1.0000 à 10 ms (1,00)
+  [OK] core.gate : maintien : sans lui 0.000000000 à 100 ms, avec 200 ms 0.004000 (entrée 0.004000)
+  [OK] core.gate : relÃ¢chement : 5 ms â 0.000000000 à 50 ms, 500 ms → 0.003922
+  [OK] core.gate : profondeur -30 dB : sortie 0.000126491 pour 0.000126491 attendus
+  [OK] core.fm : profondeur 0 : sortie = entrÃ©e au bit prÃ¨s (Ã©cart maximal 0.000000000000)
+  [OK] core.fm : index 1 rad : porteuse 0.38209 (0,38260 attendu), partiel/porteuse 0.57514 (0,57508 attendu)
+  [OK] core.fm : modulateur 300 Hz : raie Ã  1300 (0.21974) contre 1700 (0.00003) ; à 700 Hz : 1700 (0.21974) contre 1300 (0.00001)
+  [OK] core.fm : base 350 Hz : raie Ã  1350 = 0.21974 en ×1 contre 0.00000 en ×2 ; raie à 2400 = 0.05735 en ×2 contre 0.00126 en ×1
+  [OK] core.fm : harmonique 3 relative : 0.000000004 à 0, 0.21576 à 0,6
+  [OK] core.fm : Ã©cart gauche/droite : 0.000000000000 à 0,5 ; 0.84277 à 0
+  [OK] core.drive : harmonique 3 : -42.8 dB à 0 dB de drive, -9.7 dB à +36 dB (écart ≥ 20 attendu)
+  [OK] core.drive : doux : continu 0,5 Ã 2 â 0.761594 (tanh 1 = 0,761594)
+  [OK] core.drive : Ã©crÃªtage : continu â 1.000000 (1,000000) ; carré → fondamentale 1.27190 (1,27324) et rapport h3/h1 0.33060 (0,33333)
+  [OK] core.drive : repli : crÃªte 1.000000 (1,000000) et repli complet -0.000000 (0,000000)
+  [OK] core.drive : harmonique 2 relative : 0.000000051 à 0,5 et 0.34113 à 1 ; silence en entrée → crête 0.000000000
+  [OK] core.drive : 8 kHz : 17.4 dB entre lissage 1 et lissage 0 (≥ 12 attendus)
+  [OK] core.drive : drive +36 dB sur pleine Ã©chelle : crÃªte maximale des trois formes 1.000000 (≤ 1,001)
+  [OK] core.delay : temps : impulsion ressortie Ã  4800 (4800 attendus, 100 ms) et 12000 (12000 attendus, 250 ms)
+  [OK] core.delay : rÃ©injection 0,50 : rapports entre rÃ©pÃ©titions 0.4999 et 0.5000
+  [OK] core.delay : rÃ©injection Ã  1 : rapport de boucle 0.9500 (0,95 attendu), crête totale 0.9998 (jamais au-dessus de l'impulsion)
+  [OK] core.delay : amortissement : deuxiÃ¨me rÃ©pÃ©tition Ã  -19.6 dB à 8 kHz (≤ -12) et -0.26 dB à 200 Hz (|x| ≤ 2)
+  [OK] core.delay : dÃ©calage stÃ©rÃ©o Ã  1 : gauche Ã  2400 (2400), droite à 7200 (7200)
+  [OK] core.delay : queue : 19 fenÃªtres de 100 ms strictement dÃ©croissantes, derniÃ¨re crÃªte 0.000502, silence exact après reset (0.0)
+  [OK] core.reverb : dÃ©croissance : -59.9 dB en 1 s pour 1 s demandé (60 attendus), -19.9 dB pour 3 s demandé (20 attendus)
+  [OK] core.reverb : amortissement : queue Ã  150-250 ms Ã  -25.5 dB à 10 kHz (≤ -20) et -0.85 dB à 200 Hz (|x| ≤ 6)
+  [OK] core.reverb : taille : premiÃ¨re rÃ©flexion Ã  1425 (1425 attendus, 100 %) et 498 (498 attendus, 35 %)
+  [OK] core.reverb : diffusion : facteur de crÃªte sur 150 ms 20.12 à 0 contre 6.36 à fond (rapport ≥ 1,3)
+  [OK] core.reverb : grave : queue Ã  300-400 ms Ã  -48.8 dB à 60 Hz (≤ -15) et -0.49 dB à 4 kHz (|x| ≤ 3)
+  [OK] core.reverb : largeur : Ã  0 les canaux diffÃ¨rent de 0.000000000000 ; à 1 l'écart vaut 140.8 % de la queue (> 10 %)
+  [OK] core.reverb : queue : 12 fenÃªtres de 100 ms strictement dÃ©croissantes, derniÃ¨re Ã  -77.9 dB de la première, silence exact après reset (0.0)
+  [OK] core.grain : hauteur neutre : impulsion rendue intacte Ã  l'Ã©chantillon 2402 (valeur 1.000000000), rien avant (0.000000000000) ni après (0.000000000000)
+  [OK] core.grain : hauteur : 500 Hz rendu Ã  999.4 Hz à +12 demi-tons et 249.9 Hz à -12 (1000 et 250 attendus), niveaux 0.3535 et 0.3535 pour 0.3536
+  [OK] core.grain : durÃ©e prÃ©servÃ©e : salve de 4800 échantillons rendue en 5278 (un varispeed en rendrait 2400), début à 2162 pour une latence de 2402
+  [OK] core.grain : taille de grain : creux de croisement mesurÃ© Ã  1.889 (10 ms) et 1.919 (60 ms), 2,0 attendus ; avec une taille fausse de 37 %, 0.999 (le creux a disparu)
+  [OK] core.grain : rÃ©injection : Ã©nergie du second tour 0.000000000000 à 0, 0.000057 à 0,3 et 0.000228 à 0,6 (×4 attendu)
+  [OK] core.grain : Ã©cart stÃ©rÃ©o : diffÃ©rence gauche/droite 0.000000000 au centre, 1.422 à fond (> 0,2 attendu)
+  [OK] core.grain : 128 paliers de hauteur Ã  128 Ã©chantillons : crÃªte 0.5000 (entrée 0,5), plus grand écart entre deux échantillons 0.0575 (la pente propre du signal vaut déjà 0,06), latence 2402 inchangée
+  [OK] core.repitch : vitesse neutre : impulsion rendue intacte Ã  l'Ã©chantillon 194 (valeur 1.000000000), rien avant (0.000000000000) ni après (0.000000000000)
+  [OK] core.repitch : hauteur : 1000 Hz rendu Ã  1998.1 Hz à +12 demi-tons et 498.7 Hz à -12 (2000 et 500 attendus)
+  [OK] core.repitch : durÃ©e non prÃ©servÃ©e : salve de 4800 échantillons rendue en 9598 (le double attendu ; core.grain en rendrait 4800)
+  [OK] core.repitch : portÃ©e : 9 recalages à 100 ms (9 attendus) et 1 à 500 ms (1)
+  [OK] core.repitch : inertie : 30 ms aprÃ¨s le pas, 500.0 Hz sans inertie (500 visés, arrivée immédiate) et 966.7 Hz à 500 ms (le moteur est à peine parti)
+  [OK] core.repitch : Ã©cart stÃ©rÃ©o : diffÃ©rence gauche/droite 0.000000000 au centre, 1.415 à fond (> 0,2 attendu)
+  [OK] core.repitch : 128 paliers de hauteur Ã  128 Ã©chantillons : crÃªte 0.5000 (entrée 0,5), plus grand écart entre deux échantillons 0.0202 (la pente propre du signal vaut déjà 0,06), latence 194 inchangée
 
 [OK]   T12 44,1 kHz : deux passes identiques octet par octet
 [OK]   T12 44,1 kHz : blocs irrÃ©guliers, rendu identique

@@ -536,8 +536,12 @@ int main (int argc, char* argv[])
         juce::StringArray chain;
         switch (geste)
         {
+            // Geste 2 : deux emplacements, pas trois (décision pilote 16/09) — le module
+            // granulaire du catalogue EST le pitch ; un repitch derrière ferait deux
+            // décalages de hauteur en série, ce qui n'est pas le geste. Le repitch
+            // appartient au geste 3.
             case 1:  chain = { "core.fm", "core.grain", "core.gate", "core.reverb" }; break;   // texture profonde
-            case 2:  chain = { "core.grain", "core.repitch", "core.delay" }; break;            // granulaire de texture
+            case 2:  chain = { "core.grain", "core.delay" }; break;                                 // granulaire de texture
             default: chain = { "core.repitch", "core.delay", "core.filter" }; break;           // repitch fondu
         }
         for (int i = 0; i < chain.size(); ++i)
@@ -560,7 +564,7 @@ int main (int argc, char* argv[])
         else if (geste == 2)
         {
             // Texture : grains lents et dispersés, pas de grille nette (§2, geste 2).
-            state::setTail (s, 3, true, nullptr);
+            state::setTail (s, 2, true, nullptr);
             state::setRange (s, 1, "main", 0.3f, 0.8f, nullptr);
             state::setProb  (s, 1, "main", 0.4f, nullptr);
             state::generate (s, 1, 1, 16, 0.5f, nullptr);
@@ -614,17 +618,26 @@ int main (int argc, char* argv[])
                      (int) kSampleRate, kBlock, 1e6 * kBlock / kSampleRate, 0.25 * 1e6 * kBlock / kSampleRate);
         for (int which = 0; which < 3; ++which)
         {
-            // Cas 3 : les 16 emplacements occupés — le pire cas de la grille, celui que
-            // le budget §4.4 doit tenir avant même le DSP des vraies skills.
+            // Cas 3 : la CHAÎNE DE RÉFÉRENCE du §4.4 — les neuf effets du catalogue
+            // chargés simultanément, séquenceur actif sur chacun. C'est le pire cas
+            // plausible du catalogue de départ, et le chiffre que le CdC attend depuis
+            // le J2 pour recalibrer son budget.
             auto st = which == 0 ? [] { auto s = state::createDefault(); state::ensureParams (s); return s; }()
                     : which == 1 ? makeReferenceState()
                     : [] {
-                          auto s = makeReferenceState();
-                          for (int sl = 4; sl <= 16; ++sl)
+                          auto s = state::createDefault();
+                          state::ensureParams (s);
+                          const char* catalogue[9] = { "core.filter", "core.gain", "core.gate", "core.fm", "core.drive",
+                                                       "core.delay", "core.reverb", "core.grain", "core.repitch" };
+                          for (int sl = 1; sl <= 9; ++sl)
                           {
-                              state::setSkill (s, sl, sl % 3 == 0 ? dummies::kDelayId : dummies::kGainId, nullptr);
+                              state::setSkill (s, sl, catalogue[sl - 1], nullptr);
+                              state::setRange (s, sl, "main", 0.2f, 0.8f, nullptr);
                               state::generate (s, sl, 1, 16, 0.7f, nullptr);
+                              for (int k = 2; k <= 16; k += 4) state::setStepOn (s, sl, k, false, nullptr);
                           }
+                          state::setParam (s, "seq.length",   (16 - 2) / 30.0f);
+                          state::setParam (s, "seq.division", grid::divisionValueFor (6));
                           return s;
                       }();
             StateParamSource params (st);
@@ -644,7 +657,7 @@ int main (int argc, char* argv[])
             std::printf ("%s : %d blocs — moyenne %.3f µs, p50 %.3f, p99 %.3f, p99.9 %.3f (%.3f %% du bloc), max %.3f µs\n",
                          which == 0 ? "socle vide (16 emplacements sans skill)   "
                        : which == 1 ? "3 emplacements (référence J3)             "
-                                    : "16 emplacements occupés (pire cas grille) ",
+                                    : "chaîne de référence §4.4 : les neuf effets",
                          (int) s.count, s.meanUs, s.p50Us, s.p99Us, s.p999Us, 100.0 * s.p999Us / blockUs, s.maxUs);
         }
         return 0;

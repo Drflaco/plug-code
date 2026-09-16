@@ -194,9 +194,27 @@ namespace
                 Curves cs (*info, len, 0.5f);
                 skill->process (sub, cs.curves, len);
             }
-            int at = -1;
-            for (int i = 0; i < n && at < 0; ++i) if (std::abs (b.getSample (0, i)) > 1.0e-4f) at = i;
-            check (at >= 0 && std::abs (at - lat1) <= 1, "première sortie à l'échantillon " + juce::String (at) + ", latence déclarée " + juce::String (lat1));
+            // La latence se lit sur le PIC de la réponse, pas sur le premier échantillon
+            // non nul : un module à phase linéaire (fenêtrage, grain) répand de l'énergie
+            // avant son pic, et serait recalé à tort alors que sa déclaration est juste.
+            // Le pic, lui, tombe à la latence déclarée pour les deux familles.
+            int at = -1, peak = -1;
+            float peakMag = 0.0f, energyBefore = 0.0f, energyTotal = 0.0f;
+            const int early = juce::jmax (1, lat1 - juce::jmax (2, lat1 / 4));
+            for (int i = 0; i < n; ++i)
+            {
+                const float m = std::abs (b.getSample (0, i));
+                if (at < 0 && m > 1.0e-4f) at = i;
+                if (m > peakMag) { peakMag = m; peak = i; }
+                energyTotal += m * m;
+                if (i < early) energyBefore += m * m;
+            }
+            const int tolerance = juce::jmax (2, lat1 / 8);
+            check (peak >= 0 && std::abs (peak - lat1) <= tolerance,
+                   "pic de la réponse à l'échantillon " + juce::String (peak) + ", latence déclarée " + juce::String (lat1)
+                       + " (tolérance " + juce::String (tolerance) + ", première sortie à " + juce::String (at) + ")");
+            check (energyTotal <= 0.0f || energyBefore <= 0.1f * energyTotal,
+                   "rien d'important ne sort avant la latence déclarée (" + juce::String (100.0f * energyBefore / juce::jmax (1.0e-12f, energyTotal), 2) + " % de l'énergie)");
         }
 
         // 8. Les cas numériques de la skill elle-même (§3.9).
