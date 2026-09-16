@@ -61,6 +61,16 @@ namespace plug
         void setStateInformation (const void* data, int sizeInBytes) override;
 
         //==============================================================================
+        // Presets par fichier (§3.6). Le seul chemin par lequel le pilote choisit
+        // quel effet occupe quel emplacement tant que l'interface du §3.7 n'existe
+        // pas : l'hôte n'expose aucun programme, et la grille ne porte pas le
+        // catalogue. Message thread uniquement ; le chargement migre le schéma
+        // comme le ferait l'ouverture d'un projet.
+        bool loadPresetFile (const juce::File& f);
+        bool savePresetFile (const juce::File& f);
+        static juce::File presetsDirectory() { return PresetLibrary::userDir(); }
+
+        //==============================================================================
         // Modèle d'édition (message thread) : l'arbre d'état et son historique (§3.6).
         juce::AudioProcessorValueTreeState& state() noexcept { return apvts; }
         juce::ValueTree& stateTree() noexcept { return apvts.state; }
