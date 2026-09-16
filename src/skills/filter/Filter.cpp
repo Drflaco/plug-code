@@ -194,7 +194,7 @@ namespace
 
     bool Filter::selfTest (juce::String& log)
     {
-        constexpr double sr = 48000.0;
+        constexpr double kSr = 48000.0;
         constexpr int n = 8192;
         const int from = n / 2;                       // on mesure après établissement
         bool all = true;
@@ -208,10 +208,10 @@ namespace
         auto run = [&] (int channels, double freqHz, float amp, float cutV, float resV, float typeV, float stereoV, int ch)
         {
             Bench b (channels, n);
-            b.sine (freqHz, sr, amp);
+            b.sine (freqHz, kSr, amp);
             b.set (M_CUT, cutV); b.set (M_RES, resV); b.set (M_TYPE, typeV); b.set (M_STEREO, stereoV);
             const double in = (double) amp / std::sqrt (2.0);
-            prepare (sr, n); reset();
+            prepare (kSr, n); reset();
             process (b.buf, b.p, n);
             return dBratio (b.rms (ch, from), in);
         };

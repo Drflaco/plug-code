@@ -144,7 +144,7 @@ namespace
 
     bool Gain::selfTest (juce::String& log)
     {
-        constexpr double sr = 48000.0;
+        constexpr double kSr = 48000.0;
         bool all = true;
         auto note = [&] (bool ok, const juce::String& what)
         {
@@ -162,7 +162,7 @@ namespace
             {
                 Bench b (1, 16, 1.0f);
                 b.set (M_LEVEL, in[c]); b.set (M_ATT, 0.0f); b.set (M_REL, 0.0f);
-                prepare (sr, 16); reset();
+                prepare (kSr, 16); reset();
                 process (b.buf, b.p, 16);
                 ok = ok && std::abs (b.buf.getSample (0, 0)  - out[c]) < 1.0e-6f
                         && std::abs (b.buf.getSample (0, 15) - out[c]) < 1.0e-6f;
@@ -174,7 +174,7 @@ namespace
         // 2. Montée — 5 ms déclarés : 90 % à mi-temps, 99 % au temps plein.
         {
             const float attV = std::sqrt (5.0f / kAttackMaxMs);
-            prepare (sr, 512); reset();
+            prepare (kSr, 512); reset();
             Bench b0 (1, 64, 1.0f);  b0.set (M_LEVEL, 0.0f); b0.set (M_ATT, attV); b0.set (M_REL, 0.0f);
             process (b0.buf, b0.p, 64);                       // pose le gain à zéro
             Bench b1 (1, 480, 1.0f); b1.set (M_LEVEL, 0.5f); b1.set (M_ATT, attV); b1.set (M_REL, 0.0f);
@@ -188,7 +188,7 @@ namespace
         float maxStep = 0.0f;
         {
             const float relV = std::sqrt (20.0f / kReleaseMaxMs);
-            prepare (sr, 1200); reset();
+            prepare (kSr, 1200); reset();
             Bench b0 (1, 64, 1.0f);   b0.set (M_LEVEL, 0.5f); b0.set (M_ATT, 0.0f); b0.set (M_REL, relV);
             process (b0.buf, b0.p, 64);                       // montée franche : unité dès le premier échantillon
             const bool instantUp = std::abs (b0.buf.getSample (0, 0) - 1.0f) < 1.0e-6f;

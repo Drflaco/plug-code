@@ -191,7 +191,7 @@ namespace
 
     bool Gate::selfTest (juce::String& log)
     {
-        constexpr double sr = 48000.0;
+        constexpr double kSr = 48000.0;
         constexpr float kLoud = 0.5f, kQuiet = 0.004f;   // -6 dB et -48 dB : de part et d'autre d'un seuil à -30 dB
         bool all = true;
         auto note = [&] (bool ok, const juce::String& what)
@@ -204,19 +204,19 @@ namespace
         // rend la valeur de sortie à l'instant demandé après la chute.
         auto afterDrop = [&] (float holdV, float relV, float rangeV, double tailMs, int atMs)
         {
-            const int tail = (int) (0.001 * tailMs * sr);
-            prepare (sr, tail); reset();
+            const int tail = (int) (0.001 * tailMs * kSr);
+            prepare (kSr, tail); reset();
             Bench a (1, 960, kLoud);  a.all (vThr (-30.0), vAtt (1.0), holdV, relV, rangeV);
             process (a.buf, a.p, 960);
             Bench b (1, tail, kQuiet); b.all (vThr (-30.0), vAtt (1.0), holdV, relV, rangeV);
             process (b.buf, b.p, tail);
-            return b.buf.getSample (0, juce::jmin (tail - 1, (int) (0.001 * atMs * sr)));
+            return b.buf.getSample (0, juce::jmin (tail - 1, (int) (0.001 * atMs * kSr)));
         };
 
         // 1. Seuil — sous le seuil, profondeur à zéro : la sortie est un silence franc.
         {
             Bench b (1, 4800, kQuiet); b.all (vThr (-30.0), vAtt (1.0), 0.0f, vRel (5.0), 0.0f);
-            prepare (sr, 4800); reset();
+            prepare (kSr, 4800); reset();
             process (b.buf, b.p, 4800);
             double peak = 0.0;
             for (int i = 0; i < 4800; ++i) peak = juce::jmax (peak, (double) std::abs (b.buf.getSample (0, i)));
@@ -225,7 +225,7 @@ namespace
         // 2. Seuil — au-dessus, la porte s'ouvre en grand : le signal ressort intact.
         {
             Bench b (1, 4800, kLoud); b.all (vThr (-30.0), vAtt (1.0), 0.0f, vRel (5.0), 0.0f);
-            prepare (sr, 4800); reset();
+            prepare (kSr, 4800); reset();
             process (b.buf, b.p, 4800);
             const float out = b.buf.getSample (0, 4799);
             note (std::abs (out - kLoud) < 1.0e-6f, "signal à -6 dB au-dessus du même seuil : sortie " + juce::String (out, 6) + " = entrée");
@@ -233,7 +233,7 @@ namespace
         // 3. Attaque — 10 ms déclarés : mi-course à 5 ms (la rampe en S y vaut 0,5), pleine ouverture à 10 ms.
         {
             Bench b (1, 960, kLoud); b.all (vThr (-30.0), vAtt (10.0), 0.0f, vRel (100.0), 0.0f);
-            prepare (sr, 960); reset();
+            prepare (kSr, 960); reset();
             process (b.buf, b.p, 960);
             const float half = b.buf.getSample (0, 239) / kLoud, full = b.buf.getSample (0, 479) / kLoud;
             note (std::abs (half - 0.5f) < 0.02f && std::abs (full - 1.0f) < 0.002f,
@@ -256,7 +256,7 @@ namespace
         // 6. Profondeur — porte fermée à -30 dB : ce qui reste est l'entrée atténuée d'autant.
         {
             Bench b (1, 4800, kQuiet); b.all (vThr (-30.0), vAtt (1.0), 0.0f, vRel (5.0), vRange (-30.0));
-            prepare (sr, 4800); reset();
+            prepare (kSr, 4800); reset();
             process (b.buf, b.p, 4800);
             const double out = b.buf.getSample (0, 4799);
             const double expected = (double) kQuiet * std::pow (10.0, -30.0 / 20.0);

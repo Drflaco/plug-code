@@ -69,3 +69,47 @@ socle vide, où le travail est nul.
 Il reste donc, pour les neuf effets, environ 597 µs de budget au p99,9 à
 48 kHz une fois le socle payé — soit 66 µs par effet si les neuf tournent
 ensemble.
+
+## Phase 1 — les neuf effets
+
+Chaque skill passe `PlugSkillTest` avant d'entrer au registre : identité,
+libellé et aide par paramètre, classe de verrou, latence déclarée contre latence
+réelle mesurée sur impulsion, blocs vides et irréguliers, silence après remise à
+zéro, balayage de chaque paramètre sur ses bornes, déterminisme entre deux
+instances, plus ses propres cas numériques. Le coût est mesuré seul dans un
+emplacement, 60 000 blocs de 128 échantillons.
+
+| Skill | Latence | 48 kHz moyenne | 48 kHz p99 | 48 kHz p99,9 | 44,1 kHz p99,9 | Contrat |
+| --- | --- | --- | --- | --- | --- | --- |
+| `core.filter` | 0 | 1,39 µs | 1,60 µs | 4,70 µs (0,18 %) | 14,80 µs (0,51 %) | passé |
+| `core.gain` | 0 | 0,40 µs | 0,80 µs | 1,10 µs (0,04 %) | 1,10 µs (0,04 %) | passé |
+| `core.gate` | 0 | 0,80 µs | 1,30 µs | 1,90 µs (0,07 %) | 1,80 µs (0,06 %) | passé |
+
+Les maxima isolés (40 à 610 µs selon les passages, y compris sur les skills les
+plus simples) suivent l'ordonnancement de la machine, pas le traitement : ils ne
+se reproduisent pas d'une mesure à l'autre. Le chiffre utile pour le budget
+§4.4 est la p99 ; la p99,9 est déjà bruitée à cette échelle.
+
+Après chaque intégration : matrice du socle 32/32, grille toujours à 284
+paramètres, pluginval niveau 5 SUCCESS.
+
+### Famille A — filtre, gain, gate (latence nulle)
+
+- `core.filter` : variable d'état TPT deux pôles par canal ; coupure 20 Hz à
+  20 kHz exponentielle et résonance Q 0,5 à 12, toutes deux libres ; type en
+  trois paliers, verrouillé par défaut parce que changer de palier déplace la
+  prise de sortie et s'entend comme une marche ; décalage stéréo sur l'entrée
+  `stereo`. Loi −6 dB.
+- `core.gain` : gain et découpe rythmique, avec montée et descente séparées —
+  c'est ce qui rend la découpe séquencée utilisable, un saut de gain par pas
+  claque. Loi −6 dB.
+- `core.gate` : seuil, attaque, maintien, relâchement, profondeur, tous libres ;
+  rampe mise en forme à pente nulle aux deux bouts, donc pas de marche même à
+  0,1 ms d'attaque. Loi −6 dB.
+
+Décisions d'intégration prises sur cette famille :
+- L'entrée `stereo` (indice 9) est laissée aux skills tant que le moteur ne s'en
+  sert pas. Si le socle en fait un jour un panoramique générique, ce sera une
+  décision pilote et la skill la rendra.
+- Le type de filtre reste verrouillé par défaut : c'est exactement le cas prévu
+  au §3.3.1, « techniquement modulable, mais chaque saut a un coût ».
