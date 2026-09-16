@@ -1,14 +1,22 @@
-// plug-code — processeur J2 : passe-tout, latence déclarée, grille complète.
-// Aucun effet, aucune interface. Le moteur DSP arrive au J3.
+// PlugProcessor — l'adaptateur hôte VST3 (CdC §5, responsabilité 2) au-dessus
+// du moteur J3 : audio, temps, événements, état. Il ne calcule rien lui-même.
+// Garantit : la grille de 284 paramètres figée (Rév. 2), l'état v2 sérialisé en
+// XML dans le même blob que les paramètres (§3.6), la latence déclarée = celle
+// du moteur, le bypass hôte aligné sur cette latence (§4.3), aucune allocation
+// dans processBlock (§4.2). L'éditeur générique JUCE reste l'échafaudage J2,
+// jusqu'au J4 (décision pilote, ETAT Rév. 4).
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterGrid.h"
 #include "BlockTimer.h"
+#include "Engine.h"
 #include <vector>
 
 namespace plug
 {
-    class PlugProcessor : public juce::AudioProcessor
+    class PlugProcessor : public juce::AudioProcessor,
+                          private juce::ValueTree::Listener,
+                          private juce::AsyncUpdater
     {
     public:
         PlugProcessor();
@@ -22,15 +30,12 @@ namespace plug
         void processBlockBypassed (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
         //==============================================================================
-        // Échafaudage J2 uniquement : sans fenêtre, Live ne peut « configurer »
-        // aucun paramètre, donc n'en automatise aucun. L'éditeur générique de
-        // JUCE (liste de curseurs standard) n'est pas l'interface du §3.7 ;
-        // option CMake PLUG_J2_GENERIC_EDITOR, retirée au J4.
+        // Échafaudage J2 conservé jusqu'au J4 (ETAT Rév. 4) : option CMake PLUG_J2_GENERIC_EDITOR.
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
 
         const juce::String getName() const override { return "Plug"; }
-        bool acceptsMidi() const override { return false; }
+        bool acceptsMidi() const override { return true; }     // déclenchement MIDI des enveloppes (§3.4)
         bool producesMidi() const override { return false; }
         bool isMidiEffect() const override { return false; }
         double getTailLengthSeconds() const override { return 0.0; }
@@ -45,34 +50,47 @@ namespace plug
         void setStateInformation (const void* data, int sizeInBytes) override;
 
         //==============================================================================
-        // Crochets de mesure J2 (hors thread audio).
-        // La latence de test n'est PAS un paramètre de la grille : elle se lit
-        // dans %APPDATA%/LascauxLab/Plug/j2_latency.txt à la construction,
-        // ou se force ici (banc). Retirée au J3.
-        void setTestLatency (int samples);
-        int getTestLatency() const noexcept { return testLatency; }
-
+        // Modèle d'édition (message thread) : l'arbre d'état et son historique (§3.6).
         juce::AudioProcessorValueTreeState& state() noexcept { return apvts; }
+        juce::ValueTree& stateTree() noexcept { return apvts.state; }
+        juce::UndoManager& undoManager() noexcept { return undo; }
+        Engine& engine() noexcept { return plugEngine; }
+
         const BlockTimer& blockTimer() const noexcept { return timer; }
         void resetBlockTimer() noexcept { timer.reset(); }
 
-        static constexpr int kMaxTestLatency = 1 << 16;
-        static constexpr int kSchemaVersion = 1;
-
     private:
-        void applyDelay (juce::AudioBuffer<float>& buffer) noexcept;
-        void rebuildDelay();
+        // Source des valeurs brutes de la grille pour le moteur : les atomiques de l'APVTS.
+        class ApvtsParamSource : public ParamSource
+        {
+        public:
+            std::vector<std::atomic<float>*> raw;
+            float get (int gridIndex) const override { return raw[(size_t) gridIndex]->load(); }
+        };
+
+        void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;
+        void valueTreeChildAdded (juce::ValueTree&, juce::ValueTree&) override;
+        void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) override;
+        void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override;
+        void valueTreeParentChanged (juce::ValueTree&) override;
+        void handleAsyncUpdate() override;
+
+        void publishState();
         void dumpTiming (const char* reason);
-        static int readLatencyFile();
+        void loadJ3StateHook();
 
+        juce::UndoManager undo;
         juce::AudioProcessorValueTreeState apvts;
+        ApvtsParamSource paramSource;
+        Engine plugEngine;
 
-        int testLatency = 0;
+        // Bypass hôte : le sec retardé de la latence déclarée (§4.3), préalloué.
+        std::vector<std::vector<float>> bypassRing;
+        size_t bypassPos = 0;
+        int bypassLatency = 0;
+
         double currentSampleRate = 0.0;
         int currentBlockSize = 0;
-        std::vector<std::vector<float>> ring;   // un anneau par canal, taille = latence
-        size_t ringPos = 0;
-
         BlockTimer timer;
         bool timingDumped = true;
 

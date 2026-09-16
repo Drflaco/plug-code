@@ -1,4 +1,5 @@
 #include "PlugProcessor.h"
+#include "StateSchema.h"
 
 #ifndef PLUG_J2_TIMING
  #define PLUG_J2_TIMING 0
@@ -20,41 +21,65 @@ namespace plug
         : AudioProcessor (BusesProperties()
                               .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-          apvts (*this, nullptr, "PlugState", grid::createLayout())
+          apvts (*this, &undo, "PlugState", grid::createLayout())
     {
         jassert (getParameters().size() == grid::kTotalCount);
 
-        testLatency = readLatencyFile();
-        setLatencySamples (testLatency);
+        for (const auto& id : grid::allIds())
+            paramSource.raw.push_back (apvts.getRawParameterValue (id));
+        plugEngine.setParamSource (&paramSource);
+
+        state::ensureSchema (apvts.state);
+        loadJ3StateHook();
+        apvts.state.addListener (this);
+        publishState();
     }
 
     PlugProcessor::~PlugProcessor()
     {
+        apvts.state.removeListener (this);
+        cancelPendingUpdate();
         dumpTiming ("destructor");
     }
 
     //==============================================================================
-    int PlugProcessor::readLatencyFile()
+    // Crochet J3 (mesure dans Live, pas d'interface pour éditer les pas) : si
+    // %APPDATA%/LascauxLab/Plug/j3_state.xml existe, il remplace l'état par défaut
+    // à la création d'une instance. Retiré avec l'interface (J4).
+    void PlugProcessor::loadJ3StateHook()
     {
-        auto f = measureDir().getChildFile ("j2_latency.txt");
-        if (! f.existsAsFile())
-            return 0;
-
-        return juce::jlimit (0, kMaxTestLatency, f.loadFileAsString().trim().getIntValue());
+        auto f = measureDir().getChildFile ("j3_state.xml");
+        if (! f.existsAsFile()) return;
+        if (auto xml = juce::XmlDocument::parse (f))
+        {
+            auto t = juce::ValueTree::fromXml (*xml);
+            if (t.hasType (state::id::PlugState))
+            {
+                state::ensureSchema (t);
+                apvts.replaceState (t);
+            }
+        }
     }
 
-    void PlugProcessor::setTestLatency (int samples)
+    //==============================================================================
+    void PlugProcessor::valueTreePropertyChanged (juce::ValueTree& t, const juce::Identifier&)
     {
-        testLatency = juce::jlimit (0, kMaxTestLatency, samples);
-        setLatencySamples (testLatency);
-        rebuildDelay();
+        if (t.hasType (state::id::PARAM)) return;   // l'automation passe par les atomiques, pas par le modèle
+        triggerAsyncUpdate();
     }
+    void PlugProcessor::valueTreeChildAdded (juce::ValueTree&, juce::ValueTree& c)       { if (! c.hasType (state::id::PARAM)) triggerAsyncUpdate(); }
+    void PlugProcessor::valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree& c, int){ if (! c.hasType (state::id::PARAM)) triggerAsyncUpdate(); }
+    void PlugProcessor::valueTreeChildOrderChanged (juce::ValueTree&, int, int)          { triggerAsyncUpdate(); }
+    void PlugProcessor::valueTreeParentChanged (juce::ValueTree&)                        { triggerAsyncUpdate(); }
+    void PlugProcessor::handleAsyncUpdate()                                              { publishState(); }
 
-    void PlugProcessor::rebuildDelay()
+    // Message thread : reconstruit le modèle du moteur et redéclare la latence si elle change.
+    void PlugProcessor::publishState()
     {
-        const int channels = juce::jmax (2, getTotalNumOutputChannels());
-        ring.assign ((size_t) channels, std::vector<float> ((size_t) juce::jmax (1, testLatency), 0.0f));
-        ringPos = 0;
+        plugEngine.setState (apvts.state);
+        const int lat = plugEngine.latencySamples();
+        if (lat != getLatencySamples())
+            setLatencySamples (lat);
     }
 
     //==============================================================================
@@ -62,7 +87,9 @@ namespace plug
     {
         currentSampleRate = sampleRate;
         currentBlockSize = maximumExpectedSamplesPerBlock;
-        rebuildDelay();
+        plugEngine.prepare (sampleRate, maximumExpectedSamplesPerBlock);
+        bypassRing.assign (2, std::vector<float> ((size_t) Engine::kMaxLatency, 0.0f));
+        bypassPos = 0;
         timer.reset();
         timingDumped = false;
     }
@@ -76,63 +103,61 @@ namespace plug
     {
         const auto& in  = layouts.getMainInputChannelSet();
         const auto& out = layouts.getMainOutputChannelSet();
-
-        if (in != out)
-            return false;
-
+        if (in != out) return false;
         return out == juce::AudioChannelSet::mono() || out == juce::AudioChannelSet::stereo();
     }
 
     //==============================================================================
-    void PlugProcessor::applyDelay (juce::AudioBuffer<float>& buffer) noexcept
-    {
-        if (testLatency <= 0)
-            return;
-
-        const int numSamples = buffer.getNumSamples();
-        const int numChannels = juce::jmin (buffer.getNumChannels(), (int) ring.size());
-        const size_t len = (size_t) testLatency;
-
-        size_t pos = ringPos;
-
-        for (int ch = 0; ch < numChannels; ++ch)
-        {
-            auto* data = buffer.getWritePointer (ch);
-            auto* r = ring[(size_t) ch].data();
-            pos = ringPos;
-
-            for (int i = 0; i < numSamples; ++i)
-            {
-                const float delayed = r[pos];
-                r[pos] = data[i];
-                data[i] = delayed;
-                if (++pos == len) pos = 0;
-            }
-        }
-
-        ringPos = pos;
-    }
-
-    void PlugProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+    void PlugProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
     {
         juce::ScopedNoDenormals noDenormals;
         timer.begin();
 
-        // Canaux de sortie sans entrée correspondante : silence.
         for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
             buffer.clear (ch, 0, buffer.getNumSamples());
 
-        // Passe-tout : le seul traitement est le retard de la latence déclarée.
-        applyDelay (buffer);
+        // Temps de l'hôte (§3.3.3) : position musicale, tempo, transport. Sans position : roue libre.
+        Transport tr;
+        tr.hasPosition = false;
+        if (auto* ph = getPlayHead())
+            if (auto pos = ph->getPosition())
+            {
+                if (auto bpm = pos->getBpm()) tr.bpm = *bpm;
+                if (auto ppq = pos->getPpqPosition()) { tr.ppq = *ppq; tr.hasPosition = true; }
+                tr.playing = pos->getIsPlaying();
+            }
+
+        plugEngine.process (buffer, midi, tr);
+        midi.clear();
 
         timer.end ((uint32_t) buffer.getNumSamples());
     }
 
     void PlugProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
     {
-        // Bypass aligné : même retard que le chemin actif, même anneau, donc pas
-        // de saut quand l'hôte bascule. La latence déclarée ne bouge pas.
-        processBlock (buffer, midi);
+        // Bypass hôte aligné : le sec retardé de la latence déclarée (§4.3). Le moteur
+        // ne tourne pas ; sa latence reste déclarée, donc la piste ne bouge pas.
+        midi.clear();
+        const int lat = juce::jlimit (0, Engine::kMaxLatency, getLatencySamples());
+        if (lat != bypassLatency) { bypassLatency = lat; bypassPos = 0; for (auto& r : bypassRing) std::fill (r.begin(), r.end(), 0.0f); }
+        if (lat == 0 || bypassRing.empty()) return;
+
+        const int n = buffer.getNumSamples();
+        const int chans = juce::jmin (buffer.getNumChannels(), (int) bypassRing.size());
+        size_t p = bypassPos;
+        for (int i = 0; i < n; ++i)
+        {
+            for (int ch = 0; ch < chans; ++ch)
+            {
+                auto* d = buffer.getWritePointer (ch);
+                auto& r = bypassRing[(size_t) ch];
+                const float delayed = r[p];
+                r[p] = d[i];
+                d[i] = delayed;
+            }
+            if (++p == (size_t) lat) p = 0;
+        }
+        bypassPos = p;
     }
 
     //==============================================================================
@@ -157,9 +182,8 @@ namespace plug
     //==============================================================================
     void PlugProcessor::getStateInformation (juce::MemoryBlock& destData)
     {
-        auto tree = apvts.copyState();
-        tree.setProperty ("schemaVersion", kSchemaVersion, nullptr);
-
+        auto tree = apvts.copyState();          // PARAM + Generation + Slots + Macros, un seul arbre (§3.6)
+        tree.setProperty (state::id::schemaVersion, state::kSchemaVersion, nullptr);
         if (auto xml = tree.createXml())
             copyXmlToBinary (*xml, destData);
     }
@@ -171,8 +195,10 @@ namespace plug
             if (xml->hasTagName (apvts.state.getType()))
             {
                 auto tree = juce::ValueTree::fromXml (*xml);
-                // schemaVersion : migration prévue dès la version 1 (§3.6). Rien à migrer au J2.
+                state::ensureSchema (tree);     // migration 1→2 : complète, ne retire rien
                 apvts.replaceState (tree);
+                apvts.state.addListener (this);
+                publishState();
             }
         }
     }
@@ -181,40 +207,31 @@ namespace plug
     void PlugProcessor::dumpTiming (const char* reason)
     {
        #if PLUG_J2_TIMING
-        if (timingDumped)
-            return;
-
+        if (timingDumped) return;
         timingDumped = true;
         const auto s = timer.compute();
-        if (s.total == 0)
-            return;
+        if (s.total == 0) return;
 
         auto dir = measureDir().getChildFile ("measure");
         dir.createDirectory();
-
         const auto stamp = juce::Time::getCurrentTime().formatted ("%Y%m%d_%H%M%S");
-        auto f = dir.getChildFile ("j2_timing_" + stamp + "_" + juce::String (juce::Random::getSystemRandom().nextInt (10000)) + ".txt");
-
+        auto f = dir.getChildFile ("j3_timing_" + stamp + "_" + juce::String (juce::Random::getSystemRandom().nextInt (10000)) + ".txt");
         const double blockMs = currentBlockSize > 0 && currentSampleRate > 0 ? 1000.0 * currentBlockSize / currentSampleRate : 0.0;
 
         juce::String out;
-        out << "plug J2 timing — " << reason << "\n"
+        out << "plug J3 timing — " << reason << "\n"
             << "host: " << juce::PluginHostType().getHostDescription() << "\n"
             << "sampleRate: " << currentSampleRate << "\n"
             << "preparedBlockSize: " << currentBlockSize << " (" << juce::String (blockMs, 3) << " ms)\n"
             << "blockSizesSeen: " << (int) s.minBlock << ".." << (int) s.maxBlock << "\n"
-            << "latencySamples: " << testLatency << "\n"
+            << "latencySamples: " << getLatencySamples() << "\n"
             << "blocksTotal: " << (juce::int64) s.total << "  blocksKept: " << (juce::int64) s.count << "\n"
-            << "meanUs: " << juce::String (s.meanUs, 3) << "\n"
-            << "p50Us: " << juce::String (s.p50Us, 3) << "\n"
-            << "p99Us: " << juce::String (s.p99Us, 3) << "\n"
-            << "p999Us: " << juce::String (s.p999Us, 3) << "\n"
-            << "maxUs: " << juce::String (s.maxUs, 3) << "\n";
-
+            << "meanUs: " << juce::String (s.meanUs, 3) << "\np50Us: " << juce::String (s.p50Us, 3)
+            << "\np99Us: " << juce::String (s.p99Us, 3) << "\np999Us: " << juce::String (s.p999Us, 3)
+            << "\nmaxUs: " << juce::String (s.maxUs, 3) << "\n";
         if (blockMs > 0)
             out << "p999PercentOfBlock: " << juce::String (100.0 * s.p999Us / (blockMs * 1000.0), 4) << "\n"
                 << "maxPercentOfBlock: "  << juce::String (100.0 * s.maxUs  / (blockMs * 1000.0), 4) << "\n";
-
         f.replaceWithText (out);
        #else
         juce::ignoreUnused (reason);

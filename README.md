@@ -34,11 +34,30 @@ Sorties (Release) :
 
 ## Cibles
 
-- **Plug** — VST3. Au J2 : passe-tout, latence déclarée, grille de paramètres
-  complète (284 entrées, `src/ParameterGrid.h`). Aucun effet, aucune interface.
-- **PlugBench** — exécutable console : vérifie la grille, la latence réelle
-  (0 et 256 échantillons, chemin actif et bypass, blocs irréguliers),
-  l'aller-retour d'état et mesure le coût par bloc à 48 kHz / 128.
+- **Plug** — VST3. Grille de 284 paramètres figée (`src/ParameterGrid.h`) sur
+  le socle J3 (`src/Engine.*`) : horloge et transport, séquenceur paramétrique,
+  verrous, fondus et queues, graine et capture, modulation, macros, état v2,
+  mélange local et global. Aucun effet réel, aucune interface : trois modules
+  **factices** (`src/dummies/`) pour éprouver la chaîne.
+- **PlugRender** — rendu hors hôte : `PlugRender test` (matrice J3, rendu
+  déterministe comparé octet par octet), `PlugRender render --in --state --out`,
+  `PlugRender bench` (coût du socle), `PlugRender gen-input`.
+- **PlugBench** — banc J2 : grille, aller-retour d'état, coût par bloc du
+  processeur complet.
+
+## Socle J3 — où lire quoi
+
+| Fichier | Sert |
+| --- | --- |
+| `src/StepValue.*` | la fonction pure « valeur de ce pas pour cet état » (hash, densité, plage) |
+| `src/StateSchema.*` | l'état v2, migration, Générer, Figer, verrous, routes |
+| `src/Clock.h` | pas à l'échantillon depuis la position hôte, swing, arrêt, saut, roue libre |
+| `src/Engine.*` | composition (contrat J3 b), chaîne, fondus et queues, mélange, publication bornée |
+| `src/Modulation.h` | enveloppe et suiveur, déclenchement transport / audio / MIDI |
+| `src/Skill.h`, `SKILL_TEMPLATE.md` | le contrat d'un module d'effet et son squelette |
+
+Crochet J3 (sans interface) : `%APPDATA%\LascauxLab\Plug\j3_state.xml`, s'il
+existe, remplace l'état par défaut d'une nouvelle instance. Retiré au J4.
 
 ## Échafaudage J2 : éditeur générique
 
@@ -64,15 +83,12 @@ quand l'interface réelle arrive.
 et `measure/live_48k128/` contiennent les rapports bruts retenus.
 `measure/raw/` (Live Set de test, exports, journaux pluginval) reste local.
 
-## Mesure J2 dans l'hôte
+## Mesure dans l'hôte
 
 Le plugin compilé avec `PLUG_J2_TIMING=1` chronomètre chaque bloc et écrit un
 rapport à la désactivation dans
-`%APPDATA%\LascauxLab\Plug\measure\j2_timing_*.txt`.
-
-La latence de test se lit dans `%APPDATA%\LascauxLab\Plug\j2_latency.txt`
-(entier, échantillons) à la création de l'instance. Ce n'est pas un paramètre
-de la grille ; ce crochet disparaît au J3.
+`%APPDATA%\LascauxLab\Plug\measure\j3_timing_*.txt`. Le crochet de latence de
+test du J2 (`j2_latency.txt`) a disparu : la latence vient des skills.
 
 ## Identité VST3 — figée
 

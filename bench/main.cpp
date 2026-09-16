@@ -1,7 +1,7 @@
 // PlugBench — banc J2 hors hôte.
 // Vérifie : compte et identifiants de la grille, drapeaux non automatisables,
-// latence déclarée = latence réelle (0 et 256), bypass aligné, aller-retour
-// d'état, coût par bloc à 48 kHz / 128 sur le passe-tout.
+// aller-retour d'état, coût par bloc à 48 kHz / 128 du processeur à vide
+// (latence et bypass : voir PlugRender depuis J3).
 // Usage : PlugBench [fichier_rapport] [nb_blocs]
 // Code de retour 0 si tout passe.
 
@@ -87,51 +87,7 @@ int main (int argc, char* argv[])
         log << "\n";
     }
 
-    //==========================================================================
-    // 2. Latence et bypass
-    for (int lat : { 0, 256 })
-    {
-        plug::PlugProcessor p;
-        p.setTestLatency (lat);
-        p.prepareToPlay (48000.0, 128);
-
-        check (p.getLatencySamples() == lat, "latence déclarée = " + juce::String (p.getLatencySamples()) + " (attendu " + juce::String (lat) + ")", log);
-
-        const int d = measureImpulseDelay (p, 128, false);
-        check (d == lat, "latence réelle (processBlock) = " + juce::String (d), log);
-
-        plug::PlugProcessor pb;
-        pb.setTestLatency (lat);
-        pb.prepareToPlay (48000.0, 128);
-        const int db = measureImpulseDelay (pb, 128, true);
-        check (db == lat, "latence réelle (processBlockBypassed) = " + juce::String (db) + " — bypass aligné", log);
-
-        // Blocs irréguliers : le retard reste exact avec des tailles 1, 7, 128, 500, 0.
-        plug::PlugProcessor pi;
-        pi.setTestLatency (lat);
-        pi.prepareToPlay (48000.0, 512);
-        {
-            const int sizes[] = { 1, 7, 128, 500, 0, 64 };
-            juce::MidiBuffer midi;
-            int absIndex = 0, found = -1;
-            bool first = true;
-            for (int round = 0; round < 50 && found < 0; ++round)
-                for (int sz : sizes)
-                {
-                    juce::AudioBuffer<float> buf (2, juce::jmax (sz, 1));
-                    buf.clear();
-                    buf.setSize (2, sz, false, false, true);
-                    if (first && sz > 0) { buf.setSample (0, 0, 1.0f); buf.setSample (1, 0, 1.0f); first = false; }
-                    pi.processBlock (buf, midi);
-                    for (int i = 0; i < sz && found < 0; ++i)
-                        if (std::abs (buf.getSample (0, i)) > 0.0f) found = absIndex + i;
-                    absIndex += sz;
-                    if (found >= 0) break;
-                }
-            check (found == lat, "latence réelle avec blocs irréguliers = " + juce::String (found), log);
-        }
-        p.releaseResources(); pb.releaseResources(); pi.releaseResources();
-    }
+    // 2. Latence et bypass : déplacés au J3 dans PlugRender (test T6), le moteur porte la latence.
 
     //==========================================================================
     // 3. État : aller-retour
@@ -155,11 +111,10 @@ int main (int argc, char* argv[])
     }
 
     //==========================================================================
-    // 4. Coût par bloc — référence zéro du budget §4.4
-    for (int lat : { 0, 256 })
+    // 4. Coût par bloc du processeur à vide (socle J3 sans skill) — référence du budget §4.4
+    for (int lat : { 0 })
     {
         plug::PlugProcessor p;
-        p.setTestLatency (lat);
         p.prepareToPlay (48000.0, 128);
 
         juce::AudioBuffer<float> buf (2, 128);

@@ -1,0 +1,35 @@
+PlugRender — matrice J3 — 16 Sep 2026 6:59:10pm
+
+[OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
+[OK]   T1 Ã©tat relu depuis XML : fichier identique
+[OK]   T1 le rendu n'est pas silencieux
+[OK]   T1 le rendu diffÃ¨re de l'entrÃ©e (le socle agit)
+[OK]   T2 blocs 128 et blocs irrÃ©guliers (1/7/128/500/0/64/300) : rendu identique
+[OK]   T3 deux gÃ©nÃ©rations Ã  graine maÃ®tresse Ã©gale : mÃªmes valeurs de pas
+[OK]   T3 valeurs gÃ©nÃ©rÃ©es dans la plage [0.1, 0.6]
+[OK]   T3 graine maÃ®tresse diffÃ©rente : valeurs diffÃ©rentes
+[OK]   T3 plage resserrÃ©e : mÃªme forme, amplitude rÃ©duite
+[OK]   T3 capture : valeurs figÃ©es, indÃ©pendantes de la plage
+[OK]   T4 glide 2 pas : saut max entre deux Ã©chantillons = 0.00006 Ã  6045
+[OK]   T4 la valeur composÃ©e bouge bien (max 0.738)
+[OK]   T5 saut de position : rendu Ã©gal au rendu continu Ã  la position cible
+[OK]   T6 latence dÃ©clarÃ©e constante = 256 sur 3000 blocs, pas actifs et inactifs
+[OK]   T6 sec du master alignÃ© sur la latence (256)
+[OK]   T7 schemaVersion 1 â 2
+[OK]   T7 16 emplacements crÃ©Ã©s par dÃ©faut
+[OK]   T7 nÅud inconnu conservÃ©
+[OK]   T7 32 pas par emplacement
+[OK]   T7 aller-retour XML Ã©quivalent
+[OK]   T8 paramÃ¨tre verrouillÃ© : valeur composÃ©e = base sur tout le rendu
+[OK]   T9 loi -6 dB : 0.5 / 0.5
+[OK]   T9 loi -3 dB : 0.7071 / 0.7071
+[OK]   T9 loi 0 dB : 1 / 1
+[OK]   T10 transport arrÃªtÃ© : rendu dÃ©terministe
+[OK]   T10 sans position hÃ´te : roue libre Ã  120 BPM dÃ©terministe
+[OK]   T11 auto-tests des modules factices
+  [OK] factice.gain : main 0,25 → gain 0,5
+  [OK] factice.delay : impulsion retardée de 10 échantillons (10)
+  [OK] factice.latent : impulsion retardée de 256 = latence déclarée 256
+
+
+Résultat : TOUT PASSE

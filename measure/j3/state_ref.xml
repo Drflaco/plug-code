@@ -1,0 +1,1176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<PlugState schemaVersion="2" pluginVersion="0.3.0">
+  <Generation masterSeed="20260916" counter="16" density="0.800000011920929"/>
+  <Slots>
+    <Slot index="1" skill="factice.gain" skillVersion="0" tail="ring">
+      <Param name="main" min="0.2000000029802322" max="0.8999999761581421"
+             prob="1.0" locked="0" transition="glide"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="1" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="generated" seed="2234969845" density="0.800000011920929"/>
+        <Step i="2" on="0" mode="generated" seed="2605553801" density="0.800000011920929"/>
+        <Step i="3" on="1" mode="generated" seed="3539379765" density="0.800000011920929"/>
+        <Step i="4" on="1" mode="generated" seed="3787602034" density="0.800000011920929"/>
+        <Step i="5" on="0" mode="generated" seed="3754082869" density="0.800000011920929"/>
+        <Step i="6" on="1" mode="generated" seed="2591403638" density="0.800000011920929"/>
+        <Step i="7" on="1" mode="generated" seed="1299398166" density="0.800000011920929"/>
+        <Step i="8" on="0" mode="generated" seed="2240109886" density="0.800000011920929"/>
+        <Step i="9" on="1" mode="generated" seed="4089881736" density="0.800000011920929"/>
+        <Step i="10" on="1" mode="generated" seed="397028759" density="0.800000011920929"/>
+        <Step i="11" on="0" mode="generated" seed="466253185" density="0.800000011920929"/>
+        <Step i="12" on="1" mode="generated" seed="3486509695" density="0.800000011920929"/>
+        <Step i="13" on="1" mode="generated" seed="3794693832" density="0.800000011920929"/>
+        <Step i="14" on="0" mode="generated" seed="3675039439" density="0.800000011920929"/>
+        <Step i="15" on="1" mode="generated" seed="3418908668" density="0.800000011920929"/>
+        <Step i="16" on="1" mode="generated" seed="2566134722" density="0.800000011920929"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport">
+          <Point t="0.0" v="0.0" curve="0.0"/>
+          <Point t="0.5" v="1.0" curve="0.0"/>
+          <Point t="1.0" v="0.0" curve="0.0"/>
+        </Env1>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+        <Route src="env1" dst="paramB" depth="0.5"/>
+      </Mod>
+    </Slot>
+    <Slot index="2" skill="factice.delay" skillVersion="0" tail="cut">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="explicit" seed="0" density="1.0">
+          <V name="paramA" value="0.75"/>
+        </Step>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="follower" rate="0.5" sync="1" loop="1" trigger="transport"
+                 attack="0.009999999776482582" release="0.1000000014901161"/>
+        <Route src="source2" dst="main" depth="0.300000011920929"/>
+      </Mod>
+    </Slot>
+    <Slot index="3" skill="factice.latent" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="0" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="4" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="5" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="6" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="7" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="8" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="9" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="10" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="11" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="12" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="13" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="14" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="15" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+    <Slot index="16" skill="" skillVersion="0" tail="ring">
+      <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramC" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramD" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramE" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="paramF" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="mix" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="gain" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="stereo" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res1" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res2" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Param name="res3" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
+      <Line>
+        <Step i="1" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="2" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="3" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="4" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="5" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="6" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="7" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="8" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="9" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="10" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="11" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="12" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="13" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="14" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="15" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="16" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="17" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="18" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="19" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="20" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="21" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="22" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="23" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="24" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="25" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="26" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="27" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="28" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="29" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="30" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="31" on="1" mode="base" seed="0" density="1.0"/>
+        <Step i="32" on="1" mode="base" seed="0" density="1.0"/>
+      </Line>
+      <Mod>
+        <Env1 rate="0.5" sync="1" loop="1" trigger="transport"/>
+        <Source2 kind="env" rate="0.5" sync="1" loop="1" trigger="transport" attack="0.01"
+                 release="0.1"/>
+      </Mod>
+    </Slot>
+  </Slots>
+  <Macros>
+    <Macro index="1">
+      <Route slot="1" param="main" lo="0.0" hi="0.1000000014901161" curve="0.0"/>
+    </Macro>
+    <Macro index="2"/>
+    <Macro index="3"/>
+    <Macro index="4"/>
+    <Macro index="5"/>
+    <Macro index="6"/>
+    <Macro index="7"/>
+    <Macro index="8"/>
+  </Macros>
+  <PARAM id="macro1" value="0.5"/>
+  <PARAM id="macro2" value="0.0"/>
+  <PARAM id="macro3" value="0.0"/>
+  <PARAM id="macro4" value="0.0"/>
+  <PARAM id="macro5" value="0.0"/>
+  <PARAM id="macro6" value="0.0"/>
+  <PARAM id="macro7" value="0.0"/>
+  <PARAM id="macro8" value="0.0"/>
+  <PARAM id="master.drive" value="0.0"/>
+  <PARAM id="master.tone" value="0.5"/>
+  <PARAM id="master.comp" value="0.0"/>
+  <PARAM id="master.lowFreq" value="0.5"/>
+  <PARAM id="master.volume" value="0.5"/>
+  <PARAM id="master.mix" value="0.800000011920929"/>
+  <PARAM id="master.driveRouting" value="0.0"/>
+  <PARAM id="master.mixLaw" value="1.0"/>
+  <PARAM id="master.quality" value="1.0"/>
+  <PARAM id="master.res1" value="0.0"/>
+  <PARAM id="master.res2" value="0.0"/>
+  <PARAM id="master.res3" value="0.0"/>
+  <PARAM id="seq.length" value="0.4666666686534882"/>
+  <PARAM id="seq.division" value="0.4285714328289032"/>
+  <PARAM id="seq.swing" value="0.300000011920929"/>
+  <PARAM id="seq.res1" value="0.0"/>
+  <PARAM id="seq.res2" value="0.0"/>
+  <PARAM id="seq.res3" value="0.0"/>
+  <PARAM id="seq.res4" value="0.0"/>
+  <PARAM id="seq.res5" value="0.0"/>
+  <PARAM id="slot01.active" value="1.0"/>
+  <PARAM id="slot01.main" value="0.5"/>
+  <PARAM id="slot01.paramA" value="0.5"/>
+  <PARAM id="slot01.paramB" value="0.5"/>
+  <PARAM id="slot01.paramC" value="0.5"/>
+  <PARAM id="slot01.paramD" value="0.5"/>
+  <PARAM id="slot01.paramE" value="0.5"/>
+  <PARAM id="slot01.paramF" value="0.5"/>
+  <PARAM id="slot01.mix" value="1.0"/>
+  <PARAM id="slot01.gain" value="0.5"/>
+  <PARAM id="slot01.glide" value="0.25"/>
+  <PARAM id="slot01.stereo" value="0.5"/>
+  <PARAM id="slot01.fade" value="0.2000000029802322"/>
+  <PARAM id="slot01.res1" value="0.0"/>
+  <PARAM id="slot01.res2" value="0.0"/>
+  <PARAM id="slot01.res3" value="0.0"/>
+  <PARAM id="slot02.active" value="1.0"/>
+  <PARAM id="slot02.main" value="0.5"/>
+  <PARAM id="slot02.paramA" value="0.5"/>
+  <PARAM id="slot02.paramB" value="0.5"/>
+  <PARAM id="slot02.paramC" value="0.5"/>
+  <PARAM id="slot02.paramD" value="0.5"/>
+  <PARAM id="slot02.paramE" value="0.5"/>
+  <PARAM id="slot02.paramF" value="0.5"/>
+  <PARAM id="slot02.mix" value="1.0"/>
+  <PARAM id="slot02.gain" value="0.5"/>
+  <PARAM id="slot02.glide" value="0.0"/>
+  <PARAM id="slot02.stereo" value="0.5"/>
+  <PARAM id="slot02.fade" value="0.0"/>
+  <PARAM id="slot02.res1" value="0.0"/>
+  <PARAM id="slot02.res2" value="0.0"/>
+  <PARAM id="slot02.res3" value="0.0"/>
+  <PARAM id="slot03.active" value="1.0"/>
+  <PARAM id="slot03.main" value="0.5"/>
+  <PARAM id="slot03.paramA" value="0.5"/>
+  <PARAM id="slot03.paramB" value="0.5"/>
+  <PARAM id="slot03.paramC" value="0.5"/>
+  <PARAM id="slot03.paramD" value="0.5"/>
+  <PARAM id="slot03.paramE" value="0.5"/>
+  <PARAM id="slot03.paramF" value="0.5"/>
+  <PARAM id="slot03.mix" value="1.0"/>
+  <PARAM id="slot03.gain" value="0.5"/>
+  <PARAM id="slot03.glide" value="0.0"/>
+  <PARAM id="slot03.stereo" value="0.5"/>
+  <PARAM id="slot03.fade" value="0.1000000014901161"/>
+  <PARAM id="slot03.res1" value="0.0"/>
+  <PARAM id="slot03.res2" value="0.0"/>
+  <PARAM id="slot03.res3" value="0.0"/>
+  <PARAM id="slot04.active" value="1.0"/>
+  <PARAM id="slot04.main" value="0.5"/>
+  <PARAM id="slot04.paramA" value="0.5"/>
+  <PARAM id="slot04.paramB" value="0.5"/>
+  <PARAM id="slot04.paramC" value="0.5"/>
+  <PARAM id="slot04.paramD" value="0.5"/>
+  <PARAM id="slot04.paramE" value="0.5"/>
+  <PARAM id="slot04.paramF" value="0.5"/>
+  <PARAM id="slot04.mix" value="1.0"/>
+  <PARAM id="slot04.gain" value="0.5"/>
+  <PARAM id="slot04.glide" value="0.0"/>
+  <PARAM id="slot04.stereo" value="0.5"/>
+  <PARAM id="slot04.fade" value="0.0"/>
+  <PARAM id="slot04.res1" value="0.0"/>
+  <PARAM id="slot04.res2" value="0.0"/>
+  <PARAM id="slot04.res3" value="0.0"/>
+  <PARAM id="slot05.active" value="1.0"/>
+  <PARAM id="slot05.main" value="0.5"/>
+  <PARAM id="slot05.paramA" value="0.5"/>
+  <PARAM id="slot05.paramB" value="0.5"/>
+  <PARAM id="slot05.paramC" value="0.5"/>
+  <PARAM id="slot05.paramD" value="0.5"/>
+  <PARAM id="slot05.paramE" value="0.5"/>
+  <PARAM id="slot05.paramF" value="0.5"/>
+  <PARAM id="slot05.mix" value="1.0"/>
+  <PARAM id="slot05.gain" value="0.5"/>
+  <PARAM id="slot05.glide" value="0.0"/>
+  <PARAM id="slot05.stereo" value="0.5"/>
+  <PARAM id="slot05.fade" value="0.0"/>
+  <PARAM id="slot05.res1" value="0.0"/>
+  <PARAM id="slot05.res2" value="0.0"/>
+  <PARAM id="slot05.res3" value="0.0"/>
+  <PARAM id="slot06.active" value="1.0"/>
+  <PARAM id="slot06.main" value="0.5"/>
+  <PARAM id="slot06.paramA" value="0.5"/>
+  <PARAM id="slot06.paramB" value="0.5"/>
+  <PARAM id="slot06.paramC" value="0.5"/>
+  <PARAM id="slot06.paramD" value="0.5"/>
+  <PARAM id="slot06.paramE" value="0.5"/>
+  <PARAM id="slot06.paramF" value="0.5"/>
+  <PARAM id="slot06.mix" value="1.0"/>
+  <PARAM id="slot06.gain" value="0.5"/>
+  <PARAM id="slot06.glide" value="0.0"/>
+  <PARAM id="slot06.stereo" value="0.5"/>
+  <PARAM id="slot06.fade" value="0.0"/>
+  <PARAM id="slot06.res1" value="0.0"/>
+  <PARAM id="slot06.res2" value="0.0"/>
+  <PARAM id="slot06.res3" value="0.0"/>
+  <PARAM id="slot07.active" value="1.0"/>
+  <PARAM id="slot07.main" value="0.5"/>
+  <PARAM id="slot07.paramA" value="0.5"/>
+  <PARAM id="slot07.paramB" value="0.5"/>
+  <PARAM id="slot07.paramC" value="0.5"/>
+  <PARAM id="slot07.paramD" value="0.5"/>
+  <PARAM id="slot07.paramE" value="0.5"/>
+  <PARAM id="slot07.paramF" value="0.5"/>
+  <PARAM id="slot07.mix" value="1.0"/>
+  <PARAM id="slot07.gain" value="0.5"/>
+  <PARAM id="slot07.glide" value="0.0"/>
+  <PARAM id="slot07.stereo" value="0.5"/>
+  <PARAM id="slot07.fade" value="0.0"/>
+  <PARAM id="slot07.res1" value="0.0"/>
+  <PARAM id="slot07.res2" value="0.0"/>
+  <PARAM id="slot07.res3" value="0.0"/>
+  <PARAM id="slot08.active" value="1.0"/>
+  <PARAM id="slot08.main" value="0.5"/>
+  <PARAM id="slot08.paramA" value="0.5"/>
+  <PARAM id="slot08.paramB" value="0.5"/>
+  <PARAM id="slot08.paramC" value="0.5"/>
+  <PARAM id="slot08.paramD" value="0.5"/>
+  <PARAM id="slot08.paramE" value="0.5"/>
+  <PARAM id="slot08.paramF" value="0.5"/>
+  <PARAM id="slot08.mix" value="1.0"/>
+  <PARAM id="slot08.gain" value="0.5"/>
+  <PARAM id="slot08.glide" value="0.0"/>
+  <PARAM id="slot08.stereo" value="0.5"/>
+  <PARAM id="slot08.fade" value="0.0"/>
+  <PARAM id="slot08.res1" value="0.0"/>
+  <PARAM id="slot08.res2" value="0.0"/>
+  <PARAM id="slot08.res3" value="0.0"/>
+  <PARAM id="slot09.active" value="1.0"/>
+  <PARAM id="slot09.main" value="0.5"/>
+  <PARAM id="slot09.paramA" value="0.5"/>
+  <PARAM id="slot09.paramB" value="0.5"/>
+  <PARAM id="slot09.paramC" value="0.5"/>
+  <PARAM id="slot09.paramD" value="0.5"/>
+  <PARAM id="slot09.paramE" value="0.5"/>
+  <PARAM id="slot09.paramF" value="0.5"/>
+  <PARAM id="slot09.mix" value="1.0"/>
+  <PARAM id="slot09.gain" value="0.5"/>
+  <PARAM id="slot09.glide" value="0.0"/>
+  <PARAM id="slot09.stereo" value="0.5"/>
+  <PARAM id="slot09.fade" value="0.0"/>
+  <PARAM id="slot09.res1" value="0.0"/>
+  <PARAM id="slot09.res2" value="0.0"/>
+  <PARAM id="slot09.res3" value="0.0"/>
+  <PARAM id="slot10.active" value="1.0"/>
+  <PARAM id="slot10.main" value="0.5"/>
+  <PARAM id="slot10.paramA" value="0.5"/>
+  <PARAM id="slot10.paramB" value="0.5"/>
+  <PARAM id="slot10.paramC" value="0.5"/>
+  <PARAM id="slot10.paramD" value="0.5"/>
+  <PARAM id="slot10.paramE" value="0.5"/>
+  <PARAM id="slot10.paramF" value="0.5"/>
+  <PARAM id="slot10.mix" value="1.0"/>
+  <PARAM id="slot10.gain" value="0.5"/>
+  <PARAM id="slot10.glide" value="0.0"/>
+  <PARAM id="slot10.stereo" value="0.5"/>
+  <PARAM id="slot10.fade" value="0.0"/>
+  <PARAM id="slot10.res1" value="0.0"/>
+  <PARAM id="slot10.res2" value="0.0"/>
+  <PARAM id="slot10.res3" value="0.0"/>
+  <PARAM id="slot11.active" value="1.0"/>
+  <PARAM id="slot11.main" value="0.5"/>
+  <PARAM id="slot11.paramA" value="0.5"/>
+  <PARAM id="slot11.paramB" value="0.5"/>
+  <PARAM id="slot11.paramC" value="0.5"/>
+  <PARAM id="slot11.paramD" value="0.5"/>
+  <PARAM id="slot11.paramE" value="0.5"/>
+  <PARAM id="slot11.paramF" value="0.5"/>
+  <PARAM id="slot11.mix" value="1.0"/>
+  <PARAM id="slot11.gain" value="0.5"/>
+  <PARAM id="slot11.glide" value="0.0"/>
+  <PARAM id="slot11.stereo" value="0.5"/>
+  <PARAM id="slot11.fade" value="0.0"/>
+  <PARAM id="slot11.res1" value="0.0"/>
+  <PARAM id="slot11.res2" value="0.0"/>
+  <PARAM id="slot11.res3" value="0.0"/>
+  <PARAM id="slot12.active" value="1.0"/>
+  <PARAM id="slot12.main" value="0.5"/>
+  <PARAM id="slot12.paramA" value="0.5"/>
+  <PARAM id="slot12.paramB" value="0.5"/>
+  <PARAM id="slot12.paramC" value="0.5"/>
+  <PARAM id="slot12.paramD" value="0.5"/>
+  <PARAM id="slot12.paramE" value="0.5"/>
+  <PARAM id="slot12.paramF" value="0.5"/>
+  <PARAM id="slot12.mix" value="1.0"/>
+  <PARAM id="slot12.gain" value="0.5"/>
+  <PARAM id="slot12.glide" value="0.0"/>
+  <PARAM id="slot12.stereo" value="0.5"/>
+  <PARAM id="slot12.fade" value="0.0"/>
+  <PARAM id="slot12.res1" value="0.0"/>
+  <PARAM id="slot12.res2" value="0.0"/>
+  <PARAM id="slot12.res3" value="0.0"/>
+  <PARAM id="slot13.active" value="1.0"/>
+  <PARAM id="slot13.main" value="0.5"/>
+  <PARAM id="slot13.paramA" value="0.5"/>
+  <PARAM id="slot13.paramB" value="0.5"/>
+  <PARAM id="slot13.paramC" value="0.5"/>
+  <PARAM id="slot13.paramD" value="0.5"/>
+  <PARAM id="slot13.paramE" value="0.5"/>
+  <PARAM id="slot13.paramF" value="0.5"/>
+  <PARAM id="slot13.mix" value="1.0"/>
+  <PARAM id="slot13.gain" value="0.5"/>
+  <PARAM id="slot13.glide" value="0.0"/>
+  <PARAM id="slot13.stereo" value="0.5"/>
+  <PARAM id="slot13.fade" value="0.0"/>
+  <PARAM id="slot13.res1" value="0.0"/>
+  <PARAM id="slot13.res2" value="0.0"/>
+  <PARAM id="slot13.res3" value="0.0"/>
+  <PARAM id="slot14.active" value="1.0"/>
+  <PARAM id="slot14.main" value="0.5"/>
+  <PARAM id="slot14.paramA" value="0.5"/>
+  <PARAM id="slot14.paramB" value="0.5"/>
+  <PARAM id="slot14.paramC" value="0.5"/>
+  <PARAM id="slot14.paramD" value="0.5"/>
+  <PARAM id="slot14.paramE" value="0.5"/>
+  <PARAM id="slot14.paramF" value="0.5"/>
+  <PARAM id="slot14.mix" value="1.0"/>
+  <PARAM id="slot14.gain" value="0.5"/>
+  <PARAM id="slot14.glide" value="0.0"/>
+  <PARAM id="slot14.stereo" value="0.5"/>
+  <PARAM id="slot14.fade" value="0.0"/>
+  <PARAM id="slot14.res1" value="0.0"/>
+  <PARAM id="slot14.res2" value="0.0"/>
+  <PARAM id="slot14.res3" value="0.0"/>
+  <PARAM id="slot15.active" value="1.0"/>
+  <PARAM id="slot15.main" value="0.5"/>
+  <PARAM id="slot15.paramA" value="0.5"/>
+  <PARAM id="slot15.paramB" value="0.5"/>
+  <PARAM id="slot15.paramC" value="0.5"/>
+  <PARAM id="slot15.paramD" value="0.5"/>
+  <PARAM id="slot15.paramE" value="0.5"/>
+  <PARAM id="slot15.paramF" value="0.5"/>
+  <PARAM id="slot15.mix" value="1.0"/>
+  <PARAM id="slot15.gain" value="0.5"/>
+  <PARAM id="slot15.glide" value="0.0"/>
+  <PARAM id="slot15.stereo" value="0.5"/>
+  <PARAM id="slot15.fade" value="0.0"/>
+  <PARAM id="slot15.res1" value="0.0"/>
+  <PARAM id="slot15.res2" value="0.0"/>
+  <PARAM id="slot15.res3" value="0.0"/>
+  <PARAM id="slot16.active" value="1.0"/>
+  <PARAM id="slot16.main" value="0.5"/>
+  <PARAM id="slot16.paramA" value="0.5"/>
+  <PARAM id="slot16.paramB" value="0.5"/>
+  <PARAM id="slot16.paramC" value="0.5"/>
+  <PARAM id="slot16.paramD" value="0.5"/>
+  <PARAM id="slot16.paramE" value="0.5"/>
+  <PARAM id="slot16.paramF" value="0.5"/>
+  <PARAM id="slot16.mix" value="1.0"/>
+  <PARAM id="slot16.gain" value="0.5"/>
+  <PARAM id="slot16.glide" value="0.0"/>
+  <PARAM id="slot16.stereo" value="0.5"/>
+  <PARAM id="slot16.fade" value="0.0"/>
+  <PARAM id="slot16.res1" value="0.0"/>
+  <PARAM id="slot16.res2" value="0.0"/>
+  <PARAM id="slot16.res3" value="0.0"/>
+</PlugState>

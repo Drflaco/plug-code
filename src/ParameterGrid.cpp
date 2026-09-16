@@ -125,6 +125,20 @@ namespace plug::grid
         return ids;
     }
 
+    int indexOf (const String& id)
+    {
+        static const std::vector<String> ids = allIds();   // l'ordre de déclaration est l'indice, à jamais
+        for (int i = 0; i < (int) ids.size(); ++i)
+            if (ids[(size_t) i] == id) return i;
+        return -1;
+    }
+
+    float entryDefault (int index)
+    {
+        static const std::vector<Entry> e = entries();
+        return (index >= 0 && index < (int) e.size()) ? e[(size_t) index].def : 0.0f;
+    }
+
     std::vector<String> nonAutomatableIds()
     {
         std::vector<String> ids;
