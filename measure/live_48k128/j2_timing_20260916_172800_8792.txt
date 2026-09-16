@@ -1,0 +1,14 @@
+plug J2 timing — releaseResources
+host: Ableton Live
+sampleRate: 48000
+preparedBlockSize: 128 (2.667 ms)
+blockSizesSeen: 128..128
+latencySamples: 256
+blocksTotal: 195266  blocksKept: 195266
+meanUs: 0.404
+p50Us: 0.400
+p99Us: 1.000
+p999Us: 1.900
+maxUs: 79.100
+p999PercentOfBlock: 0.0713
+maxPercentOfBlock: 2.9662

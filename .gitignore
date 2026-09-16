@@ -1,0 +1,23 @@
+# Build
+build/
+out/
+*.vst3
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+.vs/
+.vscode/
+# Outils binaires (téléchargés, pas versionnés)
+tools/pluginval/*.zip
+tools/pluginval/*.exe
+# Mesures brutes locales
+measure/raw/
+# Audio
+*.wav
+*.aif
+*.flac
+# OS
+Thumbs.db
+Desktop.ini
