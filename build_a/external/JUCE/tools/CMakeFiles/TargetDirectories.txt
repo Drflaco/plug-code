@@ -1,7 +1,0 @@
-G:/plug-code/build_a/external/JUCE/tools/CMakeFiles/INSTALL.dir
-G:/plug-code/build_a/external/JUCE/tools/CMakeFiles/ALL_BUILD.dir
-G:/plug-code/build_a/external/JUCE/tools/CMakeFiles/ZERO_CHECK.dir
-G:/plug-code/build_a/external/JUCE/tools/modules/CMakeFiles/INSTALL.dir
-G:/plug-code/build_a/external/JUCE/tools/extras/Build/CMakeFiles/INSTALL.dir
-G:/plug-code/build_a/external/JUCE/tools/extras/Build/juceaide/CMakeFiles/juceaide.dir
-G:/plug-code/build_a/external/JUCE/tools/extras/Build/juceaide/CMakeFiles/INSTALL.dir

@@ -1,5 +1,6 @@
-# Build
+# Build (dont les dossiers dédiés aux auteurs de skills : build_a, build_b…)
 build/
+build_*/
 out/
 *.vst3
 *.obj
