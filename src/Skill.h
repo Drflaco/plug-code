@@ -41,6 +41,9 @@ namespace plug
 
     // Courbes de paramètres composées par le socle, une valeur par échantillon et par
     // entrée modulable (0..12), déjà bornées dans [0,1]. La skill convertit dans son unité.
+    // INVARIANT : seules les entrées que la skill DÉCLARE ont une courbe ; les autres
+    // valent nullptr et ne sont pas composées (J4a phase 0). Lire une entrée non déclarée
+    // est une faute de programme, pas un cas limite.
     struct ParamCurves
     {
         std::array<const float*, grid::kModulableCount> v {};

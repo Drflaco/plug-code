@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 16 Sep 2026 6:59:10pm
+PlugRender — matrice J3 — 16 Sep 2026 9:58:17pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -31,5 +31,10 @@ PlugRender — matrice J3 — 16 Sep 2026 6:59:10pm
   [OK] factice.delay : impulsion retardée de 10 échantillons (10)
   [OK] factice.latent : impulsion retardée de 256 = latence déclarée 256
 
+[OK]   T12 44,1 kHz : deux passes identiques octet par octet
+[OK]   T12 44,1 kHz : blocs irrÃ©guliers, rendu identique
+[OK]   T12 44,1 kHz : latence dÃ©clarÃ©e constante = 256
+[OK]   T13 rendu 48 kHz identique Ã  la rÃ©fÃ©rence figÃ©e
+[OK]   T13 rendu 44,1 kHz identique Ã  la rÃ©fÃ©rence figÃ©e
 
 Résultat : TOUT PASSE

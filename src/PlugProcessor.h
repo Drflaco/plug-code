@@ -77,7 +77,6 @@ namespace plug
 
         void publishState();
         void dumpTiming (const char* reason);
-        void loadJ3StateHook();
 
         juce::UndoManager undo;
         juce::AudioProcessorValueTreeState apvts;

@@ -35,6 +35,9 @@ commentaire qui paraphrase, français.
       paramètre déclaré, vérifiable sans oreille (impulsion, sinus, silence).
 - [ ] **Coût par bloc régulier** (annexe A.0) : pas de paquet spectral tous les N
       blocs sans l'étaler ; mesurer avec PlugBench, recalibrer le budget §4.4.
+- [ ] **Ne lire que ce qui est déclaré.** Le socle ne compose que les entrées
+      déclarées par la skill ; les autres valent `nullptr` dans `ParamCurves`.
+      Lire `p[m]` sans avoir déclaré `m` plante immédiatement — c'est voulu.
 - [ ] `factice = false`. Les modules `factice.*` du J3 ne remplissent pas ce
       contrat et n'entrent pas au catalogue.
 

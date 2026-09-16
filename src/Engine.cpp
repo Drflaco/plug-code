@@ -27,6 +27,11 @@ namespace plug
         {
             bool present = false;            // une skill connue occupe l'emplacement
             bool tailRing = true;
+            // Entrées réellement composées : celles que la skill déclare, plus mix et gain
+            // (lus par le moteur). Composer les 13 systématiquement coûtait l'essentiel des
+            // 8 µs par emplacement du J3 (MESURES_J3) ; ParamCurves porte nullptr ailleurs.
+            std::array<bool, kM> used {};
+            std::array<bool, kM> hasMod {};  // une route de modulation vise cette entrée
             std::array<ParamSpec, kM> spec {};
             struct Step { bool on = true; std::array<bool, kM> has {}; std::array<float, kM> target {}; };
             std::array<Step, kSteps> steps {};
@@ -65,6 +70,16 @@ namespace plug
         float macroCurve (float m, float curve) noexcept
         {
             return std::pow (juce::jlimit (0.0f, 1.0f, m), std::pow (2.0f, 2.0f * juce::jlimit (-1.0f, 1.0f, curve)));
+        }
+
+        // Vrai si la courbe ne bouge pas du bloc. Une comparaison par échantillon coûte
+        // mille fois moins que le cos/sin du mélange, et ouvre le chemin rapide sans
+        // rien changer au résultat (J4a phase 0).
+        bool isConstant (const float* v, int n) noexcept
+        {
+            for (int i = 1; i < n; ++i)
+                if (v[i] != v[0]) return false;
+            return true;
         }
 
         //==========================================================================
@@ -245,6 +260,13 @@ namespace plug
                     const juce::String name (grid::kModulableName[(size_t) mIdx]);
                     sm.spec[(size_t) mIdx] = readParamSpec (slotTree, name);
                 }
+
+                // mix et gain sont lus par le moteur lui-même ; le reste vient de la skill.
+                sm.used[(size_t) M_MIX] = true;
+                sm.used[(size_t) M_GAIN] = true;
+                if (info != nullptr)
+                    for (const auto& d : info->params)
+                        if (d.modulable >= 0 && d.modulable < kM) sm.used[(size_t) d.modulable] = true;
                 for (int stIdx = 0; stIdx < kSteps; ++stIdx)
                 {
                     auto stepTree = step (slotTree, stIdx + 1);
@@ -275,6 +297,8 @@ namespace plug
                         if (dst < 0) continue;
                         sm.routes[(size_t) sm.routeCount++] = { r.getProperty (id::src).toString() == "source2" ? 1 : 0, dst,
                                                                  (float) (double) r.getProperty (id::depth, 0.0) };
+                        sm.hasMod[(size_t) dst] = true;
+                        sm.used[(size_t) dst] = true;   // une route sur une entrée non déclarée reste sans effet audible, mais la courbe doit exister
                     }
             }
 
@@ -394,17 +418,34 @@ namespace plug
                 const double fadeSamples = grid::fadeSeconds (param (grid::slotIndex (i, grid::Fade))) * sr;
                 const float fadeStep = fadeSamples < 1.0 ? 1.0f : (float) (1.0 / fadeSamples);
 
-                // Sources de modulation : suiveur sur l'entrée de l'emplacement, puis enveloppes.
-                rt.follower.set (sm.src2.fol);
-                for (int k = 0; k < n; ++k)
+                // Sources de modulation : calculées seulement si une route les lit, ou si
+                // une enveloppe se déclenche sur l'audio (le suiveur lui sert de détecteur).
+                // Une source que personne ne lit ne change aucun échantillon de sortie ;
+                // ne pas la calculer laisse le rendu identique (J4a phase 0).
+                bool needEnv1 = false, needEnv2 = false;
+                for (int r = 0; r < sm.routeCount; ++r)
+                    (sm.routes[(size_t) r].src == 0 ? needEnv1 : needEnv2) = true;
+                const bool env2IsFollower = sm.src2.follower;
+                const bool needFollower = (needEnv2 && env2IsFollower)
+                                        || (needEnv1 && sm.env1.trigger == 1)
+                                        || (needEnv2 && ! env2IsFollower && sm.src2.env.trigger == 1);
+
+                if (needFollower)
                 {
-                    float x = 0.0f;
-                    for (int ch = 0; ch < chans; ++ch) x += buffer.getSample (ch, k);
-                    folBuf[(size_t) k] = rt.follower.process (x / (float) chans);
+                    rt.follower.set (sm.src2.fol);
+                    const float* in0 = buffer.getReadPointer (0);
+                    const float* in1 = chans > 1 ? buffer.getReadPointer (1) : in0;
+                    const float inv = 1.0f / (float) chans;
+                    for (int k = 0; k < n; ++k)
+                        folBuf[(size_t) k] = rt.follower.process ((chans > 1 ? in0[k] + in1[k] : in0[k]) * inv);
                 }
-                rt.env1.render (sm.env1, S0, tr.playing, spb, folBuf.data(), &midi, n, envBuf1.data());
-                if (sm.src2.follower) std::copy (folBuf.begin(), folBuf.begin() + n, envBuf2.begin());
-                else rt.env2.render (sm.src2.env, S0, tr.playing, spb, folBuf.data(), &midi, n, envBuf2.data());
+                if (needEnv1)
+                    rt.env1.render (sm.env1, S0, tr.playing, spb, folBuf.data(), &midi, n, envBuf1.data());
+                if (needEnv2)
+                {
+                    if (env2IsFollower) std::copy (folBuf.begin(), folBuf.begin() + n, envBuf2.begin());
+                    else rt.env2.render (sm.src2.env, S0, tr.playing, spb, folBuf.data(), &midi, n, envBuf2.data());
+                }
 
                 // Composition, par tranche à pas constant puis par échantillon (contrat J3 b).
                 for (int sIdx = 0; sIdx < segCount; ++sIdx)
@@ -424,12 +465,44 @@ namespace plug
                         rt.rampLen = glideSamples;
                     }
 
-                    for (int k = seg.offset; k < seg.offset + seg.len; ++k)
+                    // Une entrée par une : le chemin rapide remplit la tranche d'une seule
+                    // valeur quand rien ne peut bouger dessus, le chemin général reste le
+                    // calcul échantillon par échantillon du contrat J3 b. Les deux donnent
+                    // le même nombre — c'est ce que vérifie T13.
+                    for (int mIdx = 0; mIdx < kM; ++mIdx)
                     {
-                        for (int mIdx = 0; mIdx < kM; ++mIdx)
+                        if (! sm.used[(size_t) mIdx])
                         {
-                            const auto& spec = sm.spec[(size_t) mIdx];
-                            const float base = rt.base[(size_t) mIdx].getNextValue();
+                            rt.base[(size_t) mIdx].skip (seg.len);   // personne ne lit cette courbe ; le lissage avance quand même
+                            continue;
+                        }
+
+                        const auto& spec = sm.spec[(size_t) mIdx];
+                        auto& sv = rt.base[(size_t) mIdx];
+                        const bool locked = spec.locked || spec.structural;
+                        const bool gliding = spec.glide && rt.rampLen > 0 && rt.rampPos[(size_t) mIdx] < rt.rampLen;
+                        const bool modded = sm.hasMod[(size_t) mIdx] && ! locked;
+                        float* out = values[(size_t) i][(size_t) mIdx].data();
+
+                        if (! gliding && ! modded && ! sv.isSmoothing())
+                        {
+                            const float base = sv.getTargetValue();
+                            const float tgt = rt.hasTarget[(size_t) mIdx] ? rt.target[(size_t) mIdx] : base;
+                            // Rampe finie : le chemin général évalue rampStart + (tgt − rampStart) × 1,
+                            // qui n'est pas toujours tgt au bit près. On garde la même écriture.
+                            const float vpas = (spec.glide && rt.rampLen > 0)
+                                             ? rt.rampStart[(size_t) mIdx] + (tgt - rt.rampStart[(size_t) mIdx])
+                                             : tgt;
+                            const float v = locked ? base : juce::jlimit (0.0f, 1.0f, vpas + macroOff[(size_t) i][(size_t) mIdx]);
+                            std::fill (out + seg.offset, out + seg.offset + seg.len, v);
+                            sv.skip (seg.len);                       // lissage arrivé : skip et getNextValue rendent la même valeur
+                            rt.current[(size_t) mIdx] = vpas;
+                            continue;
+                        }
+
+                        for (int k = seg.offset; k < seg.offset + seg.len; ++k)
+                        {
+                            const float base = sv.getNextValue();
                             const float tgt = rt.hasTarget[(size_t) mIdx] ? rt.target[(size_t) mIdx] : base;
                             float vpas;
                             if (spec.glide && rt.rampLen > 0)
@@ -443,7 +516,7 @@ namespace plug
                             rt.current[(size_t) mIdx] = vpas;
 
                             float v;
-                            if (spec.locked || spec.structural)
+                            if (locked)
                                 v = base;                                    // J3-2 : rien d'interne ne bouge
                             else
                             {
@@ -453,15 +526,23 @@ namespace plug
                                         mod += sm.routes[(size_t) r].depth * (sm.routes[(size_t) r].src == 0 ? envBuf1[(size_t) k] : envBuf2[(size_t) k]);
                                 v = juce::jlimit (0.0f, 1.0f, vpas + macroOff[(size_t) i][(size_t) mIdx] + mod);
                             }
-                            values[(size_t) i][(size_t) mIdx][(size_t) k] = v;
+                            out[k] = v;
                         }
-
-                        // Activation : rampe vers 1 (pas actif et emplacement actif) ou 0 (§3.3.2).
-                        const float aTarget = (rt.stepOn && slotActive) ? 1.0f : 0.0f;
-                        if (rt.activation < aTarget) rt.activation = juce::jmin (aTarget, rt.activation + fadeStep);
-                        else if (rt.activation > aTarget) rt.activation = juce::jmax (aTarget, rt.activation - fadeStep);
-                        actBuf[(size_t) k] = rt.activation;
                     }
+
+                    // Activation : rampe vers 1 (pas actif et emplacement actif) ou 0 (§3.3.2).
+                    // La cible ne change pas dans une tranche : quand la rampe est finie,
+                    // l'activation est plate et se pose d'un bloc.
+                    const float aTarget = (rt.stepOn && slotActive) ? 1.0f : 0.0f;
+                    if (rt.activation == aTarget)
+                        std::fill (actBuf.begin() + seg.offset, actBuf.begin() + seg.offset + seg.len, aTarget);
+                    else
+                        for (int k = seg.offset; k < seg.offset + seg.len; ++k)
+                        {
+                            if (rt.activation < aTarget) rt.activation = juce::jmin (aTarget, rt.activation + fadeStep);
+                            else if (rt.activation > aTarget) rt.activation = juce::jmax (aTarget, rt.activation - fadeStep);
+                            actBuf[(size_t) k] = rt.activation;
+                        }
                 }
 
                 if (! sm.present || rt.skill == nullptr)
@@ -476,29 +557,60 @@ namespace plug
                 {
                     const float* in = buffer.getReadPointer (ch);
                     float* w = wetBuf.getWritePointer (ch);
-                    for (int k = 0; k < n; ++k)
-                        w[k] = in[k] * (sm.tailRing ? actBuf[(size_t) k] : 1.0f);
+                    if (! sm.tailRing) std::copy (in, in + n, w);
+                    else for (int k = 0; k < n; ++k) w[k] = in[k] * actBuf[(size_t) k];
                 }
+                // Une entrée non déclarée par la skill n'a pas de courbe : le pointeur est nul.
+                // Une skill qui lit ce qu'elle n'a pas déclaré tombe tout de suite au lieu de
+                // lire des valeurs périmées (contrat §3.9, voir SKILL_TEMPLATE).
                 ParamCurves curves;
-                for (int mIdx = 0; mIdx < kM; ++mIdx) curves.v[(size_t) mIdx] = values[(size_t) i][(size_t) mIdx].data();
+                for (int mIdx = 0; mIdx < kM; ++mIdx)
+                    curves.v[(size_t) mIdx] = sm.used[(size_t) mIdx] ? values[(size_t) i][(size_t) mIdx].data() : nullptr;
                 juce::AudioBuffer<float> wetView (wetBuf.getArrayOfWritePointers(), chans, 0, n);
                 rt.skill->process (wetView, curves, n);
 
                 // Mélange local (loi de la skill), activation, gain d'emplacement.
+                // La loi -3 dB demande un cosinus et un sinus : les calculer par échantillon
+                // coûtait la moitié du temps d'un emplacement (MESURES_J3). Quand mix, gain et
+                // activation ne bougent pas du bloc — le cas ordinaire — les trois gains se
+                // calculent une fois. L'écriture finale reste la même, donc le nombre aussi.
+                const float* mixCurve = values[(size_t) i][M_MIX].data();
+                const float* gainCurve = values[(size_t) i][M_GAIN].data();
+                const bool flat = isConstant (mixCurve, n) && isConstant (gainCurve, n) && isConstant (actBuf.data(), n);
+
+                float cad = 0.0f, caw = 0.0f, cDryGain = 0.0f, cWetGain = 0.0f, cGain = 0.0f;
+                if (flat)
+                {
+                    mixGains (sm.law, mixCurve[0], cad, caw);
+                    const float a = actBuf[0];
+                    const float wetInactive = sm.tailRing ? caw : 0.0f;
+                    cDryGain = 1.0f + a * (cad - 1.0f);
+                    cWetGain = wetInactive + a * (caw - wetInactive);
+                    cGain = grid::gainLinear (gainCurve[0]);
+                }
+
                 for (int ch = 0; ch < chans; ++ch)
                 {
                     float* out = buffer.getWritePointer (ch);
                     const float* d = dryBuf.getReadPointer (ch);
                     const float* w = wetBuf.getReadPointer (ch);
+
+                    if (flat)
+                    {
+                        for (int k = 0; k < n; ++k)
+                            out[k] = (d[k] * cDryGain + w[k] * cWetGain) * cGain;
+                        continue;
+                    }
+
                     for (int k = 0; k < n; ++k)
                     {
                         float ad, aw;
-                        mixGains (sm.law, values[(size_t) i][M_MIX][(size_t) k], ad, aw);
+                        mixGains (sm.law, mixCurve[k], ad, aw);
                         const float a = actBuf[(size_t) k];
                         const float wetInactive = sm.tailRing ? aw : 0.0f;     // coupée : le traité se tait
                         const float dryGain = 1.0f + a * (ad - 1.0f);           // inactif : le sec passe entier
                         const float wetGain = wetInactive + a * (aw - wetInactive);
-                        out[k] = (d[k] * dryGain + w[k] * wetGain) * grid::gainLinear (values[(size_t) i][M_GAIN][(size_t) k]);
+                        out[k] = (d[k] * dryGain + w[k] * wetGain) * grid::gainLinear (gainCurve[k]);
                     }
                 }
             }

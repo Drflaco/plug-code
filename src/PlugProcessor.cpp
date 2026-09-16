@@ -30,7 +30,6 @@ namespace plug
         plugEngine.setParamSource (&paramSource);
 
         state::ensureSchema (apvts.state);
-        loadJ3StateHook();
         apvts.state.addListener (this);
         publishState();
     }
@@ -40,25 +39,6 @@ namespace plug
         apvts.state.removeListener (this);
         cancelPendingUpdate();
         dumpTiming ("destructor");
-    }
-
-    //==============================================================================
-    // Crochet J3 (mesure dans Live, pas d'interface pour éditer les pas) : si
-    // %APPDATA%/LascauxLab/Plug/j3_state.xml existe, il remplace l'état par défaut
-    // à la création d'une instance. Retiré avec l'interface (J4).
-    void PlugProcessor::loadJ3StateHook()
-    {
-        auto f = measureDir().getChildFile ("j3_state.xml");
-        if (! f.existsAsFile()) return;
-        if (auto xml = juce::XmlDocument::parse (f))
-        {
-            auto t = juce::ValueTree::fromXml (*xml);
-            if (t.hasType (state::id::PlugState))
-            {
-                state::ensureSchema (t);
-                apvts.replaceState (t);
-            }
-        }
     }
 
     //==============================================================================

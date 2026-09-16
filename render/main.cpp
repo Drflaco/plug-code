@@ -6,6 +6,8 @@
 //   PlugRender test [dossier_sortie]                    → matrice J3, code 0 si tout passe
 //   PlugRender render --in a.wav --state s.xml --out b.wav [--bpm 120] [--ppq 0]
 //                     [--bars 8] [--block 128] [--irregular] [--stopped] [--noposition]
+//   PlugRender bench [--blocks N]                        → coût par bloc du socle
+//   PlugRender reference [dir]                           → fige les rendus de référence (48 et 44,1 kHz)
 //   PlugRender gen-input a.wav [--seconds 16]           → signal de test déterministe
 
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -23,8 +25,18 @@ using namespace plug;
 
 namespace
 {
-    constexpr double kSampleRate = 48000.0;
-    constexpr int    kBlock      = 128;
+    // Taux d'échantillonnage du rendu : variable pour éprouver le socle aux deux
+    // réglages réels (48 kHz, référence du CdC §4.1 ; 44,1 kHz, où le pilote
+    // travaille aussi). Toujours restauré après usage.
+    double kSampleRate = 48000.0;
+    constexpr int kBlock = 128;
+
+    struct ScopedRate
+    {
+        explicit ScopedRate (double r) : old (kSampleRate) { kSampleRate = r; }
+        ~ScopedRate() { kSampleRate = old; }
+        double old;
+    };
 
     int failures = 0;
     juce::String report;
@@ -439,6 +451,46 @@ namespace
             check (ok, "T11 auto-tests des modules factices\n" + log);
         }
 
+        // T12 — 44,1 kHz : le pilote y travaille aussi (ETAT Rév. 5). Mêmes garanties qu'à 48 kHz.
+        {
+            ScopedRate rate (44100.0);
+            const auto in44 = makeInput (4.0);
+            const auto ref44 = makeReferenceState();
+            RenderOptions o;
+            auto a = render (ref44, in44, o);
+            auto b = render (ref44, in44, o);
+            writeWav (dir.getChildFile ("T12_44k_pass1.wav"), a);
+            writeWav (dir.getChildFile ("T12_44k_pass2.wav"), b);
+            check (sameBytes (dir.getChildFile ("T12_44k_pass1.wav"), dir.getChildFile ("T12_44k_pass2.wav")), "T12 44,1 kHz : deux passes identiques octet par octet");
+
+            RenderOptions oi; oi.irregular = true;
+            auto c = render (ref44, in44, oi);
+            check (firstDifference (a, c) < 0, "T12 44,1 kHz : blocs irréguliers, rendu identique");
+
+            std::vector<int> lat;
+            render (ref44, in44, o, &lat);
+            bool constant = ! lat.empty();
+            for (auto l : lat) constant &= (l == lat.front());
+            check (constant && lat.front() == dummies::kLatentLatency, "T12 44,1 kHz : latence déclarée constante = " + juce::String (lat.empty() ? -1 : lat.front()));
+        }
+
+        // T13 — non-régression du rendu : comparaison octet par octet aux références
+        // figées avant l'optimisation du socle (J4a phase 0). Une optimisation qui change
+        // un seul octet est fausse. Références : measure/j4a/ref, écrites par
+        // « PlugRender reference » et versionnées.
+        {
+            const auto refDir = juce::File::getCurrentWorkingDirectory().getChildFile ("measure/j4a/ref");
+            const auto r48 = refDir.getChildFile ("socle_48k.wav");
+            const auto r44 = refDir.getChildFile ("socle_44k.wav");
+            if (r48.existsAsFile() && r44.existsAsFile())
+            {
+                check (sameBytes (dir.getChildFile ("T1_pass1.wav"), r48), "T13 rendu 48 kHz identique à la référence figée");
+                check (sameBytes (dir.getChildFile ("T12_44k_pass1.wav"), r44), "T13 rendu 44,1 kHz identique à la référence figée");
+            }
+            else
+                report << "[note] T13 : aucune référence figée dans measure/j4a/ref\n";
+        }
+
         report << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
     }
 
@@ -465,16 +517,50 @@ int main (int argc, char* argv[])
         return failures == 0 ? 0 : 1;
     }
 
+    if (a[0] == "reference")
+    {
+        // Fige les rendus de référence du socle (deux taux) : tout changement ultérieur
+        // du moteur doit reproduire ces fichiers octet par octet (contrat J4a phase 0).
+        const auto dir = cwd.getChildFile (a.size() > 1 ? a[1] : "measure/j4a/ref");
+        dir.createDirectory();
+        for (double rate : { 48000.0, 44100.0 })
+        {
+            ScopedRate sr (rate);
+            const auto in = makeInput (rate == 48000.0 ? 8.0 : 4.0);
+            RenderOptions o;
+            auto out = render (makeReferenceState(), in, o);
+            const auto f = dir.getChildFile (rate == 48000.0 ? "socle_48k.wav" : "socle_44k.wav");
+            writeWav (f, out);
+            std::printf ("référence écrite : %s\n", f.getFullPathName().toRawUTF8());
+        }
+        return 0;
+    }
+
     if (a[0] == "bench")
     {
         // Coût par bloc du socle seul (sans enveloppe VST3) : état vide, puis état de référence
         // (trois factices, pas générés, macro, enveloppe, suiveur). Référence du budget §4.4 pour J3.
         const int blocks = arg (a, "--blocks", "200000").getIntValue();
+        ScopedRate rate (arg (a, "--rate", "48000").getDoubleValue());
         juce::AudioBuffer<float> buf (2, kBlock);
         juce::Random rng (7);
-        for (int which = 0; which < 2; ++which)
+        std::printf ("— %d Hz, blocs de %d (%.2f µs par bloc), budget 25 %% = %.1f µs —\n",
+                     (int) kSampleRate, kBlock, 1e6 * kBlock / kSampleRate, 0.25 * 1e6 * kBlock / kSampleRate);
+        for (int which = 0; which < 3; ++which)
         {
-            auto st = which == 0 ? [] { auto s = state::createDefault(); state::ensureParams (s); return s; }() : makeReferenceState();
+            // Cas 3 : les 16 emplacements occupés — le pire cas de la grille, celui que
+            // le budget §4.4 doit tenir avant même le DSP des vraies skills.
+            auto st = which == 0 ? [] { auto s = state::createDefault(); state::ensureParams (s); return s; }()
+                    : which == 1 ? makeReferenceState()
+                    : [] {
+                          auto s = makeReferenceState();
+                          for (int sl = 4; sl <= 16; ++sl)
+                          {
+                              state::setSkill (s, sl, sl % 3 == 0 ? dummies::kDelayId : dummies::kGainId, nullptr);
+                              state::generate (s, sl, 1, 16, 0.7f, nullptr);
+                          }
+                          return s;
+                      }();
             StateParamSource params (st);
             Engine engine; engine.setParamSource (&params); engine.prepare (kSampleRate, kBlock); engine.setState (st);
             BlockTimer t;
@@ -490,7 +576,9 @@ int main (int argc, char* argv[])
             const auto s = t.compute();
             const double blockUs = 1e6 * kBlock / kSampleRate;
             std::printf ("%s : %d blocs — moyenne %.3f µs, p50 %.3f, p99 %.3f, p99.9 %.3f (%.3f %% du bloc), max %.3f µs\n",
-                         which == 0 ? "socle vide (16 emplacements sans skill)" : "état de référence J3 (3 factices, séquence, macro, enveloppe, suiveur)",
+                         which == 0 ? "socle vide (16 emplacements sans skill)   "
+                       : which == 1 ? "3 emplacements (référence J3)             "
+                                    : "16 emplacements occupés (pire cas grille) ",
                          (int) s.count, s.meanUs, s.p50Us, s.p99Us, s.p999Us, 100.0 * s.p999Us / blockUs, s.maxUs);
         }
         return 0;
