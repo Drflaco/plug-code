@@ -81,8 +81,16 @@ namespace plug
         switch (law)
         {
             case MixLaw::Minus6: dry = 1.0f - m; wet = m; break;                                  // linéaire, signaux en phase
-            case MixLaw::Minus3: dry = std::cos (m * juce::MathConstants<float>::halfPi);
-                                 wet = std::sin (m * juce::MathConstants<float>::halfPi); break;  // puissance constante
+            case MixLaw::Minus3:
+                // Puissance constante. Les deux bornes sont posées à la main : cos(π/2)
+                // ne vaut pas zéro en virgule flottante mais −4,4e−8, et ce résidu suffit
+                // à empêcher le plugin d'être transparent quand on ne lui demande rien
+                // (relevé par T14 le 17/09 : 0,980000019 ressortait à 0,979999959).
+                if (m <= 0.0f)      { dry = 1.0f; wet = 0.0f; }
+                else if (m >= 1.0f) { dry = 0.0f; wet = 1.0f; }
+                else                { dry = std::cos (m * juce::MathConstants<float>::halfPi);
+                                      wet = std::sin (m * juce::MathConstants<float>::halfPi); }
+                break;
             case MixLaw::Zero:   dry = juce::jmin (1.0f, 2.0f * (1.0f - m)); wet = juce::jmin (1.0f, 2.0f * m); break;
         }
     }

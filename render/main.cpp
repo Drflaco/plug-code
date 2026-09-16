@@ -493,6 +493,47 @@ namespace
                 report << "[note] T13 : aucune référence figée dans measure/j4a/ref\n";
         }
 
+        // T14 — passe-tout strict : état par DÉFAUT, aucune skill, signal à transitoires
+        // francs. La sortie doit être l'entrée, échantillon par échantillon. Ce test
+        // manquait : toute la matrice partait d'un état chargé, donc personne ne
+        // vérifiait que le plugin ne fait rien quand on ne lui demande rien.
+        {
+            for (double rate : { 48000.0, 44100.0 })
+            {
+                ScopedRate sr (rate);
+                auto def = state::createDefault();
+                state::ensureParams (def);
+
+                const int n = (int) (2.0 * kSampleRate);
+                juce::AudioBuffer<float> in (2, n);
+                in.clear();
+                juce::Random rng (4242);
+                for (int i = 0; i < n; ++i)
+                {
+                    const int phase = i % 12000;
+                    float v = 0.0f;
+                    if (phase == 0) v = 0.98f;                                       // impulsion pleine échelle
+                    else if (phase < 3000) v = 0.6f * (rng.nextFloat() * 2 - 1);     // bouffée de bruit
+                    else if (phase == 3000) v = -0.95f;                              // coupure nette
+                    in.setSample (0, i, v);
+                    in.setSample (1, i, 0.8f * v);
+                }
+
+                RenderOptions o;
+                auto out = render (def, in, o);
+                const int d = firstDifference (out, in);
+                check (d < 0, "T14 " + juce::String ((int) rate) + " Hz : état par défaut, sortie identique à l'entrée"
+                                  + (d < 0 ? juce::String() : " (1re différence à " + juce::String (d) + " : "
+                                        + juce::String (in.getSample (0, d), 9) + " vers " + juce::String (out.getSample (0, d), 9) + ")"));
+
+                RenderOptions oi; oi.irregular = true;
+                auto out2 = render (def, in, oi);
+                const int d2 = firstDifference (out2, in);
+                check (d2 < 0, "T14 " + juce::String ((int) rate) + " Hz : idem en blocs irréguliers"
+                                  + (d2 < 0 ? juce::String() : " (1re différence à " + juce::String (d2) + ")"));
+            }
+        }
+
         report << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
     }
 
@@ -517,6 +558,43 @@ int main (int argc, char* argv[])
         std::printf ("%s", report.toRawUTF8());
         dir.getChildFile ("rapport_J3.txt").replaceWithText (report);
         return failures == 0 ? 0 : 1;
+    }
+
+    if (a[0] == "passthru")
+    {
+        // Passe un fichier réel par l'état par DÉFAUT et compare échantillon par
+        // échantillon. Sert à trancher entre le moteur et le chemin hôte quand un
+        // craquement s'entend dans Live.
+        juce::AudioBuffer<float> in;
+        const auto inFile = cwd.getChildFile (arg (a, "--in"));
+        juce::WavAudioFormat fmt;
+        std::unique_ptr<juce::AudioFormatReader> rd (fmt.createReaderFor (new juce::FileInputStream (inFile), true));
+        const double fileRate = rd != nullptr ? rd->sampleRate : 48000.0;
+        rd.reset();
+        if (! readWav (inFile, in)) { std::printf ("entree illisible : %s\n", inFile.getFullPathName().toRawUTF8()); return 2; }
+
+        ScopedRate sr (fileRate);
+        auto def = state::createDefault();
+        state::ensureParams (def);
+        RenderOptions o;
+        auto out = render (def, in, o);
+
+        int first = -1, differing = 0;
+        double worst = 0.0;
+        for (int i = 0; i < in.getNumSamples(); ++i)
+            for (int ch = 0; ch < juce::jmin (in.getNumChannels(), out.getNumChannels()); ++ch)
+            {
+                const double e = std::abs ((double) out.getSample (ch, i) - (double) in.getSample (ch, i));
+                if (e > 0.0) { if (first < 0) first = i; ++differing; worst = juce::jmax (worst, e); }
+            }
+
+        const auto outName = arg (a, "--out", "");
+        if (outName.isNotEmpty()) writeWav (cwd.getChildFile (outName), out);
+
+        std::printf ("passe-tout, etat par defaut, %d Hz, %d echantillons :\n", (int) kSampleRate, in.getNumSamples());
+        if (first < 0) std::printf ("  sortie IDENTIQUE a l'entree, echantillon par echantillon\n");
+        else std::printf ("  DIFFERENTE : %d echantillons, 1re a %d, ecart max %.3e\n", differing, first, worst);
+        return first < 0 ? 0 : 1;
     }
 
     if (a[0] == "geste")
