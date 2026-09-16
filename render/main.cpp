@@ -7,6 +7,7 @@
 //   PlugRender render --in a.wav --state s.xml --out b.wav [--bpm 120] [--ppq 0]
 //                     [--bars 8] [--block 128] [--irregular] [--stopped] [--noposition]
 //   PlugRender bench [--blocks N]                        → coût par bloc du socle
+//   PlugRender geste --geste N [--out f.plugstate]   → construit un preset de geste (§2)
 //   PlugRender reference [dir]                           → fige les rendus de référence (48 et 44,1 kHz)
 //   PlugRender gen-input a.wav [--seconds 16]           → signal de test déterministe
 
@@ -15,6 +16,7 @@
 #include "BlockTimer.h"
 #include "Engine.h"
 #include "GridMap.h"
+#include "PresetLibrary.h"
 #include "StateSchema.h"
 #include "StepValue.h"
 #include "dummies/DummySkills.h"
@@ -515,6 +517,70 @@ int main (int argc, char* argv[])
         std::printf ("%s", report.toRawUTF8());
         dir.getChildFile ("rapport_J3.txt").replaceWithText (report);
         return failures == 0 ? 0 : 1;
+    }
+
+    if (a[0] == "geste")
+    {
+        // Construit l'état d'un des trois gestes de référence (CdC §2) et l'écrit en
+        // .plugstate. Un preset porte l'état COMPLET (§3.6, décision pilote J4a) :
+        // identités de skill, ordre, valeurs, motifs, verrous, graines.
+        // Les valeurs de paramètres restent neutres ici ; elles se règlent à l'écoute,
+        // c'est le travail du pilote (§2, « se décident en écoutant, pas en spécifiant »).
+        const int geste = arg (a, "--geste", "1").getIntValue();
+        const auto out = cwd.getChildFile (arg (a, "--out", "presets/geste" + juce::String (geste) + ".plugstate"));
+
+        auto s = state::createDefault();
+        state::ensureParams (s);
+
+        // Chaîne série : l'emplacement N reçoit la sortie de N−1 (§3.2).
+        juce::StringArray chain;
+        switch (geste)
+        {
+            case 1:  chain = { "core.fm", "core.grain", "core.gate", "core.reverb" }; break;   // texture profonde
+            case 2:  chain = { "core.grain", "core.repitch", "core.delay" }; break;            // granulaire de texture
+            default: chain = { "core.repitch", "core.delay", "core.filter" }; break;           // repitch fondu
+        }
+        for (int i = 0; i < chain.size(); ++i)
+            state::setSkill (s, i + 1, chain[i], nullptr);
+
+        // Séquenceur : 16 pas en doubles croches, la ligne du geste porte la variation.
+        state::setParam (s, "seq.length",   (16 - 2) / 30.0f);
+        state::setParam (s, "seq.division", grid::divisionValueFor (6));
+        state::setParam (s, "seq.swing",    0.0f);
+        state::setParam (s, "master.mix",   1.0f);
+
+        if (geste == 1)
+        {
+            // Le gate découpe, la réverbe laisse mourir sa queue (§3.3.2, défaut proposé).
+            for (int st = 1; st <= 16; ++st) if (st % 4 != 1) state::setStepOn (s, 3, st, false, nullptr);
+            state::setTail (s, 4, true, nullptr);
+            state::setRange (s, 1, "main", 0.2f, 0.7f, nullptr);
+            state::generate (s, 1, 1, 16, 0.6f, nullptr);
+        }
+        else if (geste == 2)
+        {
+            // Texture : grains lents et dispersés, pas de grille nette (§2, geste 2).
+            state::setTail (s, 3, true, nullptr);
+            state::setRange (s, 1, "main", 0.3f, 0.8f, nullptr);
+            state::setProb  (s, 1, "main", 0.4f, nullptr);
+            state::generate (s, 1, 1, 16, 0.5f, nullptr);
+        }
+        else
+        {
+            // Geste 3 : le fondu agit sur le repitch lui-même, donc glissement sur sa hauteur.
+            state::setTransition (s, 1, "main", true, nullptr);
+            state::setParam (s, "slot01.glide", 0.5f);
+            state::setRange (s, 1, "main", 0.25f, 0.75f, nullptr);
+            state::generate (s, 1, 1, 16, 0.7f, nullptr);
+            state::setTail (s, 2, true, nullptr);
+        }
+
+        const bool ok = PresetLibrary::write (out, s);
+        std::printf ("%s : %s\n", ok ? "preset écrit" : "ÉCHEC", out.getFullPathName().toRawUTF8());
+        for (int i = 0; i < chain.size(); ++i)
+            std::printf ("  emplacement %d : %s%s\n", i + 1, chain[i].toRawUTF8(),
+                         SkillRegistry::instance().info (chain[i]) == nullptr ? "   (absente du registre : l'audio traversera, §3.9)" : "");
+        return ok ? 0 : 2;
     }
 
     if (a[0] == "reference")
