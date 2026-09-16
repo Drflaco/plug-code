@@ -1,0 +1,20 @@
+^G:\PLUG-CODE\BUILD_A\CMAKEFILES\E0E1836EBDD4BE2C830CFD2E671832AA\PLUGSKILLTEST_RESOURCES.RC.RULE
+setlocal
+external\JUCE\tools\extras\Build\juceaide\juceaide_artefacts\Custom\juceaide.exe rcfile G:/plug-code/build_a/PlugSkillTest_artefacts/JuceLibraryCode/Info.txt G:/plug-code/build_a/PlugSkillTest_artefacts/JuceLibraryCode/PlugSkillTest_resources.rc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^G:\PLUG-CODE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SG:/plug-code -BG:/plug-code/build_a --check-stamp-file G:/plug-code/build_a/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

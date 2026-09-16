@@ -43,6 +43,27 @@ set(PLUG_COMPANY_NAME "Lascaux Lab")
 set(PLUG_MANUFACTURER_CODE "Lscx")
 set(PLUG_PLUGIN_CODE "Plug")
 
+# Catalogue des skills (§3.8). Un dossier par effet sous src/skills/, compilé
+# seulement s'il est listé ici : PLUG_SKILLS vide = tout le catalogue présent sur
+# disque ; PLUG_SKILLS "filter;gain" = ces deux-là. Ce filtre permet à un auteur
+# de skill de compiler et tester la sienne sans dépendre des autres, en cours
+# d'écriture (J4a phase 1).
+set(PLUG_SKILLS "" CACHE STRING "Sous-dossiers de src/skills à compiler (vide = tous)")
+
+file(GLOB PLUG_SKILL_DIRS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/src/skills" CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/skills/*")
+set(PLUG_SKILL_SOURCES "")
+set(PLUG_SKILL_DEFS "")
+foreach(dir ${PLUG_SKILL_DIRS})
+    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/skills/${dir}")
+        if(PLUG_SKILLS STREQUAL "" OR "${dir}" IN_LIST PLUG_SKILLS)
+            file(GLOB _s CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/skills/${dir}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/skills/${dir}/*.h")
+            list(APPEND PLUG_SKILL_SOURCES ${_s})
+            list(APPEND PLUG_SKILL_DEFS "PLUG_SKILL_${dir}=1")
+            message(STATUS "skill : ${dir}")
+        endif()
+    endif()
+endforeach()
+
 # Le socle : tout src/ hors l'adaptateur hôte. Testable sans Ableton (§5, §8.3).
 set(PLUG_ENGINE_SOURCES
     src/ParameterGrid.h
@@ -60,6 +81,11 @@ set(PLUG_ENGINE_SOURCES
     src/Engine.cpp
     src/dummies/DummySkills.h
     src/dummies/DummySkills.cpp
+    src/skills/Skills.h
+    src/skills/Skills.cpp
+    src/PresetLibrary.h
+    src/PresetLibrary.cpp
+    ${PLUG_SKILL_SOURCES}
     src/BlockTimer.h)
 
 set(PLUG_CORE_SOURCES
@@ -70,7 +96,8 @@ set(PLUG_CORE_SOURCES
 set(PLUG_COMMON_DEFS
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
-    JUCE_MODAL_LOOPS_PERMITTED=0)
+    JUCE_MODAL_LOOPS_PERMITTED=0
+    ${PLUG_SKILL_DEFS})
 
 juce_add_plugin(Plug
     PRODUCT_NAME "${PLUG_PRODUCT_NAME}"
@@ -124,6 +151,20 @@ target_compile_definitions(PlugRender PRIVATE
     ${PLUG_COMMON_DEFS}
     JUCE_STANDALONE_APPLICATION=1)
 target_link_libraries(PlugRender
+    PRIVATE juce::juce_audio_utils
+    PUBLIC  juce::juce_recommended_config_flags
+            juce::juce_recommended_lto_flags
+            juce::juce_recommended_warning_flags)
+
+# Vérificateur du contrat de skill (§3.9) et banc par effet. C'est l'épreuve que
+# doit passer une skill avant d'entrer au registre (J4a phase 1).
+juce_add_console_app(PlugSkillTest PRODUCT_NAME "PlugSkillTest")
+target_sources(PlugSkillTest PRIVATE skilltest/main.cpp ${PLUG_ENGINE_SOURCES})
+target_include_directories(PlugSkillTest PRIVATE src)
+target_compile_definitions(PlugSkillTest PRIVATE
+    ${PLUG_COMMON_DEFS}
+    JUCE_STANDALONE_APPLICATION=1)
+target_link_libraries(PlugSkillTest
     PRIVATE juce::juce_audio_utils
     PUBLIC  juce::juce_recommended_config_flags
             juce::juce_recommended_lto_flags

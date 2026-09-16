@@ -1,5 +1,6 @@
 #include "PlugProcessor.h"
 #include "StateSchema.h"
+#include "skills/Skills.h"
 
 #ifndef PLUG_J2_TIMING
  #define PLUG_J2_TIMING 0
@@ -25,6 +26,9 @@ namespace plug
     {
         jassert (getParameters().size() == grid::kTotalCount);
 
+        registerAllSkills();     // le catalogue existe avant que le moindre état soit lu (§3.8)
+        presets.rescan();
+
         for (const auto& id : grid::allIds())
             paramSource.raw.push_back (apvts.getRawParameterValue (id));
         plugEngine.setParamSource (&paramSource);
@@ -39,6 +43,26 @@ namespace plug
         apvts.state.removeListener (this);
         cancelPendingUpdate();
         dumpTiming ("destructor");
+    }
+
+    //==============================================================================
+    const juce::String PlugProcessor::getProgramName (int index)
+    {
+        const auto n = presets.name (index);
+        return n.isNotEmpty() ? n : juce::String ("Par défaut");
+    }
+
+    void PlugProcessor::setCurrentProgram (int index)
+    {
+        if (! juce::isPositiveAndBelow (index, presets.size())) return;
+        auto tree = presets.load (index);
+        if (! tree.isValid()) return;           // preset illisible : on ne casse pas l'état en place
+
+        currentPreset = index;
+        apvts.state.removeListener (this);
+        apvts.replaceState (tree);
+        apvts.state.addListener (this);
+        publishState();
     }
 
     //==============================================================================

@@ -10,6 +10,7 @@
 #include "ParameterGrid.h"
 #include "BlockTimer.h"
 #include "Engine.h"
+#include "PresetLibrary.h"
 #include <vector>
 
 namespace plug
@@ -40,10 +41,22 @@ namespace plug
         bool isMidiEffect() const override { return false; }
         double getTailLengthSeconds() const override { return 0.0; }
 
+        // Presets d'état (§3.6, décision pilote J4a) : chaque .plugstate de la
+        // bibliothèque porte l'état COMPLET, identités de skill comprises.
+        //
+        // INVARIANT DE GRILLE : exposer ces presets comme PROGRAMMES de l'hôte est
+        // suspendu. Mesuré le 16/09 dans JUCE 8.0.15 (juce_audio_plugin_client_VST3.cpp,
+        // « if (numPrograms > 1) ») : dès qu'un plugin annonce plus d'un programme,
+        // l'enveloppe VST3 ajoute un paramètre caché « Program » à la liste vue par
+        // l'hôte. Il porte un identifiant fixe ('prst') et ne décale donc aucune
+        // automation, mais il ajoute une entrée à ce que Live affiche — ce que le J2
+        // a gravé comme « 284 plus le Bypass imposé par la norme » (ETAT Rév. 2).
+        // Décision en attente du pilote ; d'ici là le plugin annonce un seul
+        // programme et les presets se chargent par le menu preset natif VST3.
         int getNumPrograms() override { return 1; }
         int getCurrentProgram() override { return 0; }
-        void setCurrentProgram (int) override {}
-        const juce::String getProgramName (int) override { return {}; }
+        void setCurrentProgram (int index) override;
+        const juce::String getProgramName (int index) override;
         void changeProgramName (int, const juce::String&) override {}
 
         void getStateInformation (juce::MemoryBlock& destData) override;
@@ -79,6 +92,8 @@ namespace plug
         void dumpTiming (const char* reason);
 
         juce::UndoManager undo;
+        PresetLibrary presets;
+        int currentPreset = 0;
         juce::AudioProcessorValueTreeState apvts;
         ApvtsParamSource paramSource;
         Engine plugEngine;

@@ -14,6 +14,7 @@ scripts de construction et les mesures.
 | Compilateur | MSVC 2022, Visual Studio Build Tools 17.14 (charge C++ x64) |
 | CMake | ≥ 3.22 (Kitware 4.4.3 par winget ; 3.31.6 livré avec les Build Tools convient aussi) |
 | JUCE | tag **8.0.15**, commit `91ad83ae34a81e0833b1a2b0866f54846370ae53`, sous-module `external/JUCE` |
+| Signalsmith Stretch | tag **1.1.0**, commit `44c8f865af9da8c29cc4a70a2d5a3ec83639c711`, sous-module `external/signalsmith-stretch`, **MIT** |
 | Norme C++ | C++17 |
 | Validation | pluginval 1.0.4 (`tools/pluginval/`, binaire non versionné) |
 
@@ -32,6 +33,31 @@ Sorties (Release) :
 - `build/Plug_artefacts/Release/VST3/Plug.vst3` — le plugin
 - `build/PlugBench_artefacts/Release/PlugBench.exe` — le banc hors hôte
 
+## Dépendances et licences
+
+| Brique | Licence | Usage |
+| --- | --- | --- |
+| JUCE 8.0.15 | AGPLv3 (usage personnel, §5 du CdC) | framework, VST3, paramètres, état |
+| Signalsmith Stretch 1.1.0 | MIT | pitch-shift de la famille granulaire / repitch |
+
+**chowdsp_utils n'est pas utilisé** : sa licence est mixte par module (annexe A.5
+du CdC) et les effets du catalogue de départ ne le demandent pas. Règle retenue :
+en cas de doute sur une licence, on écrit la brique nous-mêmes. Aucune dépendance
+GPL n'entre dans ce dépôt.
+
+Écart relevé le 16/09 : l'annexe A.3 du CdC prête à Signalsmith Stretch un drapeau
+`splitComputation` qui étalerait le calcul spectral. Il n'existe pas à la version
+1.1.0. La régularité du coût par bloc se mesure donc, elle ne se suppose pas.
+
+## Presets d'état (.plugstate)
+
+Un preset porte l'état **complet** (§3.6) : identités de skill, ordre, valeurs,
+motifs de pas, verrous, graines, routes — pas un sous-ensemble. Format : l'arbre
+`PlugState` en XML, avec son `schemaVersion`, donc migrable comme un projet.
+
+Les fichiers vivent dans `presets/` et sont lus depuis, par ordre de priorité :
+`%APPDATA%\LascauxLab\Plug\presets` puis le dossier `presets` voisin du binaire.
+
 ## Cibles
 
 - **Plug** — VST3. Grille de 284 paramètres figée (`src/ParameterGrid.h`) sur
@@ -42,8 +68,12 @@ Sorties (Release) :
 - **PlugRender** — rendu hors hôte : `PlugRender test` (matrice J3, rendu
   déterministe comparé octet par octet), `PlugRender render --in --state --out`,
   `PlugRender bench` (coût du socle), `PlugRender gen-input`.
-- **PlugBench** — banc J2 : grille, aller-retour d'état, coût par bloc du
-  processeur complet.
+- **PlugBench** — banc J2 : grille, presets, aller-retour d'état, coût par bloc
+  du processeur complet.
+- **PlugSkillTest** — le vérificateur du contrat de skill (§3.9) : identité,
+  aides, latence déclarée contre latence réelle, blocs vides et irréguliers,
+  silence après reset, bornes, déterminisme, coût par bloc. Une skill n'entre au
+  registre qu'après l'avoir passé. `PlugSkillTest --only core.filter`.
 
 ## Socle J3 — où lire quoi
 
@@ -56,8 +86,18 @@ Sorties (Release) :
 | `src/Modulation.h` | enveloppe et suiveur, déclenchement transport / audio / MIDI |
 | `src/Skill.h`, `SKILL_TEMPLATE.md` | le contrat d'un module d'effet et son squelette |
 
-Crochet J3 (sans interface) : `%APPDATA%\LascauxLab\Plug\j3_state.xml`, s'il
-existe, remplace l'état par défaut d'une nouvelle instance. Retiré au J4.
+Le crochet J3 `j3_state.xml` a été retiré au J4a : les presets `.plugstate` le
+remplacent.
+
+## Catalogue des skills
+
+Un effet vit dans `src/skills/<nom>/`, avec son en-tête, sa source, son
+`help.fr.md`. Il s'enregistre par une ligne dans `src/skills/Skills.cpp`, tenue
+par l'intégrateur : aucune skill ne s'enregistre toute seule, un catalogue qui
+dépend de l'ordre d'initialisation statique n'est pas un catalogue.
+
+Pour travailler sur une skill sans compiler les autres :
+`cmake -S . -B build_x -DPLUG_SKILLS="filter;gain"`.
 
 ## Échafaudage J2 : éditeur générique
 

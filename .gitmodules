@@ -1,3 +1,7 @@
 [submodule "external/JUCE"]
 	path = external/JUCE
 	url = https://github.com/juce-framework/JUCE.git
+[submodule "external/signalsmith-stretch"]
+	path = external/signalsmith-stretch
+	url = https://github.com/Signalsmith-Audio/signalsmith-stretch.git
+	branch = main

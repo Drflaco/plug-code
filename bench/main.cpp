@@ -90,6 +90,24 @@ int main (int argc, char* argv[])
     // 2. Latence et bypass : déplacés au J3 dans PlugRender (test T6), le moteur porte la latence.
 
     //==========================================================================
+    // 2 bis. Presets d'état exposés comme programmes (§3.6, décision pilote J4a).
+    // L'épreuve qui compte : exposer des programmes ne doit AJOUTER AUCUN paramètre
+    // à la grille figée, sinon les automations des projets existants se décalent.
+    {
+        plug::PlugProcessor p;
+        const int n = p.getNumPrograms();
+        check (p.getParameters().size() == plug::grid::kTotalCount,
+               "presets exposés : la grille reste à " + juce::String (p.getParameters().size()) + " paramètres", log);
+        log << "       " << n << " programme(s) :";
+        for (int i = 0; i < juce::jmin (n, 8); ++i) log << " « " << p.getProgramName (i) << " »";
+        log << "\n";
+
+        // L'exposition en programmes est suspendue (voir PlugProcessor.h) : l'hôte
+        // doit voir un seul programme, donc aucun paramètre « Program » ajouté.
+        check (n == 1, "un seul programme annoncé : aucun paramètre « Program » ajouté par l'enveloppe VST3", log);
+    }
+
+    //==========================================================================
     // 3. État : aller-retour
     {
         plug::PlugProcessor a;
