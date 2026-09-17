@@ -130,6 +130,9 @@ namespace plug::ui
         float volume = 0.5f;
         float mix = 1.0f;
         int law = 1;                    // 0 = -6 dB, 1 = -3 dB, 2 = 0 dB
+        // Textes composés par la couche de présentation : un widget ne convertit rien,
+        // et surtout pas une valeur de grille en décibels (il ne connaît pas GridMap).
+        juce::String volumeText, mixText;
         std::vector<MasterEntryView> inertEntries;   // drive, tone, comp, grave, routage, qualité
     };
 

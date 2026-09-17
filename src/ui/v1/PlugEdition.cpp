@@ -8,23 +8,24 @@ namespace plug::ui::v1
     //==========================================================================
     PlugEdition::Handle::Handle (Presenter& p) : presenter (p)
     {
-        setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
+        setMouseCursor (juce::MouseCursor::LeftRightResizeCursor);
         setTooltip ("Partage séquenceur / inspecteur : un clic bascule entre 2/3–1/3 et "
-                    "1/3–2/3. Deux positions seulement, et le réglage est global "
-                    "(préférences, hors preset)."_fr);
+                    "1/3–2/3 en largeur. Deux positions seulement, et le réglage est "
+                    "global (préférences, hors preset)."_fr);
     }
 
     void PlugEdition::Handle::paint (juce::Graphics& g)
     {
-        auto r = getLocalBounds().toFloat().reduced (0.0f, 4.0f);
+        auto r = getLocalBounds().toFloat().reduced (4.0f, 0.0f);
         g.setColour (juce::Colours::white.withAlpha (0.10f));
         g.fillRoundedRectangle (r, 2.0f);
 
-        // Trois traits au centre : ça se prend, et ça dit que c'est une poignée.
+        // Trois traits empilés au centre : le « ║ » du schéma. Ça se prend, et ça dit
+        // que c'est une poignée.
         g.setColour (juce::Colours::white.withAlpha (0.35f));
         const float cx = r.getCentreX(), cy = r.getCentreY();
         for (int i = -1; i <= 1; ++i)
-            g.fillRect (cx + (float) i * 8.0f - 5.0f, cy - 0.5f, 10.0f, 1.0f);
+            g.fillRect (cx - 0.5f, cy + (float) i * 8.0f - 5.0f, 1.0f, 10.0f);
     }
 
     void PlugEdition::Handle::mouseDown (const juce::MouseEvent&)
@@ -58,13 +59,13 @@ namespace plug::ui::v1
         auto banner = r.removeFromTop (16);
         freeRunning.setBounds (banner);
 
-        // Partage vertical à deux positions. Le séquenceur garde toute la largeur : en
-        // mode compact, seules les cases s'aplatissent, les 32 pas restent tous là.
+        // Partage EN LARGEUR à deux positions, séquenceur à gauche (schéma §1 et §2).
+        // À 1/3 le séquenceur passe en compact : les 32 pas y sont tous, sans chiffre.
         const double part = presenter.prefsView().ratioTwoThirds ? 2.0 / 3.0 : 1.0 / 3.0;
-        const int seqH = (int) ((double) (r.getHeight() - kHandleHeight) * part);
+        const int seqW = (int) ((double) (r.getWidth() - kHandleWidth) * part);
 
-        sequencer.setBounds (r.removeFromTop (seqH));
-        handle.setBounds (r.removeFromTop (kHandleHeight));
+        sequencer.setBounds (r.removeFromLeft (seqW));
+        handle.setBounds (r.removeFromLeft (kHandleWidth));
         inspector.setBounds (r);
     }
 
@@ -72,6 +73,12 @@ namespace plug::ui::v1
     {
         sequencer.refresh();
         inspector.refresh();
+    }
+
+    void PlugEdition::refreshSelection()
+    {
+        sequencer.refreshSelection();
+        inspector.refresh();          // lui DOIT relire : il montre le pas sélectionné
     }
 
     void PlugEdition::setTransport (const TransportView& t)

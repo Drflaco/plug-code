@@ -26,7 +26,7 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugEditor::PlugEditor (juce::AudioProcessor& processor, Presenter& p)
-        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p), macros (p), controls (p), edition (p)
+        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p), macros (p), controls (p), edition (p), master (p)
     {
         const auto prefsView = presenter.prefsView();
 
@@ -79,6 +79,7 @@ namespace plug::ui::v1
         macros.refresh();
         controls.refresh();
         edition.refresh();
+        master.refresh();
     }
 
     PlugEditor::~PlugEditor()
@@ -108,7 +109,7 @@ namespace plug::ui::v1
         r.removeFromTop (6);
         tabs.setBounds (r.removeFromTop (PlugTabs::kHeight));
         r.removeFromTop (6);
-        master.setBounds (r.removeFromBottom (86));
+        master.setBounds (r.removeFromBottom (PlugMaster::kHeight));
         r.removeFromBottom (6);
 
         // Contrôles à gauche, édition à droite. Ce partage-ci est FIXE : la préférence
@@ -128,8 +129,22 @@ namespace plug::ui::v1
     }
 
     //==========================================================================
-    void PlugEditor::viewChanged (const ViewMask&)
+    void PlugEditor::viewChanged (const ViewMask& mask)
     {
+        // Deux chemins, parce qu'ils ne coûtent pas la même chose. Déplacer la sélection
+        // ne change pas l'état : relire les dix lignes à chaque mouvement de souris
+        // coûtait 2,57 ms par événement (measure/MESURES_J4b.md). Le chemin léger ne
+        // relit que ce que la sélection déplace.
+        constexpr juce::uint32 kStateBits = ViewMask::Slots | ViewMask::Params | ViewMask::Line
+                                          | ViewMask::Master | ViewMask::Macros | ViewMask::Generation
+                                          | ViewMask::Sequencer | ViewMask::Presets | ViewMask::Prefs;
+        if ((mask.bits & kStateBits) == 0 && mask.has (ViewMask::Session))
+        {
+            controls.refresh();
+            edition.refreshSelection();
+            return;
+        }
+
         // Étape 2 : la barre (nom du preset, « * », historique) et les onglets (effets,
         // activité, sélection). Les widgets des étapes suivantes filtreront le masque ;
         // ici les deux se relisent entièrement, ce qui coûte quelques chaînes par
@@ -139,6 +154,7 @@ namespace plug::ui::v1
         macros.refresh();
         controls.refresh();
         edition.refresh();
+        master.refresh();
     }
 
     void PlugEditor::transportChanged (const TransportView& t)

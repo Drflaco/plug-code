@@ -119,3 +119,25 @@ compositeur, ni la carte graphique, ni l'ordonnancement de Live. L'option CMake
 séquenceur un compteur qui écrit ses p50/p99 dans
 `%APPDATA%\LascauxLab\Plug\measure\` : c'est par là que la mesure dans l'hôte se
 fera, et elle reste au pilote.
+
+### Balayage de sélection — un défaut trouvé par la mesure (étape 5)
+
+Le glisser du séquenceur rappelait `refresh()` à **chaque événement de souris**, et
+`refresh()` relit les dix lignes : dix `slotView` (130 `ParamView`, chacune avec son
+halo, son texte et sa raison de verrou) plus dix `lineView`. Mesuré sur 100
+événements, après 100 tours de chauffe :
+
+| Chemin | moyenne | p99 |
+| --- | --- | --- |
+| Avant — relecture complète à chaque événement | **2673 µs** | 3524 µs |
+| Après — chemin léger | **79,5 µs** | 114 µs |
+
+**Ce qui a changé** : déplacer la sélection n'est pas un changement d'état.
+`Presenter::selectSteps` ne marque plus que `Session` (et non `Params`), le
+séquenceur a un `refreshSelection()` qui relit trois entiers et repeint au lieu de
+relire vingt Views, et l'éditeur choisit le chemin d'après le masque. Seul
+l'inspecteur relit vraiment — il montre le pas sélectionné, il n'a pas le choix.
+
+**Facteur 33**, et rien n'a été « optimisé » avant d'avoir le chiffre (REGIME §2).
+Le banc garde les DEUX mesures : si le chemin léger repasse au-dessus de 0,7 ms,
+c'est que quelqu'un l'a rebranché sur la relecture complète.

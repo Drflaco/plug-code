@@ -4,9 +4,12 @@
 //   · la poignée a DEUX positions, pas un curseur continu : 2/3–1/3 ou 1/3–2/3.
 //     Un partage libre invite à régler la fenêtre au lieu de travailler, et le
 //     §3.7 ne demande qu'un basculement ;
-//   · le partage est VERTICAL : le séquenceur garde ainsi toute la largeur pour
-//     ses 32 pas, et le mode compact ne réduit que la HAUTEUR des cases — les 32
-//     pas restent lisibles, ce que demande le §C ;
+//   · le partage est EN LARGEUR, séquenceur à GAUCHE et inspecteur à DROITE, avec
+//     une poignée verticale : c'est ce que dessine SCHEMA_INTERFACE_v0.1 §1 et §2,
+//     et le schéma fait foi (CdC §0 bis, §8.5 — on ne s'en écarte que sur décision
+//     du pilote). À 1/3, le séquenceur passe en mode COMPACT : ni chiffre ni nom
+//     d'effet, seulement ■ / · et les barres du mode B, l'étiquette réduite au
+//     numéro d'emplacement ;
 //   · le ratio vit dans les préférences (global, hors preset, §3.11) : c'est un
 //     réglage de la machine du pilote, pas du morceau.
 #pragma once
@@ -26,6 +29,7 @@ namespace plug::ui::v1
         void paint (juce::Graphics&) override;
         void resized() override;
         void refresh();
+        void refreshSelection();     // chemin léger : seule la sélection a bougé
         void setTransport (const TransportView&);
 
     private:
@@ -49,7 +53,7 @@ namespace plug::ui::v1
         PlugInspector inspector;
         juce::Label freeRunning;
 
-        static constexpr int kHandleHeight = 12;
+        static constexpr int kHandleWidth = 12;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlugEdition)
     };

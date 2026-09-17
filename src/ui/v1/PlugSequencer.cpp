@@ -96,15 +96,23 @@ namespace plug::ui::v1
     juce::Rectangle<int> PlugSequencer::modeButtonBounds (int row) const
     {
         if (row < 0 || row + 1 >= (int) rowY.size()) return {};
-        return { getWidth() - kTailWidth + 2, rowY[(size_t) row], 24,
+        return { getWidth() - tailWidth() + 2, rowY[(size_t) row], compact ? 16 : 24,
                  rowY[(size_t) row + 1] - rowY[(size_t) row] - kRowGap };
     }
 
     juce::Rectangle<int> PlugSequencer::paramButtonBounds (int row) const
     {
         if (row < 0 || row + 1 >= (int) rowY.size()) return {};
-        return { getWidth() - kTailWidth + 28, rowY[(size_t) row], 20,
+        return { getWidth() - tailWidth() + (compact ? 20 : 28), rowY[(size_t) row], compact ? 12 : 20,
                  rowY[(size_t) row + 1] - rowY[(size_t) row] - kRowGap };
+    }
+
+    void PlugSequencer::composeLabels()
+    {
+        // En large : « 3  FM ». En compact : « 3 ». Recomposé quand le mode change,
+        // jamais à chaque frame.
+        for (size_t r = 0; r < rows.size(); ++r)
+            rows[r].label = compact ? String ((int) r + 1) : String ((int) r + 1) + "  " + rows[r].name;
     }
 
     //==========================================================================
@@ -117,12 +125,18 @@ namespace plug::ui::v1
         columnX.assign (kSteps + 1, 0);
 
         auto area = getLocalBounds().reduced (6, 6);
+
+        // Le mode compact du schéma §2 : sous cette largeur, une case ne peut plus
+        // porter que sa présence. On enlève alors le nom de l'effet, pas des pas.
+        const bool wantCompact = area.getWidth() < 640;
+        if (wantCompact != compact) { compact = wantCompact; composeLabels(); }
+
         const int top = area.getY();
         const int h = n > 0 ? juce::jmax (kMinRowHeight, area.getHeight() / n) : 0;
         for (int r = 0; r <= n; ++r) rowY[(size_t) r] = top + r * h;
 
-        const int x0 = area.getX() + kLabelWidth;
-        const int width = juce::jmax (kSteps, area.getRight() - kTailWidth - x0);
+        const int x0 = area.getX() + labelWidth();
+        const int width = juce::jmax (kSteps, area.getRight() - tailWidth() - x0);
         for (int s = 0; s <= kSteps; ++s)
             columnX[(size_t) s] = x0 + (int) ((juce::int64) width * s / kSteps);
     }
@@ -146,8 +160,7 @@ namespace plug::ui::v1
             const auto lv = presenter.lineView (slot1);
             auto& row = rows[(size_t) r];
 
-            // Composé ICI, jamais dans paint().
-            row.label = String (slot1) + "  " + (sv.present ? sv.skillLabel : "—"_fr);
+            row.name = sv.present ? sv.skillLabel : "—"_fr;
             row.modeB = lv.modeB;
             row.present = sv.present;
             row.selected = (slot1 == selectedSlot);
@@ -172,7 +185,21 @@ namespace plug::ui::v1
             }
         }
 
+        composeLabels();                 // composé ICI, jamais dans paint()
         if (countChanged) resized();
+        repaint();
+    }
+
+    void PlugSequencer::refreshSelection()
+    {
+        const int slot = presenter.selectedSlot();
+        const int first = presenter.firstSelectedStep();
+        const int last = presenter.lastSelectedStep();
+        if (slot == selectedSlot && first == selFirst && last == selLast) return;
+
+        for (auto& row : rows) row.selected = false;
+        selectedSlot = slot; selFirst = first; selLast = last;
+        if (slot >= 1 && slot <= (int) rows.size()) rows[(size_t) slot - 1].selected = true;
         repaint();
     }
 
@@ -218,7 +245,7 @@ namespace plug::ui::v1
             const int h = rowY[(size_t) row + 1] - y - kRowGap;
 
             g.setColour (juce::Colours::white.withAlpha (info.selected ? 0.9f : (info.present ? 0.6f : 0.35f)));
-            g.drawText (info.label, getLocalBounds().getX() + 8, y, kLabelWidth - 10, h,
+            g.drawText (info.label, getLocalBounds().getX() + 8, y, labelWidth() - 10, h,
                         juce::Justification::centredLeft, true);
 
             for (int s = 0; s < kSteps; ++s)
@@ -323,7 +350,7 @@ namespace plug::ui::v1
             presenter.selectSteps (dragAnchor, dragAnchor);
         }
         dragging = ! e.mods.isShiftDown();
-        refresh();
+        refreshSelection();
     }
 
     void PlugSequencer::mouseDrag (const juce::MouseEvent& e)
@@ -333,7 +360,7 @@ namespace plug::ui::v1
         if (step < 0) return;
         if (step + 1 == selLast) return;                    // rien n'a changé : pas de notification
         presenter.selectSteps (dragAnchor, step + 1);
-        refresh();
+        refreshSelection();
     }
 
     void PlugSequencer::mouseUp (const juce::MouseEvent&) { dragging = false; }

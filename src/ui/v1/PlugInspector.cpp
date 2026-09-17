@@ -197,9 +197,20 @@ namespace plug::ui::v1
         density.onDragEnd = [this] { presenter.setDensity ((float) density.getValue()); };
         addAndMakeVisible (density);
 
-        seed.setReadOnly (true);
-        seed.setWantsKeyboardFocus (false);
-        seed.setTooltip ("Graine maîtresse : deux générations à graine égale donnent les mêmes pas."_fr);
+        // Champ d'entier, validé à Entrée (schéma §2 « Graine [4821] »). Une saisie
+        // invalide reprend la valeur courante, sans message : le champ se corrige
+        // lui-même, il ne fait pas la leçon.
+        seed.setInputRestrictions (10, "0123456789");
+        seed.setTooltip ("Graine maîtresse : deux générations à graine égale donnent les mêmes pas.\n"
+                         "Entrée pour valider ; une saisie invalide revient à la valeur courante."_fr);
+        seed.onReturnKey = [this]
+        {
+            const auto typed = seed.getText().trim();
+            const juce::int64 v = typed.getLargeIntValue();
+            if (typed.isNotEmpty() && v >= 0 && v <= 0xffffffffLL) presenter.setMasterSeed ((juce::uint32) v);
+            refresh();                       // valide ou non, le champ dit ce qui EST
+        };
+        seed.onFocusLost = [this] { refresh(); };
         addAndMakeVisible (seed);
 
         newSeed.setButtonText ("Nouvelle graine"_fr);

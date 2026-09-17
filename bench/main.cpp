@@ -348,6 +348,52 @@ int main (int argc, char* argv[])
             check (s.p99Us < 8000.0, "rendu : p99 de l'éditeur entier sous 8 ms ("
                                          + juce::String (s.p99Us, 1) + " us)", log);
         }
+
+        // Balayage de sélection : ce que coûte UN mouvement de souris dans le séquenceur.
+        // Le glisser rappelle refresh(), donc relit toutes les Views — pas une fois par
+        // frame, une fois par événement. On mesure 100 événements, et on ne « corrige »
+        // rien sans ce chiffre (REGIME §2 : mesurer, jamais supposer).
+        {
+            plug::BlockTimer t;
+            for (int i = 0; i < 200; ++i)
+            {
+                const int last = 1 + (i % 32);
+                if (i == 100) t.reset();
+                t.begin();
+                view.selectSteps (1, last);
+                for (int s = 1; s <= 10; ++s) { view.slotView (s); view.lineView (s); }
+                view.stepCountsView (1, 1, last);
+                t.end (1);
+            }
+            const auto s = t.compute();
+            log << "\nBalayage de sélection (100 événements, 10 lignes relues à chaque fois) :\n"
+                << "  moyenne " << juce::String (s.meanUs, 1) << " us\n"
+                << "  p99     " << juce::String (s.p99Us, 1) << " us\n"
+                << "  max     " << juce::String (s.maxUs, 1) << " us\n";
+            check (s.p99Us < 4000.0, "balayage : p99 d'un événement de glisser sous 4 ms ("
+                                         + juce::String (s.p99Us, 1) + " us)", log);
+        }
+
+        // Le même balayage par le CHEMIN LÉGER, celui que l'interface emprunte depuis
+        // que la sélection ne marque plus l'état : deux Views au lieu de vingt.
+        {
+            plug::BlockTimer t;
+            for (int i = 0; i < 200; ++i)
+            {
+                const int last = 1 + (i % 32);
+                if (i == 100) t.reset();
+                t.begin();
+                view.selectSteps (1, last);
+                view.slotView (1);                 // les contrôles et l'inspecteur, rien d'autre
+                view.stepCountsView (1, 1, last);
+                t.end (1);
+            }
+            const auto s = t.compute();
+            log << "\nBalayage de sélection, chemin léger (100 événements) :\n"
+                << "  moyenne " << juce::String (s.meanUs, 1) << " us\n"
+                << "  p99     " << juce::String (s.p99Us, 1) << " us\n";
+            check (s.p99Us < 700.0, "balayage léger : p99 sous 0,7 ms (" + juce::String (s.p99Us, 1) + " us)", log);
+        }
     }
 
     //==========================================================================

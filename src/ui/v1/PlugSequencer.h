@@ -33,11 +33,17 @@ namespace plug::ui::v1
         void mouseUp (const juce::MouseEvent&) override;
 
         void refresh();                                  // relit les Views, recompose les textes
+        // Chemin LÉGER : la sélection a bougé, les pas n'ont pas changé. On relit trois
+        // entiers de session et on repeint — pas dix LineView (mesuré, §5).
+        void refreshSelection();
         void setTransport (const TransportView&);        // 30 Hz : ne repeint que deux colonnes
 
         static constexpr int kSteps = 32;
-        static constexpr int kLabelWidth = 96;
-        static constexpr int kTailWidth = 52;            // bouton A/B + menu du paramètre montré
+        // Deux jeux de mesures : le schéma §1 (large) et le schéma §2 (compact). En
+        // compact l'étiquette se réduit au NUMÉRO d'emplacement et on ne lit plus que
+        // ■ / · et les barres du mode B — les 32 pas y sont tous, sans chiffre.
+        static constexpr int kLabelWidth = 96, kLabelWidthCompact = 26;
+        static constexpr int kTailWidth = 52, kTailWidthCompact = 34;
 
        #if PLUG_UI_TIMING
         // Mesure du rendu (ETAT a) « Rendu ») : p50/p99 de paint(), jamais dans le
@@ -58,13 +64,17 @@ namespace plug::ui::v1
 
         struct Row
         {
-            juce::String label;          // « 3 FM », composée à la notification
+            juce::String label;          // « 3  FM » ou « 3 » en compact, composée à la notification
+            juce::String name;           // le libellé de l'effet, gardé pour recomposer
             juce::String paramLabel;     // le paramètre montré en mode B
             bool modeB = false;
             bool present = false;
             bool selected = false;
         };
 
+        void composeLabels();
+        int labelWidth() const { return compact ? kLabelWidthCompact : kLabelWidth; }
+        int tailWidth() const { return compact ? kTailWidthCompact : kTailWidth; }
         int rowAt (int y) const;
         int stepAt (int x) const;
         juce::Rectangle<int> cellBounds (int row, int step) const;
@@ -80,6 +90,7 @@ namespace plug::ui::v1
         std::vector<int> columnX;         // kSteps + 1 abscisses, calculées dans resized()
         std::vector<int> rowY;            // rows.size() + 1 ordonnées
 
+        bool compact = false;   // posé par resized() selon la largeur disponible
         int playhead = -1;
         int selectedSlot = 1, selFirst = 1, selLast = 32;
         bool dragging = false;

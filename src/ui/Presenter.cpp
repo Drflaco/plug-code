@@ -346,6 +346,8 @@ namespace plug::ui
         v.volume = state::readParam (s, "master.volume");
         v.mix    = state::readParam (s, "master.mix");
         v.law    = (int) std::lround (state::readParam (s, "master.mixLaw"));
+        v.volumeText = display::dB (grid::gainLinear (v.volume));
+        v.mixText = display::sig (100.0 * (double) v.mix);
 
         // §3.10 : le moteur n'applique que le mélange et le volume. Les six autres entrées
         // existent dans la grille figée et ne sont lues par personne — elles s'affichent
@@ -665,7 +667,9 @@ namespace plug::ui
 
     void Presenter::setMasterSeed (juce::uint32 seed)
     {
-        Command c (*this, "Nouvelle graine"_fr);
+        // « Graine 4821 » et non « Nouvelle graine » : l'historique doit dire LAQUELLE,
+        // sinon deux tirages successifs sont indiscernables (schéma §2).
+        Command c (*this, "Graine "_fr + String ((juce::int64) seed));
         state::setMasterSeed (proc.stateTree(), seed, &proc.undoManager());
     }
 
@@ -756,7 +760,10 @@ namespace plug::ui
         JUCE_ASSERT_MESSAGE_THREAD
         stepFirst = juce::jlimit (1, kSteps, juce::jmin (first1, last1));
         stepLast  = juce::jlimit (1, kSteps, juce::jmax (first1, last1));
-        mark (ViewMask::Session | ViewMask::Params, selection);
+        // Session SEULE : déplacer la sélection ne change pas l'état, donc rien ne
+        // justifie de relire les dix lignes du séquenceur à chaque mouvement de souris
+        // (mesuré à 2,57 ms par événement avant cette correction, measure/MESURES_J4b.md).
+        mark (ViewMask::Session, selection);
     }
 
     void Presenter::setLineModeB (int slot1, bool modeB)

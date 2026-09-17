@@ -20,6 +20,7 @@
 #include "PlugBar.h"
 #include "PlugControls.h"
 #include "PlugEdition.h"
+#include "PlugMaster.h"
 #include "PlugMacros.h"
 #include "PlugPanels.h"
 #include "PlugTabs.h"
@@ -77,7 +78,7 @@ namespace plug::ui::v1
         PlugMacros macros;
         PlugControls controls;
         PlugEdition edition;
-        Zone master { juce::String::fromUTF8 ("Master + Sortie") };
+        PlugMaster master;
         std::unique_ptr<AboutPanel> about;
         std::unique_ptr<PrefsPanel> prefs;
         std::unique_ptr<juce::TooltipWindow> tooltips;
