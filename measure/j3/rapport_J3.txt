@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 17 Sep 2026 3:30:46pm
+PlugRender — matrice J3 — 17 Sep 2026 3:48:09pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -122,6 +122,12 @@ PlugRender — matrice J3 — 17 Sep 2026 3:30:46pm
 [OK]   T20 lineHasPattern : un pas Ã©teint suffit
 [OK]   T20 lineHasPattern : un pas gÃ©nÃ©rÃ© suffit
 [OK]   T20 lineHasPattern : un pas figÃ© suffit
+[OK]   T22 les deux verrous posÃ©s Ã  la main tiennent avant la pose
+[OK]   T22 setSkill : l'identitÃ© est posÃ©e
+[OK]   T22 setSkill : une entrÃ©e que la skill arrivante ne dÃ©clare PAS est libÃ©rÃ©e
+[OK]   T22 setSkill : une entrÃ©e dÃ©clarÃ©e libre par la skill arrivante est libÃ©rÃ©e
+[OK]   T22 setSkill : une entrÃ©e dÃ©clarÃ©e verrouillÃ©e par dÃ©faut est re-verrouillÃ©e
+[OK]   T22 setSkill : skill absente du registre, aucun verrou ne survit
 [OK]   T21 uiSnapshot : avant tout bloc, aucun pas et transport arrÃªtÃ©
 [OK]   T21 uiSnapshot : aprÃ¨s un bloc, pas 0, transport en lecture
 [OK]   T21 uiSnapshot : roue libre signalÃ©e quand l'hÃ´te ne donne pas de position

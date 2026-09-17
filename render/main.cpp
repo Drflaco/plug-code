@@ -711,6 +711,42 @@ namespace
             check (StateQuery::lineHasPattern (c, 1), "T20 lineHasPattern : un pas figé suffit");
         }
 
+        // T22 — StateEdit::setSkill : la pose COMPLÈTE. Elle rend aux entrées DÉCLARÉES
+        // leur classe de verrou (J3-5) et LIBÈRE celles que la skill n'occupe pas
+        // (décision pilote du 17/09, ETAT Rév. 9 Q1). `state::setSkill` seule ne fait que
+        // la première moitié : c'est ce cas qui garde la seconde en place.
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setSkill (s, 1, "core.fm", nullptr);
+            state::setLocked (s, 1, "paramD", true, nullptr);   // aucune skill n'occupe paramD
+            state::setLocked (s, 1, "paramA", true, nullptr);   // FM la déclare, et la déclare libre
+
+            check (state::readParamSpec (state::slot (s, 1), "paramD").locked
+                       && state::readParamSpec (state::slot (s, 1), "paramA").locked,
+                   "T22 les deux verrous posés à la main tiennent avant la pose");
+
+            StateEdit::setSkill (s, 1, "core.delay", nullptr);
+
+            check (state::slot (s, 1).getProperty ("skill").toString() == "core.delay",
+                   "T22 setSkill : l'identité est posée");
+            check (! state::readParamSpec (state::slot (s, 1), "paramD").locked,
+                   "T22 setSkill : une entrée que la skill arrivante ne déclare PAS est libérée");
+            check (! state::readParamSpec (state::slot (s, 1), "paramA").locked,
+                   "T22 setSkill : une entrée déclarée libre par la skill arrivante est libérée");
+
+            StateEdit::setSkill (s, 1, "core.fm", nullptr);
+            check (state::readParamSpec (state::slot (s, 1), "paramB").locked,
+                   "T22 setSkill : une entrée déclarée verrouillée par défaut est re-verrouillée");
+
+            // Skill absente du registre : rien n'est déclaré, donc aucun verrou ne survit.
+            state::setLocked (s, 1, "paramC", true, nullptr);
+            StateEdit::setSkill (s, 1, "core.inconnue", nullptr);
+            check (! state::readParamSpec (state::slot (s, 1), "paramB").locked
+                       && ! state::readParamSpec (state::slot (s, 1), "paramC").locked,
+                   "T22 setSkill : skill absente du registre, aucun verrou ne survit");
+        }
+
         // T21 — Engine::uiSnapshot : le seul chemin de l'audio vers l'interface (c-1).
         {
             auto s = state::createDefault();

@@ -62,10 +62,11 @@ namespace plug::ui
     {
         JUCE_ASSERT_MESSAGE_THREAD
         ++presenter.busy;
+        ++presenter.editing;      // c'est le pilote : l'état va cesser de décrire le preset
         presenter.proc.undoManager().beginNewTransaction (name);
     }
 
-    Presenter::Command::~Command() { --presenter.busy; }
+    Presenter::Command::~Command() { --presenter.editing; --presenter.busy; }
 
     Presenter::ScopedStateReplacement::ScopedStateReplacement (Presenter* p) noexcept : presenter (p)
     {
@@ -123,13 +124,15 @@ namespace plug::ui
         if (slot1 >= 1 && slot1 <= kSlots)
             pending.slots |= (juce::uint16) (1u << (slot1 - 1));
 
-        // Dès que l'ÉTAT bouge, le preset affiché ne le décrit plus : « geste1 * ».
-        // La sélection, les préférences et le mode A/B ne comptent pas — ils ne sont
-        // pas dans le preset (décision pilote du 16/09).
+        // Dès que le PILOTE fait bouger l'état, le preset affiché ne le décrit plus :
+        // « geste1 * ». Ni la sélection, ni les préférences, ni le mode A/B (ils ne sont
+        // pas dans le preset, décision du 16/09) ; ni un flush venu de l'hôte — sinon un
+        // clip automatisé qui joue ferait clignoter l'étoile en permanence, et l'étoile
+        // ne dirait plus rien du travail du pilote (décision du 17/09).
         constexpr juce::uint32 kStateBits = ViewMask::Slots | ViewMask::Params | ViewMask::Line
                                           | ViewMask::Master | ViewMask::Macros
                                           | ViewMask::Generation | ViewMask::Sequencer;
-        if ((bits & kStateBits) != 0) presetModified = true;
+        if ((bits & kStateBits) != 0 && editing.load() != 0) presetModified = true;
 
         triggerAsyncUpdate();
     }
@@ -249,7 +252,10 @@ namespace plug::ui
         const auto* info = v.present ? SkillRegistry::instance().info (v.skillId) : nullptr;
         v.unknown = v.present && info == nullptr;
         const int skillVersion = (int) sl.getProperty (state::id::skillVersion, 0);
+        v.skillVersion = skillVersion;
         v.skillLabel = info != nullptr ? info->label : (v.unknown ? v.skillId : Format::emptySlotText());
+        if (info != nullptr)
+            v.mixLaw = info->mixLaw == MixLaw::Minus6 ? "-6 dB" : (info->mixLaw == MixLaw::Zero ? "0 dB" : "-3 dB");
 
         v.active = state::readParam (s, slotGridId (v.slot1, "active")) >= 0.5f;
         v.tailRing = sl.getProperty (state::id::tail, "ring").toString() != "cut";
@@ -505,6 +511,7 @@ namespace plug::ui
         auto* p = proc.state().getParameter (gridId);
         if (p == nullptr) return;
         ++busy;
+        ++editing;
         proc.undoManager().beginNewTransaction ("Régler " + p->getName (40));
         p->beginChangeGesture();
     }
@@ -518,7 +525,7 @@ namespace plug::ui
         // Hors geste (valeur tapée, réglage unique), la commande ouvre sa propre
         // transaction ; un geste de knob n'en ouvre qu'une pour tout le mouvement.
         const bool standalone = busy.load() == 0;
-        if (standalone) { ++busy; proc.undoManager().beginNewTransaction ("Régler " + p->getName (40)); }
+        if (standalone) { ++busy; ++editing; proc.undoManager().beginNewTransaction ("Régler " + p->getName (40)); }
 
         // On écrit la valeur DANS L'ARBRE, avec l'UndoManager du pilote. L'APVTS écoute
         // son propre arbre : il relaie au paramètre, donc à l'hôte. Le recopiage
@@ -526,19 +533,20 @@ namespace plug::ui
         // annulable alors même que ce recopiage, lui, ne l'est plus (parade du piège
         // APVTS/undo ; voir les deux UndoManager dans PlugProcessor.h).
         state::setParam (proc.stateTree(), gridId, raw, &proc.undoManager());
-        if (standalone) --busy;
+        if (standalone) { --editing; --busy; }
     }
 
     void Presenter::endGesture (const String& gridId)
     {
         JUCE_ASSERT_MESSAGE_THREAD
         if (auto* p = proc.state().getParameter (gridId)) p->endChangeGesture();
+        if (editing.load() > 0) --editing;
         if (busy.load() > 0) --busy;
     }
 
     void Presenter::setSkill (int slot1, const String& skillId)
     {
-        Command c (*this, "Poser " + skillLabel (skillId) + " dans l'emplacement " + String (slot1));
+        Command c (*this, "Poser " + skillLabel (skillId) + " en " + String (slot1));
         // StateEdit, pas StateSchema : la pose libère aussi les entrées que la skill
         // arrivante ne déclare pas (ETAT Rév. 9 Q1, décision pilote du 17/09).
         StateEdit::setSkill (proc.stateTree(), slot1, skillId, &proc.undoManager());
@@ -546,17 +554,20 @@ namespace plug::ui
 
     void Presenter::clearSlot (int slot1)
     {
-        Command c (*this, "Vider l'emplacement " + String (slot1));
+        Command c (*this, "Vider " + String (slot1));
         StateEdit::clearSlot (proc.stateTree(), slot1, &proc.undoManager());
     }
 
     void Presenter::moveSlot (int from1, int to1, MoveMode mode)
     {
-        const String what = skillLabel (slotView (from1).skillId);
+        // Le nom lu dans l'historique doit dire QUOI, D'OÙ et VERS OÙ : « Déplacer FM
+        // de 3 vers 5 ». « Déplacer » seul ne se relit pas trois gestes plus tard.
+        const auto source = slotView (from1);
+        const String what = source.present ? skillLabel (source.skillId) : String ("l'emplacement vide");
         const String verb = mode == MoveMode::Swap ? String ("Échanger ")
                           : mode == MoveMode::Copy ? String ("Copier ")
                                                    : String ("Déplacer ");
-        Command c (*this, verb + what + " vers " + String (to1));
+        Command c (*this, verb + what + " de " + String (from1) + " vers " + String (to1));
         StateEdit::moveSlot (proc.stateTree(), from1, to1,
                              mode == MoveMode::Swap ? StateEdit::Mode::Swap
                            : mode == MoveMode::Copy ? StateEdit::Mode::Copy
@@ -681,18 +692,18 @@ namespace plug::ui
     void Presenter::undo()
     {
         JUCE_ASSERT_MESSAGE_THREAD
-        ++busy;
+        ++busy; ++editing;                   // défaire est un geste du pilote, l'étoile suit
         proc.undoManager().undo();
-        --busy;
+        --editing; --busy;
         mark (ViewMask::All);
     }
 
     void Presenter::redo()
     {
         JUCE_ASSERT_MESSAGE_THREAD
-        ++busy;
+        ++busy; ++editing;
         proc.undoManager().redo();
-        --busy;
+        --editing; --busy;
         mark (ViewMask::All);
     }
 

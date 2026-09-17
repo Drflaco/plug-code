@@ -25,7 +25,7 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugEditor::PlugEditor (juce::AudioProcessor& processor, Presenter& p)
-        : AudioProcessorEditor (processor), presenter (p), bar (p)
+        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p)
     {
         const auto prefsView = presenter.prefsView();
 
@@ -38,7 +38,8 @@ namespace plug::ui::v1
 
         content.setInterceptsMouseClicks (false, true);   // un clic dans le vide revient à l'éditeur
         content.addAndMakeVisible (bar);
-        for (auto* z : { &macros, &tabs, &controls, &edition, &master })
+        content.addAndMakeVisible (tabs);
+        for (auto* z : { &macros, &controls, &edition, &master })
             content.addAndMakeVisible (*z);
         addAndMakeVisible (content);
 
@@ -86,7 +87,7 @@ namespace plug::ui::v1
         r.removeFromTop (6);
         macros.setBounds (r.removeFromTop (70));
         r.removeFromTop (6);
-        tabs.setBounds (r.removeFromTop (34));
+        tabs.setBounds (r.removeFromTop (PlugTabs::kHeight));
         r.removeFromTop (6);
         master.setBounds (r.removeFromBottom (86));
         r.removeFromBottom (6);
@@ -110,9 +111,12 @@ namespace plug::ui::v1
     //==========================================================================
     void PlugEditor::viewChanged (const ViewMask&)
     {
-        // Étape 1 : seule la barre a de quoi se relire (nom du preset, « * », état de
-        // l'historique). Les widgets des étapes 2 à 7 s'abonneront et filtreront le masque.
+        // Étape 2 : la barre (nom du preset, « * », historique) et les onglets (effets,
+        // activité, sélection). Les widgets des étapes suivantes filtreront le masque ;
+        // ici les deux se relisent entièrement, ce qui coûte quelques chaînes par
+        // notification et rien du tout par frame.
         bar.refresh();
+        tabs.refresh();
     }
 
     void PlugEditor::transportChanged (const TransportView&)

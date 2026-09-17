@@ -159,9 +159,16 @@ namespace plug::ui
         bool presetModified = false;    // l'état a bougé depuis : la barre affiche « geste1 * »
         juce::ListenerList<Listener> listeners;
 
-        // Vrai tant qu'une commande, un geste de knob ou un remplacement d'état court.
-        // Lu depuis parameterValueChanged, qui peut venir du thread audio : atomique.
+        // Deux compteurs, deux questions différentes :
+        //  · `busy` — une commande, un geste OU un remplacement d'état court. Il répond
+        //    « cette valeur ne vient pas de l'hôte » (hostDriven, d-1). Lu depuis
+        //    parameterValueChanged, qui peut venir du thread audio : atomique.
+        //  · `editing` — le PILOTE édite, et rien d'autre. Il répond « le preset affiché
+        //    ne décrit plus l'état » (l'étoile de la barre). Un chargement de preset et un
+        //    flush venu de l'hôte ne le lèvent jamais : même discrimination que hostDriven
+        //    (décision pilote du 17/09).
         std::atomic<int> busy { 0 };
+        std::atomic<int> editing { 0 };
         std::atomic<juce::uint32> hostPending { 0 };   // emplacements marqués depuis le dernier tour
         juce::uint16 hostDriven = 0;                   // acquis pour la session
 

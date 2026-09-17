@@ -19,6 +19,7 @@
 #include "../ViewTypes.h"
 #include "PlugBar.h"
 #include "PlugPanels.h"
+#include "PlugTabs.h"
 #include <memory>
 
 namespace plug::ui::v1
@@ -69,7 +70,8 @@ namespace plug::ui::v1
         // ses pixels réels, la mise en page garde ses 1280×800 logiques.
         juce::Component content;
         PlugBar bar;
-        Zone macros { "Macros" }, tabs { "Onglets" },
+        PlugTabs tabs;
+        Zone macros { "Macros" },
              controls { "Contrôles" }, edition { "Édition" }, master { "Master + Sortie" };
         std::unique_ptr<AboutPanel> about;
         std::unique_ptr<PrefsPanel> prefs;

@@ -52,6 +52,8 @@ namespace plug::ui
         int slot1 = 1;
         juce::String skillId;
         juce::String skillLabel;
+        int skillVersion = 0;           // celle enregistrée dans l'état, pas celle du registre
+        juce::String mixLaw;            // loi naturelle de la skill, en toutes lettres : « -3 dB »
         bool present = false;           // un effet est posé
         bool unknown = false;           // posé mais absent du registre (§3.9) : l'audio traverse
         bool active = true;

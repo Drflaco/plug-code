@@ -70,7 +70,11 @@ namespace plug::ui::v1
         const auto presets = presenter.presetView();
         const auto history = presenter.undoView();
 
-        const String name = presets.currentName.isNotEmpty() ? presets.currentName : String ("sans titre");
+        // Aucun nom connu (Set rouvert : le nom vit dans la session, pas dans l'état) :
+        // « — », jamais « sans titre ». On ne fait pas croire à un preset qui n'existe
+        // pas (décision pilote du 17/09 ; l'attribut dans PlugState est une question
+        // du CdC 0.4, le schéma v2 ne se retouche pas pour un confort d'affichage).
+        const String name = presets.currentName.isNotEmpty() ? presets.currentName : String ("—");
         presetButton.setButtonText (name + (presets.modified ? " *" : "") + "  ▾");
 
         undoButton.setEnabled (history.canUndo);
@@ -83,6 +87,8 @@ namespace plug::ui::v1
     {
         presetButton.setTooltip ("Presets d'état : la bibliothèque, plus charger et enregistrer un fichier.\n"
                                  "Dossier : " + presets.folder
+                                 + (presets.currentName.isEmpty()
+                                        ? String ("\nNom du preset non conservé par le projet en v1.") : String())
                                  + (presets.modified ? "\nL'état a changé depuis le chargement (*)." : ""));
 
         // Le nom de la transaction, pas « Annuler » : c'est lui qui montre la granularité.

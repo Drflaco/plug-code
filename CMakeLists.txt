@@ -135,7 +135,9 @@ set(PLUG_UI_SOURCES
     src/ui/v1/PlugBar.h
     src/ui/v1/PlugBar.cpp
     src/ui/v1/PlugPanels.h
-    src/ui/v1/PlugPanels.cpp)
+    src/ui/v1/PlugPanels.cpp
+    src/ui/v1/PlugTabs.h
+    src/ui/v1/PlugTabs.cpp)
 
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}
