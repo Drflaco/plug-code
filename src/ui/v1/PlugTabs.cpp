@@ -3,6 +3,7 @@
 namespace plug::ui::v1
 {
     using juce::String;
+    using namespace plug::ui::literals;   // "…"_fr : l'unique porte UTF-8 (ViewTypes.h)
 
     namespace
     {
@@ -13,7 +14,7 @@ namespace plug::ui::v1
         constexpr int kEdgeZone = 12;      // bord d'onglet : au-delà c'est un échange, en deçà une insertion
         constexpr int kBannerMs = 3000;    // durée du rappel « Annuler (Ctrl+Z) » après un dépôt
 
-        constexpr int kClearSlot = 1, kSkillBase = 100;
+        constexpr int kClearSlot = 1, kSkillBase = 100, kCopyToBase = 200;
     }
 
     //==========================================================================
@@ -45,15 +46,24 @@ namespace plug::ui::v1
         g.setColour (active ? juce::Colours::white.withAlpha (0.8f) : juce::Colours::white.withAlpha (0.25f));
         if (active) g.fillEllipse (l); else g.drawEllipse (l, 1.0f);
 
-        g.setColour (juce::Colours::white.withAlpha (sourceOfDrag ? 0.35f
-                                                                  : (present ? 0.9f : 0.45f)));
-        if (unknown) g.setColour (juce::Colour (0xffe2b34a));
-        g.setFont (13.0f);
-        g.drawText (title, getLocalBounds().withTrimmedLeft (20).withTrimmedRight (18),
-                    juce::Justification::centredLeft, true);
+        auto textArea = getLocalBounds().withTrimmedLeft (20).withTrimmedRight (18);
 
-        g.setColour (juce::Colours::white.withAlpha (0.45f));
-        g.drawText ("▾", arrow(), juce::Justification::centred, false);
+        // Skill absente du registre : un triangle DESSINÉ, pas un « ⚠ » — U+26A0 manque
+        // dans la police par défaut de Windows (défaut vu dans Live le 17/09).
+        if (unknown)
+        {
+            glyph::warning (g, textArea.removeFromLeft (14).toFloat(), juce::Colour (0xffe2b34a));
+            textArea.removeFromLeft (3);
+        }
+
+        g.setColour (unknown ? juce::Colour (0xffe2b34a)
+                             : juce::Colours::white.withAlpha (sourceOfDrag ? 0.35f : (present ? 0.9f : 0.45f)));
+        // 12 points et non 13 : « 1 · Pitch granulaire » tenait mal dans un onglet, et le
+        // nom complet reste dans l'aide au survol (remarque du pilote, 17/09).
+        g.setFont (12.0f);
+        g.drawText (title, textArea, juce::Justification::centredLeft, true);
+
+        glyph::chevronDown (g, arrow().toFloat(), juce::Colours::white.withAlpha (0.45f));
     }
 
     void PlugTabs::Tab::mouseDown (const juce::MouseEvent& e) { tabs.tabMouseDown (*this, e); }
@@ -69,8 +79,9 @@ namespace plug::ui::v1
         banner.setVisible (false);
         addChildComponent (banner);
 
+        bannerUndo.setButtonText ("Annuler (Ctrl+Z)"_fr);
         bannerUndo.setWantsKeyboardFocus (false);
-        bannerUndo.setTooltip ("Défait le déplacement qui vient d'avoir lieu.");
+        bannerUndo.setTooltip ("Défait le déplacement qui vient d'avoir lieu."_fr);
         bannerUndo.onClick = [this] { presenter.undo(); setBanner ({}, false); };
         bannerUndo.setVisible (false);
         addChildComponent (bannerUndo);
@@ -111,9 +122,9 @@ namespace plug::ui::v1
 
             // Le titre est composé ICI, une fois par notification. paint() ne fabrique
             // aucune chaîne : c'est la règle de rendu du pilote (aucune allocation par frame).
-            const String what = v.unknown ? "⚠ " + v.skillId
-                                          : (v.present ? v.skillLabel : String ("—"));
-            t->title = String (t->slot1) + " · " + what;
+            // Le signe d'alerte d'une skill inconnue est DESSINÉ par Tab::paint, pas écrit.
+            const String what = v.unknown ? v.skillId : (v.present ? v.skillLabel : "—"_fr);
+            t->title = String (t->slot1) + " · "_fr + what;
             t->selected = (t->slot1 == selected);
             t->active = v.active;
             t->unknown = v.unknown;
@@ -121,17 +132,20 @@ namespace plug::ui::v1
 
             String help;
             if (v.unknown)
-                help << "Effet inconnu : " << v.skillId << " v" << v.skillVersion
-                     << "\nL'audio traverse, les données sont conservées (§3.9).";
+                help << "Effet inconnu : "_fr << v.skillId << " v" << v.skillVersion
+                     << "\nL'audio traverse, les données sont conservées (§3.9)."_fr;
             else if (! v.present)
-                help << "Emplacement vide — clic droit ou ▾ pour choisir un effet.";
+                help << "Emplacement vide — clic droit ou chevron pour choisir un effet."_fr;
             else
                 help << v.skillLabel << "  (" << v.skillId << " v" << v.skillVersion << ")"
-                     << "\nLoi de mélange naturelle : " << v.mixLaw
-                     << "\nLatence : non affichée en v1."
-                     << "\nClic = sélectionner · clic droit ou ▾ = changer d'effet · glisser = réordonner.";
+                     << "\nLoi de mélange naturelle : "_fr << v.mixLaw
+                     << "\nLatence : non affichée en v1."_fr;
+            help << "\nClic = sélectionner · clic droit ou chevron = changer d'effet."_fr
+                 << "\nGlisser = réordonner : sur un onglet pour échanger, entre deux pour insérer, "
+                    "Alt pour copier. Au-delà du dernier onglet, l'effet va à la fin des "
+                    "emplacements affichés."_fr;
             if (v.hostDriven)
-                help << "\nDes valeurs sont arrivées de l'hôte sur cet emplacement.";
+                help << "\nDes valeurs sont arrivées de l'hôte sur cet emplacement."_fr;
             t->setTooltip (help);
             t->repaint();
         }
@@ -330,7 +344,7 @@ namespace plug::ui::v1
         // Le bandeau reste trois secondes avec Ctrl+Z à portée de clic : pas de
         // confirmation avant, une porte de sortie après (ETAT d-1).
         auto warning = presenter.moveWarning (from);
-        if (warning.isEmpty()) warning = "Déplacement appliqué : seul l'effet a bougé (§3.2).";
+        if (warning.isEmpty()) warning = "Déplacement appliqué : seul l'effet a bougé (§3.2)."_fr;
         setBanner (warning, true);
         startTimer (kBannerMs);
         refresh();
@@ -352,24 +366,36 @@ namespace plug::ui::v1
     }
 
     //==========================================================================
+    void PlugTabs::openSkillMenu (int slot1) { showSkillMenu (slot1); }
+
     void PlugTabs::showSkillMenu (int slot1)
     {
         const auto v = presenter.slotView (slot1);
         const auto ids = presenter.skillIds();
 
         juce::PopupMenu menu;
-        menu.addSectionHeader ("Emplacement " + String (slot1));
+        menu.addSectionHeader ("Emplacement "_fr + String (slot1));
         for (int i = 0; i < ids.size(); ++i)
         {
-            // JUCE ne donne pas d'aide au survol à un élément de menu : l'identifiant
-            // est donc écrit dans l'élément lui-même, ce qui le rend plus visible
-            // qu'une aide — et c'est lui qui est gravé à jamais (§3.9).
-            menu.addItem (juce::PopupMenu::Item (presenter.skillLabel (ids[i]) + "   ·   " + ids[i])
+            // JUCE ne donne pas d'aide au survol à un élément de menu : l'identifiant est
+            // donc écrit dans l'élément lui-même, ce qui le rend plus visible qu'une aide
+            // — et c'est lui qui est gravé à jamais (§3.9).
+            menu.addItem (juce::PopupMenu::Item (presenter.skillLabel (ids[i]) + "   ·   "_fr + ids[i])
                               .setID (kSkillBase + i)
                               .setTicked (ids[i] == v.skillId));
         }
         menu.addSeparator();
-        menu.addItem (juce::PopupMenu::Item ("Vider l'emplacement").setID (kClearSlot).setEnabled (v.present));
+
+        // Repli au cas où Live mange la touche Alt du glisser-copier (décision pilote
+        // du 17/09) : la MÊME commande, la même transaction, par le menu.
+        juce::PopupMenu copyTo;
+        const int shown = presenter.displayedSlots();
+        for (int s = 1; s <= shown; ++s)
+            if (s != slot1)
+                copyTo.addItem (juce::PopupMenu::Item (String (s)).setID (kCopyToBase + s).setEnabled (v.present));
+        menu.addSubMenu ("Copier vers..."_fr, copyTo, v.present);
+
+        menu.addItem (juce::PopupMenu::Item ("Vider l'emplacement"_fr).setID (kClearSlot).setEnabled (v.present));
 
         Component* target = nullptr;
         for (auto& t : tabs) if (t->slot1 == slot1) target = t.get();
@@ -379,6 +405,13 @@ namespace plug::ui::v1
                             {
                                 if (result == 0) return;
                                 if (result == kClearSlot) { presenter.clearSlot (slot1); refresh(); return; }
+
+                                if (result >= kCopyToBase)
+                                {
+                                    presenter.moveSlot (slot1, result - kCopyToBase, Presenter::MoveMode::Copy);
+                                    refresh();
+                                    return;
+                                }
 
                                 const int index = result - kSkillBase;
                                 if (index < 0 || index >= ids.size()) return;

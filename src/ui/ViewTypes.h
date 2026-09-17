@@ -13,6 +13,30 @@
 #include <array>
 #include <vector>
 
+namespace plug::ui::literals
+{
+    // L'UNIQUE porte d'entrée d'un littéral français vers une juce::String.
+    //
+    // juce::String(const char*) décode OCTET PAR OCTET (CharPointer_ASCII,
+    // juce_String.cpp:307) : « Chargé » devient « ChargÃ© », en silence, en Release.
+    // C'est le défaut que le pilote a vu dans Live le 17/09. /utf-8 garantit que les
+    // octets du littéral SONT de l'UTF-8 ; ce suffixe garantit qu'on les DÉCODE comme
+    // tels. Les deux moitiés sont nécessaires, aucune ne suffit seule.
+    //
+    // Règle de src/ui/ : tout littéral portant un caractère non ASCII s'écrit "…"_fr.
+    inline juce::String operator"" _fr (const char* bytes, size_t length)
+    {
+        return juce::String::fromUTF8 (bytes, (int) length);
+    }
+
+    // Même porte, pour les octets déclarés par une skill (SkillInfo::label,
+    // SkillParamDecl::label / help / unit) : des const char*, jamais des String.
+    inline juce::String fr (const char* bytes)
+    {
+        return bytes != nullptr ? juce::String::fromUTF8 (bytes) : juce::String();
+    }
+}
+
 namespace plug::ui
 {
     constexpr int kSlots = 16;

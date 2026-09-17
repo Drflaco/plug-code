@@ -9,9 +9,50 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include "GridMap.h"
 #include <array>
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <vector>
+
+namespace plug::display
+{
+    // Mise en forme des valeurs déclarées par les skills (J4b c-2, étape 3).
+    // Un seul endroit : neuf skills qui écriraient chacune leur virgule finiraient par
+    // en écrire neuf façons. Français : la virgule est le séparateur décimal.
+
+    // L'unique porte d'un littéral non ASCII d'une skill vers une juce::String.
+    // juce::String(const char*) décode octet par octet (CharPointer_ASCII) : « ×2 »
+    // y devient « Ã—2 ». Mesuré le 17/09 par PlugBench, qui affichait « Ã3 ».
+    inline juce::String text (const char* utf8Bytes) noexcept
+    {
+        return juce::String::fromUTF8 (utf8Bytes);
+    }
+
+    inline juce::String num (double v, int decimals) noexcept
+    {
+        return juce::String (v, decimals).replaceCharacter ('.', ',');
+    }
+
+    // Deux à trois chiffres significatifs, choisis sur l'ordre de grandeur : « 12400 Hz »
+    // et « 0,125 ms » se lisent ; « 12400,00 » et « 0,13 » non.
+    inline juce::String sig (double v) noexcept
+    {
+        const double a = std::abs (v);
+        if (a >= 100.0) return num (v, 0);
+        if (a >= 10.0)  return num (v, 1);
+        if (a >= 1.0)   return num (v, 2);
+        return num (v, 3);
+    }
+
+    // Gain linéaire vers décibels, avec le seul cas que la formule ne couvre pas.
+    // « -inf » et non « -∞ » : aucun caractère qui dépende d'une police absente
+    // (défaut vu dans Live le 17/09).
+    inline juce::String dB (double linear) noexcept
+    {
+        if (linear <= 0.0) return "-inf";
+        return sig (20.0 * std::log10 (linear));
+    }
+}
 
 namespace plug
 {
@@ -41,9 +82,16 @@ namespace plug
 
     struct SkillInfo
     {
-        juce::String id;                // stable à jamais, jamais réutilisé (§3.9)
+        juce::String id;                // stable à jamais, jamais réutilisé (§3.9) ; ASCII
         int version = 1;
-        juce::String label;
+        // ENCODAGE — `label` est des OCTETS, pas une juce::String, et c'est volontaire
+        // (défaut vu dans Live le 17/09). juce::String(const char*) décode octet par
+        // octet (CharPointer_ASCII, juce_String.cpp:307) : « Délai » y devient « DÃ©lai »
+        // en silence. En gardant const char*, la conversion ne peut plus se faire toute
+        // seule — qui lit ce champ DOIT choisir juce::String::fromUTF8. C'est l'invariant
+        // qui supprime la classe d'erreur au lieu de corriger ses instances (REGIME §4).
+        // Même raison pour SkillParamDecl::label, ::help et ::unit.
+        const char* label = "";
         MixLaw mixLaw = MixLaw::Minus3; // loi naturelle du mélange local (§3.7)
         bool factice = false;           // vrai pour les modules de test J3 : hors catalogue, hors contrat
         std::vector<SkillParamDecl> params;

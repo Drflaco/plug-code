@@ -15,6 +15,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "../Presenter.h"
 #include "../ViewTypes.h"
+#include "PlugGlyphs.h"
 #include <memory>
 #include <vector>
 
@@ -33,6 +34,10 @@ namespace plug::ui::v1
 
         // Relit les Views et recompose titres et aides. Appelée à chaque notification.
         void refresh();
+
+        // Le menu d'effet d'un emplacement — les contrôles s'en servent aussi, pour
+        // qu'il n'existe qu'un seul catalogue à tenir.
+        void openSkillMenu (int slot1);
 
         static constexpr int kRowHeight = 34;
         static constexpr int kBannerHeight = 24;
@@ -93,7 +98,7 @@ namespace plug::ui::v1
         DropKind dropKind = DropKind::None;
 
         juce::Label banner;
-        juce::TextButton bannerUndo { "Annuler (Ctrl+Z)" };
+        juce::TextButton bannerUndo;   // texte posé au constructeur, via la porte UTF-8
         const juce::String copyTag { "copie" };   // membre : jamais construit dans paint()
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlugTabs)

@@ -1,8 +1,10 @@
 #include "Format.h"
+#include "ViewTypes.h"
 
 namespace plug::ui::Format
 {
     using juce::String;
+    using namespace plug::ui::literals;   // "…"_fr : l'unique porte UTF-8 (ViewTypes.h)
 
     String rawText (float raw)
     {
@@ -19,22 +21,22 @@ namespace plug::ui::Format
     String lockReason (bool locked, bool lockedByDefault, bool structural, const String& help)
     {
         if (structural)
-            return "Structurel, jamais par pas ni modulé" + (help.isNotEmpty() ? " : " + help : String());
+            return "Structurel, jamais par pas ni modulé"_fr + (help.isNotEmpty() ? " : " + help : String());
         if (locked && lockedByDefault)
-            return "Verrouillé par la skill" + (help.isNotEmpty() ? " : " + help : String());
+            return "Verrouillé par la skill"_fr + (help.isNotEmpty() ? " : " + help : String());
         if (locked)
-            return "Verrouillé par toi — la skill le laisse libre";
+            return "Verrouillé par toi — la skill le laisse libre"_fr;
         if (lockedByDefault)
-            return "Déverrouillé par toi — la skill le verrouille par défaut"
+            return "Déverrouillé par toi — la skill le verrouille par défaut"_fr
                        + (help.isNotEmpty() ? " : " + help : String());
         return {};
     }
 
     String lockWord (bool locked, bool lockedByDefault, bool structural)
     {
-        if (structural) return "structurel";
-        if (locked) return lockedByDefault ? "skill" : "toi";
-        if (lockedByDefault) return "toi";
+        if (structural) return "structurel"_fr;
+        if (locked) return lockedByDefault ? "skill"_fr : "toi"_fr;
+        if (lockedByDefault) return "toi"_fr;
         return {};
     }
 
@@ -46,45 +48,45 @@ namespace plug::ui::Format
 
     String genericLabel (const String& paramName)
     {
-        if (paramName == "mix")  return "Mix";
-        if (paramName == "gain") return "Gain";
-        if (paramName == "main") return "Principal";
+        if (paramName == "mix")  return "Mix"_fr;
+        if (paramName == "gain") return "Gain"_fr;
+        if (paramName == "main") return "Principal"_fr;
         if (paramName.startsWith ("param") && paramName.length() == 6)
-            return "Paramètre " + paramName.substring (5).toUpperCase();
-        if (isReserve (paramName)) return "—";
+            return "Paramètre "_fr + paramName.substring (5).toUpperCase();
+        if (isReserve (paramName)) return "—"_fr;   // tiret cadratin : présent dans Segoe UI et Verdana
         return paramName;
     }
 
     String genericHelp (const String& paramName)
     {
         if (paramName == "mix")  return "Mélange local de cet emplacement : le socle le compose toujours, "
-                                        "quelle que soit la skill en place (§3.7).";
+                                        "quelle que soit la skill en place (§3.7)."_fr;
         if (paramName == "gain") return "Gain de sortie de l'emplacement : 0 = silence, 0,5 = unité, 1 = +6 dB "
-                                        "(échelle linéaire de la grille).";
-        if (isReserve (paramName)) return "Réserve : aucune skill ne l'occupe.";
-        return "Entrée générique de l'emplacement : la skill en place ne l'a pas déclarée.";
+                                        "(échelle linéaire de la grille)."_fr;
+        if (isReserve (paramName)) return "Réserve : aucune skill ne l'occupe."_fr;
+        return "Entrée générique de l'emplacement : la skill en place ne l'a pas déclarée."_fr;
     }
 
     //==========================================================================
     String slotSettingLabel (const String& which)
     {
-        if (which == "active") return "Actif";
-        if (which == "glide")  return "Glissement";
-        if (which == "fade")   return "Fondu";
-        if (which == "tail")   return "Queue";
+        if (which == "active") return "Actif"_fr;
+        if (which == "glide")  return "Glissement"_fr;
+        if (which == "fade")   return "Fondu"_fr;
+        if (which == "tail")   return "Queue"_fr;
         return which;
     }
 
     String slotSettingHelp (const String& which)
     {
         if (which == "active") return "Contournement doux de l'emplacement : la latence ne change pas, "
-                                      "le fondu adoucit l'entrée et la sortie (§3.3.2).";
+                                      "le fondu adoucit l'entrée et la sortie (§3.3.2)."_fr;
         if (which == "glide")  return "Durée de glissement entre deux valeurs de pas, de 0 à 4 pas. "
-                                      "Au-delà d'un pas, la valeur n'atteint plus sa cible avant la suivante.";
+                                      "Au-delà d'un pas, la valeur n'atteint plus sa cible avant la suivante."_fr;
         if (which == "fade")   return "Fondu d'activation, de 0 à 500 ms, course quadratique : "
-                                      "il retire le clic à l'allumage comme à l'extinction (§3.3.2).";
+                                      "il retire le clic à l'allumage comme à l'extinction (§3.3.2)."_fr;
         if (which == "tail")   return "Ce que devient la queue quand l'emplacement s'éteint : "
-                                      "laissée mourir, ou coupée net (§3.3.2).";
+                                      "laissée mourir, ou coupée net (§3.3.2)."_fr;
         return {};
     }
 
@@ -92,30 +94,33 @@ namespace plug::ui::Format
     String masterInertLabel (const String& entryId)
     {
         String label = entryId;
-        if (entryId == "master.drive")             label = "Drive";
-        else if (entryId == "master.tone")         label = "Tonalité";
-        else if (entryId == "master.comp")         label = "Compression";
-        else if (entryId == "master.lowFreq")      label = "Grave préservé";
-        else if (entryId == "master.driveRouting") label = "Routage du drive";
-        else if (entryId == "master.quality")      label = "Qualité";
-        return label + " (J4c)";
+        if (entryId == "master.drive")             label = "Drive"_fr;
+        else if (entryId == "master.tone")         label = "Tonalité"_fr;
+        else if (entryId == "master.comp")         label = "Compression"_fr;
+        else if (entryId == "master.lowFreq")      label = "Grave préservé"_fr;
+        else if (entryId == "master.driveRouting") label = "Routage du drive"_fr;
+        else if (entryId == "master.quality")      label = "Qualité"_fr;
+        return label + " (J4c)"_fr;
     }
 
     String masterInertHelp()
     {
         return "Pas encore implémenté — J4c. L'entrée existe dans la grille, le moteur ne la lit pas : "
-               "la bouger n'a aucun effet sur le son.";
+               "la bouger n'a aucun effet sur le son."_fr;
     }
 
     //==========================================================================
     String emptySlotText()
     {
-        return "Emplacement vide — choisir un effet \xe2\x96\xbe";
+        // Pas de « ▾ » ici : U+25BE n'est pas garanti dans la police par défaut de Windows,
+        // et un chevron manquant se voit (défaut du 17/09). Les widgets qui en veulent un
+        // le DESSINENT (PlugGlyphs.h).
+        return "Emplacement vide — choisir un effet"_fr;
     }
 
     String unknownSkillHelp (const String& skillId, int version)
     {
         return "Effet inconnu (" + skillId + " v" + String (version) + ") : l'audio traverse, "
-               "les données sont conservées (§3.9).";
+               "les données sont conservées (§3.9)."_fr;
     }
 }

@@ -54,6 +54,23 @@ namespace
         return kRatios[(size_t) k];
     }
 
+    // Lisibilité (J4b c-2) : les mêmes conversions que process(). Le rapport s'affiche
+    // comme il s'entend — un rapport accroché, pas un décimal approché.
+    juce::String dispDepth  (float v) { return display::sig (1000.0 * kDepthMaxS * (double) quad (v)); }
+    juce::String dispFreq   (float v) { return display::sig (baseHz (v)); }
+    juce::String dispRatio  (float v)
+    {
+        const float r = ratioFor (v);
+        // display::text : « × » est du multi-octet, juce::String(const char*) le
+        // décoderait octet par octet et afficherait « Ã—2 » (mesuré le 17/09).
+        if (r < 0.30f) return display::text ("×1/4");
+        if (r < 0.40f) return display::text ("×1/3");
+        if (r < 0.75f) return display::text ("×1/2");
+        return display::text ("×") + juce::String ((int) std::lround (r));
+    }
+    juce::String dispSelf   (float v) { return display::sig (1000.0 * kSelfMaxS * (double) quad (v)); }
+    juce::String dispStereo (float v) { return display::sig ((juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 200.0f); }
+
     //==========================================================================
     class Fm : public Skill
     {
@@ -65,19 +82,19 @@ namespace
                 {
                     { M_DEPTH,  "Profondeur",
                       "Index de modulation : excursion du retard de 0 à 2 ms, course quadratique (2 ms valent environ 6,3 radians pour une composante à 1 kHz, et l'index croît avec la fréquence de la composante). À 0 la sortie est l'entrée intacte. Libre : c'est le réglage que le séquenceur fait vivre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispDepth },
                     { M_FREQ,   "Fréquence",
                       "Fréquence de base du modulateur, de 0,5 Hz à 2 kHz, course exponentielle (le milieu tombe vers 32 Hz). Sous 20 Hz on entend un vibrato, au-dessus des partiels latéraux. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "Hz", dispFreq },
                     { M_RATIO,  "Rapport",
                       "Multiplie la fréquence de base par un rapport simple, accroché en 11 paliers : 1/4, 1/3, 1/2, 1, 2, 3, 4, 5, 6, 7, 8 (le palier le plus proche de la valeur × 10). Des rapports simples font tomber les partiels sur une même série harmonique. Verrouillé par défaut : le faire sauter d'un pas à l'autre est exactement ce qui disperse les partiels et casse la cohérence cherchée ; déverrouille-le si c'est l'effet voulu.",
-                      LockClass::LockedByDefault, false },
+                      LockClass::LockedByDefault, false, "", dispRatio },
                     { M_SELF,   "Auto-modulation",
                       "Le signal module son propre retard, en plus de l'oscillateur : 0 à 2 ms d'excursion, course quadratique. Épaissit sans ajouter de hauteur étrangère, puisque le modulateur est la source elle-même. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispSelf },
                     { M_STEREO, "Décalage stéréo",
                       "Écarte la phase des deux modulateurs : 0,5 = les deux canaux en phase (image mono), 0 et 1 = une demi-période d'écart de part et d'autre, soit une période entière entre gauche et droite. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispStereo },
                 }
             };
             return i;

@@ -49,6 +49,16 @@ namespace
     // Trois paliers égaux sur l'entrée continue : passe-bas, passe-bande, passe-haut.
     inline int filterType (float v) noexcept { return juce::jlimit (0, 2, (int) (juce::jlimit (0.0f, 1.0f, v) * 3.0f)); }
 
+    // Lisibilité (J4b c-2) : ce que le pilote lit sous le knob. Fonctions pures, sans
+    // état, réutilisant les conversions ci-dessus — un seul sens par paramètre.
+    juce::String dispCut    (float v) { return display::sig (kFcMin * std::exp (juce::jlimit (0.0f, 1.0f, v) * kCutSpan)); }
+    juce::String dispRes    (float v) { return display::sig (resonanceQ (v)); }
+    juce::String dispType   (float v)
+    {
+        switch (filterType (v)) { case 0: return "Passe-bas"; case 1: return "Passe-bande"; default: return "Passe-haut"; }
+    }
+    juce::String dispStereo (float v) { return display::sig ((juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0f * kStereoOctaves); }
+
     //==========================================================================
     class Filter : public Skill
     {
@@ -60,16 +70,16 @@ namespace
                 {
                     { M_CUT,    "Coupure",
                       "Fréquence de coupure, de 20 Hz à 20 kHz, course exponentielle (le milieu tombe vers 630 Hz). Libre : c'est le balayage que le séquenceur fait vivre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "Hz", dispCut },
                     { M_RES,    "Résonance",
                       "Pointe à la coupure : Q de 0,5 (amorti) à 12 (environ +21 dB). Libre : la pointe suit la coupure sans risque de resynchronisation.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "", dispRes },
                     { M_TYPE,   "Type",
                       "Type de filtre en trois paliers : 0 à 0,33 passe-bas, 0,34 à 0,66 passe-bande, 0,67 à 1 passe-haut. Verrouillé par défaut : changer de palier en cours de séquence déplace la sortie d'un tap à l'autre et s'entend comme une marche ; déverrouille-le si c'est l'effet cherché.",
-                      LockClass::LockedByDefault, false },
+                      LockClass::LockedByDefault, false, "", dispType },
                     { M_STEREO, "Décalage stéréo",
                       "Écarte les deux coupures : 0,5 = aucun écart, 0 et 1 = une demi-octave par canal (une octave entre gauche et droite), le sens s'inversant de part et d'autre du centre. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "oct", dispStereo },
                 }
             };
             return i;

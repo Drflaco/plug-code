@@ -14,11 +14,17 @@ du rythme des pas, pas d'un LFO.
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Gain | 0 = silence · 0,5 = unité · 1 = +6 dB (loi linéaire de la grille) | libre | glissement |
-| `paramA` | Montée | 0 → 50 ms, course quadratique (temps des 99 %) | libre | saut |
-| `paramB` | Descente | 0 → 200 ms, course quadratique (temps des 99 %) | libre | saut |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Gain | 0 = silence · 0,5 = unité · 1 = +6 dB (loi linéaire de la grille) | libre | glissement | `0,00 dB` (`-inf` à zéro) |
+| `paramA` | Montée | 0 → 50 ms, course quadratique (temps des 99 %) | libre | saut | `12,5 ms` |
+| `paramB` | Descente | 0 → 200 ms, course quadratique (temps des 99 %) | libre | saut | `50,0 ms` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Ce qui rend la découpe utilisable.** Un pas qui commande un saut de gain
 produit un clic : la marche est instantanée, le haut-parleur la suit. Les deux

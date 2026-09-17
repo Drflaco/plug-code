@@ -60,6 +60,12 @@ namespace
         return (float) (kSpanMinS * sr) * std::exp (juce::jlimit (0.0f, 1.0f, v) * kSpanSpan);
     }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles.
+    juce::String dispPitch   (float v) { return display::sig ((double) (juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0 * kPitchSemis); }
+    juce::String dispSpan    (float v) { return display::sig (1000.0 * kSpanMinS * std::exp ((double) juce::jlimit (0.0f, 1.0f, v) * kSpanSpan)); }
+    juce::String dispInertia (float v) { const double c = (double) juce::jlimit (0.0f, 1.0f, v); return display::sig (1000.0 * kInertiaMaxS * c * c); }
+    juce::String dispStereo  (float v) { return display::sig ((double) (juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0 * kDetuneCents); }
+
     inline float detuneFor (float v) noexcept
     {
         return std::exp2 ((juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0f * kDetuneCents / 1200.0f);
@@ -91,16 +97,16 @@ namespace
                 {
                     { M_PITCH,   "Hauteur",
                       "Vitesse de lecture de la bande, de -12 à +12 demi-tons (0,5 = vitesse d'origine) : la hauteur et la durée changent ensemble, comme une bande qu'on accélère. Verrouillé par défaut (§3.3.1) : la hauteur est le cas type du verrou, une valeur tirée à chaque pas emmène le traité hors de la tonalité de la source et fait recaler la tête sans arrêt. Le geste 3 se joue justement en le déverrouillant et en le faisant glisser — c'est pour ça que sa transition par défaut est le glissement, pas le saut.",
-                      LockClass::LockedByDefault, true },
+                      LockClass::LockedByDefault, true, "demi-tons", dispPitch },
                     { M_SPAN,    "Portée",
                       "Distance que la tête peut parcourir avant d'être recalée par un fondu de 4 ms : de 10 ms à 500 ms, course exponentielle (le milieu tombe vers 70 ms). Courte, la bande bégaie et le recalage devient une texture ; longue, elle plonge loin avant de revenir. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispSpan },
                     { M_INERTIA, "Inertie",
                       "Temps que met la vitesse de bande à rejoindre la valeur du pas : de 0 (instantané) à 500 ms, course quadratique. C'est le poids du moteur — c'est lui qui donne le glissement du geste 3 plutôt qu'une marche. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispInertia },
                     { M_STEREO,  "Écart stéréo",
                       "Désaccorde les deux canaux, jusqu'à 25 centièmes de demi-ton par canal (0,5 = aucun écart, gauche et droite rigoureusement identiques). Les deux têtes s'écartent lentement, puis recalent chacune de leur côté : l'image s'ouvre. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "cents", dispStereo },
                 }
             };
             return i;

@@ -16,12 +16,18 @@ agit sur le repitch lui-même, pas sur le mélange.
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Hauteur | -12 → +12 demi-tons (0,5 = vitesse d'origine) | **verrouillé par défaut** | **glissement** |
-| `paramA` | Portée | 10 ms → 500 ms de course avant recalage, exponentielle (milieu ≈ 70 ms) | libre | glissement |
-| `paramB` | Inertie | 0 → 500 ms, quadratique | libre | glissement |
-| `stereo` | Écart stéréo | 0,5 = aucun écart ; 0 et 1 = 25 centièmes de demi-ton par canal | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Hauteur | -12 → +12 demi-tons (0,5 = vitesse d'origine) | **verrouillé par défaut** | **glissement** | `0,00 demi-tons` |
+| `paramA` | Portée | 10 ms → 500 ms de course avant recalage, exponentielle (milieu ≈ 70 ms) | libre | glissement | `70,7 ms` |
+| `paramB` | Inertie | 0 → 500 ms, quadratique | libre | glissement | `125 ms` |
+| `stereo` | Écart stéréo | 0,5 = aucun écart ; 0 et 1 = 25 centièmes de demi-ton par canal | libre | glissement | `0,00 cents` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Le recalage, et pourquoi il existe.** Une tête lue plus vite que l'écriture
 rattrape le présent ; lue moins vite, elle prend un retard sans fin. Une bande

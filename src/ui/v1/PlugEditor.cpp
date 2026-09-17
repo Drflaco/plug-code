@@ -4,6 +4,7 @@
 namespace plug::ui::v1
 {
     using juce::String;
+    using namespace plug::ui::literals;   // "…"_fr : l'unique porte UTF-8 (ViewTypes.h)
 
     //==========================================================================
     PlugEditor::Zone::Zone (const String& name) : title (name)
@@ -25,7 +26,7 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugEditor::PlugEditor (juce::AudioProcessor& processor, Presenter& p)
-        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p)
+        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p), macros (p), controls (p)
     {
         const auto prefsView = presenter.prefsView();
 
@@ -39,7 +40,11 @@ namespace plug::ui::v1
         content.setInterceptsMouseClicks (false, true);   // un clic dans le vide revient à l'éditeur
         content.addAndMakeVisible (bar);
         content.addAndMakeVisible (tabs);
-        for (auto* z : { &macros, &controls, &edition, &master })
+        content.addAndMakeVisible (macros);
+        content.addAndMakeVisible (controls);
+        // Le menu d'effet vit dans les onglets : les contrôles le lui demandent.
+        controls.onChooseSkill = [this] (int slot1) { tabs.openSkillMenu (slot1); };
+        for (auto* z : { &edition, &master })
             content.addAndMakeVisible (*z);
         addAndMakeVisible (content);
 
@@ -60,6 +65,19 @@ namespace plug::ui::v1
         addKeyListener (this);
 
         presenter.addListener (this);
+
+        // Premier affichage APRÈS construction, jamais pendant. Les widgets se lisent
+        // dans LEUR constructeur — donc pendant l'initialisation des membres de
+        // l'éditeur, avant que celui-ci existe et avant qu'il écoute le Presenter. Sur
+        // une instance neuve rien ne changeait ensuite, et ce premier état restait à
+        // l'écran : c'est ce que le pilote a vu le 17/09 (indicateurs d'activité faux,
+        // corrigés d'eux-mêmes dès qu'un preset était chargé, c'est-à-dire dès la
+        // première notification). Le modèle, lui, est juste — PlugBench §6 le vérifie :
+        // seize emplacements actifs sur l'état par défaut.
+        bar.refresh();
+        tabs.refresh();
+        macros.refresh();
+        controls.refresh();
     }
 
     PlugEditor::~PlugEditor()
@@ -85,7 +103,7 @@ namespace plug::ui::v1
         auto r = content.getLocalBounds().reduced (6, 6);
         bar.setBounds (r.removeFromTop (PlugBar::kHeight));
         r.removeFromTop (6);
-        macros.setBounds (r.removeFromTop (70));
+        macros.setBounds (r.removeFromTop (PlugMacros::kHeight));
         r.removeFromTop (6);
         tabs.setBounds (r.removeFromTop (PlugTabs::kHeight));
         r.removeFromTop (6);
@@ -117,6 +135,8 @@ namespace plug::ui::v1
         // notification et rien du tout par frame.
         bar.refresh();
         tabs.refresh();
+        macros.refresh();
+        controls.refresh();
     }
 
     void PlugEditor::transportChanged (const TransportView&)

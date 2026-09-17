@@ -13,6 +13,7 @@
 #include "skills/Skills.h"
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <set>
 
 using namespace plug;
@@ -75,13 +76,29 @@ namespace
         auto& reg = SkillRegistry::instance();
         const auto* info = reg.info (id);
         auto skill = reg.create (id);
-        report << "\n== " << id << " — " << (info ? info->label : juce::String ("?")) << " ==\n";
+        report << "\n== " << id << " — "
+               << (info != nullptr ? juce::String::fromUTF8 (info->label) : juce::String ("?")) << " ==\n";
         if (info == nullptr || skill == nullptr) { check (false, "skill introuvable dans le registre"); return; }
 
         // 1. Identité et déclarations (§3.9).
         check (info->id.isNotEmpty() && info->id.containsChar ('.'), "identité « " + info->id + " » de la forme famille.nom");
         check (info->version >= 1, "version déclarée : " + juce::String (info->version));
-        check (info->label.isNotEmpty(), "libellé renseigné");
+        // ENCODAGE (défaut vu dans Live le 17/09) : le libellé est des OCTETS UTF-8, jamais
+        // une juce::String construite implicitement — juce::String(const char*) décode
+        // octet par octet et « Délai » y devient « DÃ©lai ». On le décode explicitement, et
+        // on vérifie que ces octets SONT de l'UTF-8 valide : si /utf-8 disparaissait du
+        // CMake, MSVC réencoderait les littéraux dans la page de code ANSI et ce cas tombe.
+        check (juce::String::fromUTF8 (info->label).isNotEmpty(), "libellé renseigné");
+        check (juce::CharPointer_UTF8::isValidString (info->label, std::numeric_limits<int>::max()),
+               "libellé encodé en UTF-8 valide");
+        {
+            bool utf8 = true;
+            for (const auto& d : info->params)
+                utf8 &= juce::CharPointer_UTF8::isValidString (d.label, std::numeric_limits<int>::max())
+                     && juce::CharPointer_UTF8::isValidString (d.help, std::numeric_limits<int>::max())
+                     && juce::CharPointer_UTF8::isValidString (d.unit, std::numeric_limits<int>::max());
+            check (utf8, "libellés, aides et unités des paramètres encodés en UTF-8 valide");
+        }
         check (! info->factice, "déclarée non factice (entre au catalogue §3.8)");
         check (! info->params.empty(), juce::String (info->params.size()) + " paramètre(s) déclaré(s)");
 

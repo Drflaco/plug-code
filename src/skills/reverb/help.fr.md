@@ -14,14 +14,20 @@ réverbe séquencés.
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Décroissance | 0,2 s → 6 s (RT60), exponentielle | libre | glissement |
-| `paramA` | Amortissement | 0 = transparent · 0,5 ≈ 11 kHz · 1 ≈ 800 Hz (passe-bas de boucle, à 48 kHz) | libre | glissement |
-| `paramB` | Taille | 35 % → 100 % (première réflexion 10 ms → 30 ms) | **verrouillée par défaut** | saut |
-| `paramC` | Diffusion | 0 → 0,7 (coefficient des quatre passe-tout) | libre | glissement |
-| `paramD` | Grave | 20 Hz → 500 Hz (passe-haut de boucle) | libre | glissement |
-| `stereo` | Largeur | 0 = queue mono · 1 = chaque canal garde sa queue | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Décroissance | 0,2 s → 6 s (RT60), exponentielle | libre | glissement | `1,10 s` |
+| `paramA` | Amortissement | 0 = transparent · 0,5 ≈ 11 kHz · 1 ≈ 800 Hz (passe-bas de boucle, à 48 kHz) | libre | glissement | `25,0 %` |
+| `paramB` | Taille | 35 % → 100 % (première réflexion 10 ms → 30 ms) | **verrouillée par défaut** | saut | `67,5 %` |
+| `paramC` | Diffusion | 0 → 0,7 (coefficient des quatre passe-tout) | libre | glissement | `50,0 %` |
+| `paramD` | Grave | 20 Hz → 500 Hz (passe-haut de boucle) | libre | glissement | `100 Hz` |
+| `stereo` | Largeur | 0 = queue mono · 1 = chaque canal garde sa queue | libre | glissement | `50,0 %` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Pourquoi la taille est verrouillée par défaut.** La changer déplace d'un coup
 les têtes des huit peignes : la queue en cours se replie sur une autre longueur

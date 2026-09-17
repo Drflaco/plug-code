@@ -27,6 +27,11 @@ namespace
     constexpr float kReleaseMaxMs = 200.0f;
     constexpr float kLn100 = 4.605170186f;    // ln(100) : le temps déclaré est celui des 99 %
 
+    // Lisibilité (J4b c-2) : exactement les conversions de process(), pas une de plus.
+    juce::String dispLevel (float v) { return display::dB (grid::gainLinear (v)); }
+    juce::String dispAtt   (float v) { const float c = juce::jlimit (0.0f, 1.0f, v); return display::sig (kAttackMaxMs  * c * c); }
+    juce::String dispRel   (float v) { const float c = juce::jlimit (0.0f, 1.0f, v); return display::sig (kReleaseMaxMs * c * c); }
+
     //==========================================================================
     class Gain : public Skill
     {
@@ -38,13 +43,13 @@ namespace
                 {
                     { M_LEVEL, "Gain",
                       "Gain appliqué au signal : 0 = silence, 0,5 = unité, 1 = +6 dB (échelle linéaire, celle de la grille). Libre : c'est lui que le séquenceur hache.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "dB", dispLevel },
                     { M_ATT,   "Montée",
                       "Temps pour rejoindre un gain plus fort : 0 à 50 ms (99 % de la marche), course quadratique. À 0, la montée est franche ; quelques millisecondes suffisent à retirer le clic. Libre.",
-                      LockClass::Free, false },
+                      LockClass::Free, false, "ms", dispAtt },
                     { M_REL,   "Descente",
                       "Temps pour rejoindre un gain plus faible : 0 à 200 ms (99 % de la marche), course quadratique. Plus long que la montée, il donne une découpe qui respire au lieu de trancher. Libre.",
-                      LockClass::Free, false },
+                      LockClass::Free, false, "ms", dispRel },
                 }
             };
             return i;

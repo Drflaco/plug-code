@@ -24,9 +24,12 @@ namespace plug
        #else
         const juce::String version ("dev");
        #endif
+        // fromUTF8 : juce::String(const char*) décoderait « compilé » octet par octet
+        // (CharPointer_ASCII) et l'afficherait « compilÃ© » — défaut vu dans Live le 17/09.
         return "Plug " + version
-             + "  ·  commit " + PLUG_GIT_COMMIT
-             + "  ·  compilé le " + __DATE__ + " à " + __TIME__;
+             + juce::String::fromUTF8 ("  ·  commit ") + PLUG_GIT_COMMIT
+             + juce::String::fromUTF8 ("  ·  compilé le ") + __DATE__
+             + juce::String::fromUTF8 (" à ") + __TIME__;
     }
 
     // Bandeau d'identité posé au-dessus de l'éditeur générique (échafaudage J2,

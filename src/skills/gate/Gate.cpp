@@ -49,6 +49,13 @@ namespace
         return c <= 0.0f ? 0.0f : std::exp (kThrMinDb * (1.0f - c) * kDbToLin);
     }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles.
+    juce::String dispThr   (float v) { return display::sig (kThrMinDb * (1.0f - juce::jlimit (0.0f, 1.0f, v))); }
+    juce::String dispAtt   (float v) { return display::sig (1000.0f * attackSec (v)); }
+    juce::String dispHold  (float v) { return display::sig (1000.0f * holdSec (v)); }
+    juce::String dispRel   (float v) { return display::sig (1000.0f * releaseSec (v)); }
+    juce::String dispRange (float v) { return display::dB (floorGain (v)); }
+
     //==========================================================================
     class Gate : public Skill
     {
@@ -60,19 +67,19 @@ namespace
                 {
                     { M_THR,   "Seuil",
                       "Niveau à partir duquel la porte s'ouvre : de -60 dB (tout passe) à 0 dB (rien ne passe), échelle linéaire en dB. Libre : c'est le réglage que le séquenceur fait respirer.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "dB", dispThr },
                     { M_ATT,   "Attaque",
                       "Temps d'ouverture : 0,1 ms à 100 ms, course exponentielle. La montée est en S, donc sans clic même au plus court. Libre.",
-                      LockClass::Free, false },
+                      LockClass::Free, false, "ms", dispAtt },
                     { M_HOLD,  "Maintien",
                       "Durée pendant laquelle la porte reste ouverte après le passage sous le seuil : 0 à 500 ms, course quadratique. C'est ce qui l'empêche de battre sur un signal qui frôle le seuil. Libre.",
-                      LockClass::Free, false },
+                      LockClass::Free, false, "ms", dispHold },
                     { M_REL,   "Relâchement",
                       "Temps de fermeture, une fois le maintien écoulé : 1 ms à 1000 ms, course exponentielle. Long, il laisse la queue mourir ; court, il tranche. Libre.",
-                      LockClass::Free, false },
+                      LockClass::Free, false, "ms", dispRel },
                     { M_RANGE, "Profondeur",
                       "Ce qui reste quand la porte est fermée : 0 = silence franc, 0,5 = -30 dB, 1 = la porte n'atténue plus rien. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "dB", dispRange },
                 }
             };
             return i;

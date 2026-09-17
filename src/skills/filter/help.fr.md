@@ -14,12 +14,18 @@ Sert le geste 3 (repitch fondu) et, plus largement, tout balayage séquencé.
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Coupure | 20 Hz → 20 kHz, exponentielle (milieu ≈ 630 Hz) | libre | glissement |
-| `paramA` | Résonance | Q 0,5 → 12 (jusqu'à ≈ +21 dB de pointe) | libre | glissement |
-| `paramB` | Type | 3 paliers : 0–0,33 passe-bas · 0,34–0,66 passe-bande · 0,67–1 passe-haut | verrouillé par défaut | saut |
-| `stereo` | Décalage stéréo | 0,5 = aucun écart ; 0 et 1 = une demi-octave par canal, soit une octave entre gauche et droite, le sens s'inversant de part et d'autre du centre | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Coupure | 20 Hz → 20 kHz, exponentielle (milieu ≈ 630 Hz) | libre | glissement | `632 Hz` |
+| `paramA` | Résonance | Q 0,5 → 12 (jusqu'à ≈ +21 dB de pointe) | libre | glissement | `2,45` (Q, sans unité) |
+| `paramB` | Type | 3 paliers : 0–0,33 passe-bas · 0,34–0,66 passe-bande · 0,67–1 passe-haut | verrouillé par défaut | saut | `Passe-bas` / `Passe-bande` / `Passe-haut` |
+| `stereo` | Décalage stéréo | 0,5 = aucun écart ; 0 et 1 = une demi-octave par canal, soit une octave entre gauche et droite, le sens s'inversant de part et d'autre du centre | libre | glissement | `0,00 oct` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Pourquoi le type est verrouillé par défaut.** Passer d'un palier à l'autre
 déplace la prise de sortie d'un tap à l'autre du même filtre : l'état ne bouge

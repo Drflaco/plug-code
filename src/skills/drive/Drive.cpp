@@ -86,6 +86,19 @@ namespace
     inline double biasFor   (float v) noexcept { return ((double) juce::jlimit (0.0f, 1.0f, v) - 0.5) * 2.0 * kBiasMax; }
     inline double smoothHz  (float v) noexcept { return kLpMin * std::exp ((double) juce::jlimit (0.0f, 1.0f, v) * kLpSpan); }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles. La forme
+    // est un fondu continu entre trois non-linéarités : on nomme la plus proche.
+    juce::String dispDrive  (float v) { return display::sig (20.0 * std::log10 (driveGain (v))); }
+    juce::String dispShape  (float v)
+    {
+        const double c = (double) juce::jlimit (0.0f, 1.0f, v);
+        if (c <= 0.25) return display::text ("Doux");
+        if (c <= 0.75) return display::text ("Écrêtage");   // accents : voir display::text
+        return display::text ("Repli");
+    }
+    juce::String dispBias   (float v) { return display::sig (100.0 * biasFor (v) / kBiasMax); }
+    juce::String dispSmooth (float v) { return display::sig (smoothHz (v)); }
+
     //==========================================================================
     class Drive : public Skill
     {
@@ -97,16 +110,16 @@ namespace
                 {
                     { M_DRIVE,  "Drive",
                       "Gain d'attaque de la forme d'onde : 0 dB à +36 dB, course exponentielle (le milieu vaut +18 dB). Le niveau de sortie ne se rattrape pas ici mais avec l'entrée « gain » de l'emplacement. Libre : c'est le terrain naturel de la variation par pas.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "dB", dispDrive },
                     { M_SHAPE,  "Forme",
                       "Fondu continu entre trois formes : 0 = doux (tanh, compression progressive), 0,5 = écrêtage franc, 1 = repli (l'onde revient au lieu de plafonner, ce qui engendre beaucoup de partiels). Libre : le fondu est continu, il n'y a donc pas de marche à craindre entre deux pas.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "", dispShape },
                     { M_BIAS,   "Asymétrie",
                       "Décale le signal avant la forme : 0,5 = symétrique (harmoniques impaires seules), 0 et 1 = ±1 de décalage, ce qui fait apparaître les harmoniques paires. La composante continue engendrée est retirée en sortie, donc le silence reste le silence. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispBias },
                     { M_SMOOTH, "Lissage",
                       "Passe-bas d'un pôle après la forme : 1 kHz à 20 kHz, course exponentielle. À 1 il n'adoucit presque rien ; baissé, il retire la friture des harmoniques les plus hautes. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "Hz", dispSmooth },
                 }
             };
             return i;

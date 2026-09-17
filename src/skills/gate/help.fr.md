@@ -15,13 +15,19 @@ transitions sont donc lissées en S.
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Seuil | -60 dB (tout passe) → 0 dB (rien ne passe), linéaire en dB | libre | glissement |
-| `paramA` | Attaque | 0,1 ms → 100 ms, exponentielle | libre | saut |
-| `paramB` | Maintien | 0 → 500 ms, quadratique | libre | saut |
-| `paramC` | Relâchement | 1 ms → 1000 ms, exponentielle | libre | saut |
-| `paramD` | Profondeur | 0 = silence franc · 0,5 = -30 dB · 1 = la porte n'atténue plus | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Seuil | -60 dB (tout passe) → 0 dB (rien ne passe), linéaire en dB | libre | glissement | `-30,0 dB` |
+| `paramA` | Attaque | 0,1 ms → 100 ms, exponentielle | libre | saut | `3,16 ms` |
+| `paramB` | Maintien | 0 → 500 ms, quadratique | libre | saut | `125 ms` |
+| `paramC` | Relâchement | 1 ms → 1000 ms, exponentielle | libre | saut | `31,6 ms` |
+| `paramD` | Profondeur | 0 = silence franc · 0,5 = -30 dB · 1 = la porte n'atténue plus | libre | glissement | `-30,0 dB` (`-inf` à zéro) |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 Les cinq sont **libres** : aucune ne touche à la latence ni à la structure, et
 seuil comme temps sont exactement ce qu'on veut faire varier d'un pas à l'autre.

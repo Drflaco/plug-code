@@ -18,6 +18,8 @@
 #include "../Presenter.h"
 #include "../ViewTypes.h"
 #include "PlugBar.h"
+#include "PlugControls.h"
+#include "PlugMacros.h"
 #include "PlugPanels.h"
 #include "PlugTabs.h"
 #include <memory>
@@ -71,8 +73,10 @@ namespace plug::ui::v1
         juce::Component content;
         PlugBar bar;
         PlugTabs tabs;
-        Zone macros { "Macros" },
-             controls { "Contrôles" }, edition { "Édition" }, master { "Master + Sortie" };
+        PlugMacros macros;
+        PlugControls controls;
+        Zone edition { juce::String::fromUTF8 ("Édition") },
+             master { juce::String::fromUTF8 ("Master + Sortie") };
         std::unique_ptr<AboutPanel> about;
         std::unique_ptr<PrefsPanel> prefs;
         std::unique_ptr<juce::TooltipWindow> tooltips;

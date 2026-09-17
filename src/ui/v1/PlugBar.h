@@ -14,6 +14,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "../Presenter.h"
 #include "../ViewTypes.h"
+#include "PlugGlyphs.h"
 #include <memory>
 
 namespace plug::ui::v1
@@ -43,9 +44,13 @@ namespace plug::ui::v1
 
         Presenter& presenter;
 
-        juce::TextButton presetButton { "Preset" };   // [Preset ▾] : bibliothèque + fichier
-        juce::TextButton undoButton { "Annuler" }, redoButton { "Refaire" };
-        juce::TextButton aboutButton, prefsButton { "⚙" };
+        // Chevron et engrenage sont DESSINÉS, pas écrits : U+25BE et U+2699 manquent
+        // dans la police par défaut de Windows, et le pilote a vu le 17/09 un « ⚙ »
+        // rendu en « … ». Un tracé n'a pas de police, donc pas de glyphe absent.
+        IconButton presetButton { "preset", IconButton::Icon::ChevronDown };
+        IconButton aboutButton  { "apropos", IconButton::Icon::None };
+        IconButton prefsButton  { "prefs", IconButton::Icon::Gear };
+        juce::TextButton undoButton, redoButton;
         std::unique_ptr<juce::FileChooser> chooser;
         juce::Label status;
 

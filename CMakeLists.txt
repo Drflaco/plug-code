@@ -45,6 +45,17 @@ if(GIT_FOUND)
 endif()
 message(STATUS "commit : ${PLUG_GIT_COMMIT}")
 
+# Encodage — corrigé à la racine (défaut vu dans Live le 17/09 : « ChargÃ© », « ContrÃ´les »).
+# Sans /utf-8, MSVC lit un fichier source UTF-8 SANS BOM dans la page de code ANSI de la
+# machine : les octets d'un littéral accentué dépendent alors du réglage Windows de qui
+# compile. Avec /utf-8, source ET exécution sont UTF-8, partout et toujours. Ce n'est que
+# la moitié matérielle du problème ; l'autre moitié est que juce::String(const char*)
+# décode octet par octet (CharPointer_ASCII, juce_String.cpp:307) — d'où le point de
+# passage unique plug::ui::literals::operator""_fr et SkillInfo::label en const char*.
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 add_subdirectory(external/JUCE)
 
 # Échafaudage J2 : éditeur générique JUCE pour que Live puisse « configurer »
@@ -137,7 +148,13 @@ set(PLUG_UI_SOURCES
     src/ui/v1/PlugPanels.h
     src/ui/v1/PlugPanels.cpp
     src/ui/v1/PlugTabs.h
-    src/ui/v1/PlugTabs.cpp)
+    src/ui/v1/PlugTabs.cpp
+    src/ui/v1/PlugGlyphs.h
+    src/ui/v1/PlugGlyphs.cpp
+    src/ui/v1/PlugControls.h
+    src/ui/v1/PlugControls.cpp
+    src/ui/v1/PlugMacros.h
+    src/ui/v1/PlugMacros.cpp)
 
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}

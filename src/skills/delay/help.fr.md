@@ -14,12 +14,18 @@
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Temps | 1 ms → 2 s, exponentielle (milieu ≈ 45 ms) | libre | glissement |
-| `paramA` | Réinjection | 0 → **0,95**, jamais davantage | libre | glissement |
-| `paramB` | Amortissement | 0 = transparent · 0,5 ≈ 11 kHz · 1 ≈ 800 Hz (coupure du passe-bas de boucle, à 48 kHz) | libre | glissement |
-| `stereo` | Décalage stéréo | 0,5 = même temps des deux côtés ; 0 et 1 = ±50 % par canal (rapport 1 à 3 entre gauche et droite) | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Temps | 1 ms → 2 s, exponentielle (milieu ≈ 45 ms) | libre | glissement | `44,7 ms` |
+| `paramA` | Réinjection | 0 → **0,95**, jamais davantage | libre | glissement | `47,5 %` |
+| `paramB` | Amortissement | 0 = transparent · 0,5 ≈ 11 kHz · 1 ≈ 800 Hz (coupure du passe-bas de boucle, à 48 kHz) | libre | glissement | `25,0 %` |
+| `stereo` | Décalage stéréo | 0,5 = même temps des deux côtés ; 0 et 1 = ±50 % par canal (rapport 1 à 3 entre gauche et droite) | libre | glissement | `0,00 %` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 Les quatre sont **libres** : le CdC range explicitement temps de délai et
 réinjection dans le terrain naturel de la variation par pas (§3.3.1).

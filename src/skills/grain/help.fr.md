@@ -16,12 +16,18 @@ Sert les gestes 1 (texture profonde) et 2 (granulaire de texture).
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Hauteur | -24 → +24 demi-tons (0,5 = hauteur d'origine) | **verrouillé par défaut** | saut |
-| `paramA` | Taille de grain | 5 ms → 100 ms, exponentielle (milieu ≈ 22 ms) | libre | glissement |
-| `paramB` | Réinjection | 0 → 0,8 | libre | glissement |
-| `stereo` | Écart stéréo | 0,5 = aucun écart ; 0 et 1 = 50 centièmes de demi-ton par canal, soit un demi-ton entre gauche et droite, le sens s'inversant de part et d'autre du centre | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Hauteur | -24 → +24 demi-tons (0,5 = hauteur d'origine) | **verrouillé par défaut** | saut | `0,00 demi-tons` |
+| `paramA` | Taille de grain | 5 ms → 100 ms, exponentielle (milieu ≈ 22 ms) | libre | glissement | `22,4 ms` |
+| `paramB` | Réinjection | 0 → 0,8 | libre | glissement | `40,0 %` |
+| `stereo` | Écart stéréo | 0,5 = aucun écart ; 0 et 1 = 50 centièmes de demi-ton par canal, soit un demi-ton entre gauche et droite, le sens s'inversant de part et d'autre du centre | libre | glissement | `0,00 cents` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Pourquoi la hauteur est verrouillée par défaut.** C'est le cas type du §3.3.1.
 La raison retenue ici est musicale, pas technique : la hauteur est le réglage

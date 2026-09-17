@@ -16,13 +16,19 @@ d'entrée, pas de son. **Latence nulle.** Première moitié du geste 1 (FM → p
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Profondeur | 0 → 2 ms d'excursion de retard, quadratique (≈ 6,3 rad d'index à 1 kHz) | libre | glissement |
-| `paramA` | Fréquence | 0,5 Hz → 2 kHz, exponentielle (milieu ≈ 32 Hz) | libre | glissement |
-| `paramB` | Rapport | 11 paliers : 1/4, 1/3, 1/2, 1, 2, 3, 4, 5, 6, 7, 8 (palier le plus proche de la valeur × 10) | verrouillé par défaut | saut |
-| `paramC` | Auto-modulation | 0 → 2 ms d'excursion, quadratique | libre | glissement |
-| `stereo` | Décalage stéréo | 0,5 = modulateurs en phase ; 0 et 1 = une demi-période d'écart de part et d'autre | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Profondeur | 0 → 2 ms d'excursion de retard, quadratique (≈ 6,3 rad d'index à 1 kHz) | libre | glissement | `0,500 ms` |
+| `paramA` | Fréquence | 0,5 Hz → 2 kHz, exponentielle (milieu ≈ 32 Hz) | libre | glissement | `31,6 Hz` |
+| `paramB` | Rapport | 11 paliers : 1/4, 1/3, 1/2, 1, 2, 3, 4, 5, 6, 7, 8 (palier le plus proche de la valeur × 10) | verrouillé par défaut | saut | `×2` (rapport) |
+| `paramC` | Auto-modulation | 0 → 2 ms d'excursion, quadratique | libre | glissement | `0,500 ms` |
+| `stereo` | Décalage stéréo | 0,5 = modulateurs en phase ; 0 et 1 = une demi-période d'écart de part et d'autre | libre | glissement | `0,00 %` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **L'index dépend de la fréquence traitée.** Moduler un retard, ce n'est pas
 moduler une phase à index constant : pour une composante à `f`, l'index vaut

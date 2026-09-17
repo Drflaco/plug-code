@@ -59,6 +59,12 @@ namespace
     // Quadratique : de la finesse près de zéro, où l'oreille entend la moindre perte d'aigu.
     inline float dampOf       (float v) noexcept { const float c = juce::jlimit (0.0f, 1.0f, v); return kDampMax * c * c; }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles.
+    juce::String dispTime   (float v) { return display::sig (1000.0f * delaySeconds (v)); }
+    juce::String dispFb     (float v) { return display::sig (100.0f * feedbackOf (v)); }
+    juce::String dispDamp   (float v) { return display::sig (100.0f * dampOf (v) / kDampMax); }
+    juce::String dispStereo (float v) { return display::sig ((juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0f * kStereoMax * 100.0f); }
+
     //==========================================================================
     class Delay : public Skill
     {
@@ -70,16 +76,16 @@ namespace
                 {
                     { M_TIME,   "Temps",
                       "Temps de retard, de 1 ms à 2 s, course exponentielle (le milieu tombe vers 45 ms). La tête de lecture est continue : changer le temps pendant que la ligne sonne fait glisser la hauteur comme une bande, sans clic. Elle se déplace au plus d'un quart d'échantillon par échantillon, donc un très grand écart met quelques secondes à s'installer. Libre : c'est le terrain naturel de la variation par pas (§3.3.1).",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispTime },
                     { M_FB,     "Réinjection",
                       "Part de la répétition renvoyée dans la ligne : 0 = une seule répétition, 1 = 0,95, jamais davantage. La boucle est bornée strictement sous 1 pour qu'elle ne puisse pas devenir un oscillateur qui sature ; à 1 la queue perd 5 % par tour et s'éteint toujours. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispFb },
                     { M_DAMP,   "Amortissement",
                       "Passe-bas à un pôle dans la boucle : chaque répétition perd un peu d'aigu. 0 = aucun filtrage (la ligne est transparente), 0,5 = coupure vers 11 kHz, 1 = vers 800 Hz (valeurs à 48 kHz : le filtre est défini par son coefficient, sa coupure suit donc la fréquence d'échantillonnage). Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispDamp },
                     { M_STEREO, "Décalage stéréo",
                       "Écarte les temps des deux canaux : 0,5 = même temps des deux côtés, 0 et 1 = ±50 % par canal (rapport de 1 à 3 entre gauche et droite), le sens s'inversant de part et d'autre du centre. Le temps ainsi écarté reste plafonné à 2 s. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispStereo },
                 }
             };
             return i;

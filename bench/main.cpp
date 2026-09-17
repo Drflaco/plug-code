@@ -263,6 +263,45 @@ int main (int argc, char* argv[])
     }
 
     //==========================================================================
+    // 6. Vue des emplacements et encodage — deux défauts vus dans Live le 17/09.
+    // L'indicateur d'activité des onglets alternait plein / creux sur un état par
+    // DÉFAUT, où les seize slotNN.active valent 1 ; et tous les accents sortaient en
+    // mojibake. Ces cas lisent exactement ce que la vue lit, et rien d'autre.
+    {
+        plug::PlugProcessor p;
+        auto& view = p.presenter();
+
+        int actifs = 0;
+        juce::String creux;
+        for (int s = 1; s <= 16; ++s)
+            if (view.slotView (s).active) ++actifs; else creux << " " << s;
+        check (actifs == 16, "vue : les 16 emplacements sont actifs sur l'état par défaut ("
+                                 + juce::String (actifs) + "/16"
+                                 + (creux.isEmpty() ? juce::String() : ", creux :" + creux) + ")", log);
+
+        // La même lecture, mais brute : si les deux divergent, le défaut est dans la
+        // vue ; si elles concordent, il est dans l'état ou dans la grille.
+        int bruts = 0;
+        for (int s = 1; s <= 16; ++s)
+            if (plug::state::readParam (p.stateTree(), "slot" + juce::String (s).paddedLeft ('0', 2) + ".active") >= 0.5f)
+                ++bruts;
+        check (bruts == 16, "état : les 16 PARAM slotNN.active valent 1 (" + juce::String (bruts) + "/16)", log);
+
+        // ENCODAGE : un libellé accentué déclaré par une skill doit ressortir INTACT de
+        // la couche de présentation, pas en « DÃ©calage stÃ©rÃ©o ».
+        view.setSkill (1, "core.fm");
+        const auto fm = view.slotView (1);
+        const auto& stereo = fm.params[9];          // grid::kModulable[9] = « stereo »
+        check (stereo.label == juce::String::fromUTF8 ("Décalage stéréo") && stereo.label.length() == 15,
+               "encodage : « " + stereo.label + " » — " + juce::String (stereo.label.length())
+                   + " points de code, attendu 15", log);
+        check (fm.params[2].valueText.isNotEmpty() && fm.params[2].unit.isEmpty(),
+               "lisibilité : le Rapport de core.fm s'affiche « " + fm.params[2].valueText + " »", log);
+        log << "       core.fm : Profondeur « " << fm.params[0].valueText
+            << " », Fréquence « " << fm.params[1].valueText << " »\n";
+    }
+
+    //==========================================================================
     log << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
 
     std::printf ("%s", log.toRawUTF8());

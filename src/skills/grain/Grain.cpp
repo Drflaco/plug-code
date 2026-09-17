@@ -58,6 +58,12 @@ namespace
         return juce::jlimit (4.0f, (float) maxGrain, g);
     }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles.
+    juce::String dispPitch  (float v) { return display::sig ((double) (juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0 * kPitchSemis); }
+    juce::String dispSize   (float v) { return display::sig (1000.0 * kGrainMinS * std::exp ((double) juce::jlimit (0.0f, 1.0f, v) * kGrainSpan)); }
+    juce::String dispFb     (float v) { return display::sig (100.0f * kFbMax * juce::jlimit (0.0f, 1.0f, v)); }
+    juce::String dispStereo (float v) { return display::sig ((double) (juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0 * kDetuneCents); }
+
     inline float detuneFor (float v) noexcept
     {
         return std::exp2 ((juce::jlimit (0.0f, 1.0f, v) - 0.5f) * 2.0f * kDetuneCents / 1200.0f);
@@ -89,16 +95,16 @@ namespace
                 {
                     { M_PITCH,  "Hauteur",
                       "Décale la hauteur de -24 à +24 demi-tons (0,5 = hauteur d'origine) sans changer la durée : ce qui entre en deux secondes ressort en deux secondes. Verrouillé par défaut (§3.3.1) : c'est le réglage qui éloigne le plus vite le traité de la tonalité de la source, et une hauteur tirée à chaque pas casse la cohérence harmonique cherchée. Ici le saut ne coûte aucune resynchronisation — il ne change que la vitesse des têtes de lecture — donc le déverrouiller est une décision musicale, pas un risque technique.",
-                      LockClass::LockedByDefault, false },
+                      LockClass::LockedByDefault, false, "demi-tons", dispPitch },
                     { M_SIZE,   "Taille de grain",
                       "Longueur de la fenêtre de lecture, de 5 ms à 100 ms, course exponentielle (le milieu tombe vers 22 ms). Court, le grain chante et devient métallique ; long, le son s'étale et flange. Libre : la taille module par pas sans toucher à la latence déclarée.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "ms", dispSize },
                     { M_FB,     "Réinjection",
                       "Renvoie le traité dans la ligne à retard, de 0 à 0,8. Chaque tour repasse par le décalage : avec une hauteur montante, la queue monte indéfiniment en spirale. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispFb },
                     { M_STEREO, "Écart stéréo",
                       "Désaccorde les deux canaux, jusqu'à 50 centièmes de demi-ton par canal (0,5 = aucun écart, gauche et droite rigoureusement identiques ; 0 et 1 = un demi-ton entre les deux, le sens s'inversant de part et d'autre du centre). Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "cents", dispStereo },
                 }
             };
             return i;

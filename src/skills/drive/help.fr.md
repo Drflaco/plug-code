@@ -14,12 +14,18 @@ de la non-linéarité** plutôt que par suréchantillonnage. **Latence nulle.**
 
 ## Paramètres
 
-| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition |
-| --- | --- | --- | --- | --- |
-| `main` | Drive | 0 dB → +36 dB d'attaque, exponentielle (milieu = +18 dB) | libre | glissement |
-| `paramA` | Forme | 0 = doux (tanh) · 0,5 = écrêtage franc · 1 = repli ; fondu continu entre les trois | libre | glissement |
-| `paramB` | Asymétrie | 0,5 = symétrique ; 0 et 1 = ±1 de décalage avant la forme | libre | glissement |
-| `paramC` | Lissage | passe-bas d'un pôle après la forme : 1 kHz → 20 kHz, exponentielle | libre | glissement |
+| Entrée | Nom | Unité et plage | Verrou (§3.3.1) | Transition | Affichage |
+| --- | --- | --- | --- | --- | --- |
+| `main` | Drive | 0 dB → +36 dB d'attaque, exponentielle (milieu = +18 dB) | libre | glissement | `18,0 dB` |
+| `paramA` | Forme | 0 = doux (tanh) · 0,5 = écrêtage franc · 1 = repli ; fondu continu entre les trois | libre | glissement | `Doux` / `Écrêtage` / `Repli` |
+| `paramB` | Asymétrie | 0,5 = symétrique ; 0 et 1 = ±1 de décalage avant la forme | libre | glissement | `0,00 %` |
+| `paramC` | Lissage | passe-bas d'un pôle après la forme : 1 kHz → 20 kHz, exponentielle | libre | glissement | `4470 Hz` |
+
+> **Affichage (J4b c-2).** La colonne donne ce que l'interface écrit sous le
+> contrôle, à la valeur brute 0,5 — la skill déclare `unit` et `display`, et
+> l'interface ne convertit rien elle-même. Sans déclaration, le repli est la
+> valeur brute `0,00`–`1,00`.
+
 
 **Pas de niveau de sortie ici.** L'entrée `gain` de l'emplacement appartient au
 moteur (§3.2) : c'est elle qui rattrape le niveau quand on pousse le drive. La

@@ -67,6 +67,14 @@ namespace
     inline float diffOf  (float v) noexcept { return kDiffMax * juce::jlimit (0.0f, 1.0f, v); }
     inline float sizeOf  (float v) noexcept { return kSizeMin + (1.0f - kSizeMin) * juce::jlimit (0.0f, 1.0f, v); }
 
+    // Lisibilité (J4b c-2) : les conversions de process(), rendues lisibles.
+    juce::String dispDecay  (float v) { return display::sig (rt60Sec (v)); }
+    juce::String dispDamp   (float v) { return display::sig (100.0f * dampOf (v) / kDampMax); }
+    juce::String dispSize   (float v) { return display::sig (100.0f * sizeOf (v)); }
+    juce::String dispDiff   (float v) { return display::sig (100.0f * diffOf (v) / kDiffMax); }
+    juce::String dispBass   (float v) { return display::sig (bassHz (v)); }
+    juce::String dispWidth  (float v) { return display::sig (100.0f * juce::jlimit (0.0f, 1.0f, v)); }
+
     //==========================================================================
     class Reverb : public Skill
     {
@@ -78,22 +86,22 @@ namespace
                 {
                     { M_DECAY,  "Décroissance",
                       "Temps de décroissance à -60 dB, de 0,2 s à 6 s, course exponentielle. La réinjection de chaque peigne est bornée à 0,985 : aux très petites tailles la décroissance plafonne avant 6 s, c'est le prix d'une queue qui s'éteint toujours. Libre : c'est le réglage que le séquenceur fait respirer.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "s", dispDecay },
                     { M_DAMP,   "Amortissement",
                       "Passe-bas à un pôle dans chaque peigne : la queue perd son aigu avant son grave, comme une pièce meublée. 0 = aucun filtrage, 0,5 = coupure vers 11 kHz, 1 = vers 800 Hz (valeurs à 48 kHz : le filtre est défini par son coefficient, sa coupure suit donc la fréquence d'échantillonnage). Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispDamp },
                     { M_SIZE,   "Taille",
                       "Longueur des lignes, de 35 % à 100 % (première réflexion de 10 ms à 30 ms). Verrouillée par défaut : la changer déplace d'un coup les têtes des huit peignes, et la queue en cours se replie — ça s'entend comme un décrochage, pas comme une pièce qui grandit. Déverrouille-la si c'est le décrochage qui est cherché ; rien ne l'interdit, ni la latence ni l'allocation.",
-                      LockClass::LockedByDefault, false },
+                      LockClass::LockedByDefault, false, "%", dispSize },
                     { M_DIFF,   "Diffusion",
                       "Coefficient des quatre passe-tout de sortie, de 0 à 0,7. À 0 les réflexions restent des échos distincts ; à fond elles s'étalent en nappe. Les passe-tout sont de gain unité : la diffusion ne change ni le niveau ni la durée de la queue. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispDiff },
                     { M_BASS,   "Grave",
                       "Passe-haut à un pôle dans chaque peigne, de 20 Hz (le grave dure autant que le reste) à 500 Hz (le grave s'éteint bien plus vite). C'est le réglage qui empêche la queue d'empâter un mixage. Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "Hz", dispBass },
                     { M_STEREO, "Largeur",
                       "Ouverture de la queue : 0 = les deux canaux sont identiques (queue mono), 0,5 = demi-ouverture, 1 = chaque canal garde sa propre queue (les lignes du canal droit sont décalées d'une demi-milliseconde). Libre.",
-                      LockClass::Free, true },
+                      LockClass::Free, true, "%", dispWidth },
                 }
             };
             return i;

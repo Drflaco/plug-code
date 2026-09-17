@@ -3,11 +3,12 @@
 namespace plug::ui::v1
 {
     using juce::String;
+    using namespace plug::ui::literals;   // "…"_fr : l'unique porte UTF-8 (ViewTypes.h)
 
     namespace
     {
-        // Identifiants du menu [Preset ▾]. Les entrées de bibliothèque prennent
-        // kLibraryBase + index : un seul rappel, pas de lambda par preset.
+        // Identifiants du menu des presets. Les entrées de bibliothèque prennent
+        // kLibraryBase + index : un seul rappel, pas une lambda par preset.
         constexpr int kLoadFile = 1, kSaveAs = 2, kRescan = 3, kLibraryBase = 100;
     }
 
@@ -20,11 +21,16 @@ namespace plug::ui::v1
         aboutButton.onClick  = [this] { if (onShowAbout) onShowAbout(); };
         prefsButton.onClick  = [this] { if (onShowPrefs) onShowPrefs(); };
 
-        // L'identité du binaire est un bouton, pas une décoration : on clique dessus
-        // pour avoir la ligne entière, elle reste lisible sans cliquer.
-        aboutButton.setButtonText (presenter.aboutView().shortStamp);
+        // L'identité du binaire est un bouton, pas une décoration : on clique dessus pour
+        // la ligne entière, elle reste lisible sans cliquer (incident du 17/09).
+        aboutButton.setLabelText (presenter.aboutView().shortStamp);
 
-        for (auto* b : { &presetButton, &undoButton, &redoButton, &aboutButton, &prefsButton })
+        undoButton.setButtonText ("Annuler"_fr);
+        redoButton.setButtonText ("Refaire"_fr);
+
+        for (auto* b : { (juce::Button*) &presetButton, (juce::Button*) &undoButton,
+                         (juce::Button*) &redoButton,   (juce::Button*) &aboutButton,
+                         (juce::Button*) &prefsButton })
         {
             b->setWantsKeyboardFocus (false);   // le clavier reste à l'hôte et à l'éditeur
             addAndMakeVisible (*b);
@@ -72,10 +78,10 @@ namespace plug::ui::v1
 
         // Aucun nom connu (Set rouvert : le nom vit dans la session, pas dans l'état) :
         // « — », jamais « sans titre ». On ne fait pas croire à un preset qui n'existe
-        // pas (décision pilote du 17/09 ; l'attribut dans PlugState est une question
-        // du CdC 0.4, le schéma v2 ne se retouche pas pour un confort d'affichage).
-        const String name = presets.currentName.isNotEmpty() ? presets.currentName : String ("—");
-        presetButton.setButtonText (name + (presets.modified ? " *" : "") + "  ▾");
+        // pas (décision pilote du 17/09 ; l'attribut dans PlugState est une question du
+        // CdC 0.4 — le schéma v2 ne se retouche pas pour un confort d'affichage).
+        const String name = presets.currentName.isNotEmpty() ? presets.currentName : "—"_fr;
+        presetButton.setLabelText (name + (presets.modified ? " *" : ""));
 
         undoButton.setEnabled (history.canUndo);
         redoButton.setEnabled (history.canRedo);
@@ -86,23 +92,23 @@ namespace plug::ui::v1
     void PlugBar::applyTooltips (const PresetView& presets, const UndoView& history)
     {
         presetButton.setTooltip ("Presets d'état : la bibliothèque, plus charger et enregistrer un fichier.\n"
-                                 "Dossier : " + presets.folder
+                                 "Dossier : "_fr + presets.folder
                                  + (presets.currentName.isEmpty()
-                                        ? String ("\nNom du preset non conservé par le projet en v1.") : String())
-                                 + (presets.modified ? "\nL'état a changé depuis le chargement (*)." : ""));
+                                        ? "\nNom du preset non conservé par le projet en v1."_fr : String())
+                                 + (presets.modified ? "\nL'état a changé depuis le chargement (*)."_fr : String()));
 
-        // Le nom de la transaction, pas « Annuler » : c'est lui qui montre la granularité.
+        // Le NOM de la transaction, pas « Annuler » : c'est lui qui montre la granularité.
         undoButton.setTooltip (history.canUndo
-                                   ? (history.undoName.isNotEmpty() ? "Annuler : " + history.undoName
-                                                                    : String ("Annuler la dernière action"))
-                                   : String ("Rien à annuler"));
+                                   ? (history.undoName.isNotEmpty() ? "Annuler : "_fr + history.undoName
+                                                                    : "Annuler la dernière action"_fr)
+                                   : "Rien à annuler"_fr);
         redoButton.setTooltip (history.canRedo
-                                   ? (history.redoName.isNotEmpty() ? "Refaire : " + history.redoName
-                                                                    : String ("Refaire l'action annulée"))
-                                   : String ("Rien à refaire"));
+                                   ? (history.redoName.isNotEmpty() ? "Refaire : "_fr + history.redoName
+                                                                    : "Refaire l'action annulée"_fr)
+                                   : "Rien à refaire"_fr);
 
         aboutButton.setTooltip (presenter.aboutView().buildStamp);
-        prefsButton.setTooltip ("Préférences (§3.11) — l'espace existe, son contenu arrive à l'étape 6.");
+        prefsButton.setTooltip ("Préférences (§3.11) — l'espace existe, son contenu arrive à l'étape 6."_fr);
     }
 
     //==========================================================================
@@ -112,9 +118,9 @@ namespace plug::ui::v1
         const auto presets = presenter.presetView();
 
         juce::PopupMenu menu;
-        menu.addSectionHeader ("Bibliothèque");
+        menu.addSectionHeader ("Bibliothèque"_fr);
         if (presets.names.isEmpty())
-            menu.addItem (juce::PopupMenu::Item ("Aucun preset dans " + presets.folder).setEnabled (false));
+            menu.addItem (juce::PopupMenu::Item ("Aucun preset dans "_fr + presets.folder).setEnabled (false));
         else
             for (int i = 0; i < presets.names.size(); ++i)
                 menu.addItem (juce::PopupMenu::Item (presets.names[i])
@@ -122,9 +128,9 @@ namespace plug::ui::v1
                                   .setTicked (i == presets.currentIndex));
 
         menu.addSeparator();
-        menu.addItem (kLoadFile, "Charger un fichier...");
-        menu.addItem (kSaveAs,   "Enregistrer sous...");
-        menu.addItem (kRescan,   "Relire le dossier");
+        menu.addItem (kLoadFile, "Charger un fichier..."_fr);
+        menu.addItem (kSaveAs,   "Enregistrer sous..."_fr);
+        menu.addItem (kRescan,   "Relire le dossier"_fr);
 
         // showMenuAsync : aucune boucle modale dans un plugin, et l'hôte n'attend pas.
         menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&presetButton),
@@ -138,8 +144,8 @@ namespace plug::ui::v1
                                 const int index = result - kLibraryBase;
                                 if (index < 0) return;
                                 const bool ok = presenter.loadPresetIndex (index);
-                                status.setText (ok ? "Chargé : " + presenter.presetView().currentName
-                                                   : String ("Preset illisible"),
+                                status.setText (ok ? "Chargé : "_fr + presenter.presetView().currentName
+                                                   : "Preset illisible"_fr,
                                                 juce::dontSendNotification);
                                 refresh();
                             });
@@ -147,7 +153,7 @@ namespace plug::ui::v1
 
     void PlugBar::chooseToLoad()
     {
-        chooser = std::make_unique<juce::FileChooser> ("Charger un preset Plug",
+        chooser = std::make_unique<juce::FileChooser> ("Charger un preset Plug"_fr,
                                                         juce::File (presenter.presetView().folder), "*.plugstate");
         chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                                [this] (const juce::FileChooser& fc)
@@ -155,8 +161,8 @@ namespace plug::ui::v1
                                    const auto f = fc.getResult();
                                    if (f == juce::File()) return;
                                    const bool ok = presenter.loadPreset (f);
-                                   status.setText (ok ? "Chargé : " + f.getFileNameWithoutExtension()
-                                                      : "Illisible : " + f.getFileName(),
+                                   status.setText (ok ? "Chargé : "_fr + f.getFileNameWithoutExtension()
+                                                      : "Illisible : "_fr + f.getFileName(),
                                                     juce::dontSendNotification);
                                    refresh();
                                });
@@ -169,7 +175,7 @@ namespace plug::ui::v1
                                    .getChildFile ((presets.currentName.isNotEmpty() ? presets.currentName
                                                                                     : String ("sans-titre"))
                                                       + ".plugstate");
-        chooser = std::make_unique<juce::FileChooser> ("Enregistrer l'état courant", suggested, "*.plugstate");
+        chooser = std::make_unique<juce::FileChooser> ("Enregistrer l'état courant"_fr, suggested, "*.plugstate");
         chooser->launchAsync (juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                                   | juce::FileBrowserComponent::warnAboutOverwriting,
                                [this] (const juce::FileChooser& fc)
@@ -177,8 +183,8 @@ namespace plug::ui::v1
                                    const auto f = fc.getResult();
                                    if (f == juce::File()) return;
                                    const bool ok = presenter.savePreset (f);
-                                   status.setText (ok ? "Enregistré : " + f.getFileNameWithoutExtension()
-                                                      : String ("Échec de l'enregistrement"),
+                                   status.setText (ok ? "Enregistré : "_fr + f.getFileNameWithoutExtension()
+                                                      : "Échec de l'enregistrement"_fr,
                                                     juce::dontSendNotification);
                                    refresh();
                                });

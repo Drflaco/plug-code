@@ -14,6 +14,7 @@
 namespace plug::ui
 {
     using juce::String;
+    using namespace plug::ui::literals;   // "..."_fr : l'unique porte UTF-8 (ViewTypes.h)
     using juce::ValueTree;
 
     namespace
@@ -52,7 +53,7 @@ namespace plug::ui
             if (const auto* info = SkillRegistry::instance().info (id))
                 for (const auto& d : info->params)
                     if (name == String (grid::kModulableName[(size_t) d.modulable]))
-                        return d.label;
+                        return fr (d.label);
             return Format::genericLabel (name);
         }
     }
@@ -253,7 +254,7 @@ namespace plug::ui
         v.unknown = v.present && info == nullptr;
         const int skillVersion = (int) sl.getProperty (state::id::skillVersion, 0);
         v.skillVersion = skillVersion;
-        v.skillLabel = info != nullptr ? info->label : (v.unknown ? v.skillId : Format::emptySlotText());
+        v.skillLabel = info != nullptr ? fr (info->label) : (v.unknown ? v.skillId : Format::emptySlotText());
         if (info != nullptr)
             v.mixLaw = info->mixLaw == MixLaw::Minus6 ? "-6 dB" : (info->mixLaw == MixLaw::Zero ? "0 dB" : "-3 dB");
 
@@ -276,9 +277,10 @@ namespace plug::ui
 
             p.name = name;
             p.declared = decl != nullptr;
-            p.label = decl != nullptr ? String (decl->label) : Format::genericLabel (name);
-            p.unit  = decl != nullptr ? String (decl->unit) : String();
-            p.help  = decl != nullptr ? String (decl->help)
+            // fr(...) et non String(...) : ce sont des octets UTF-8 déclarés par la skill.
+            p.label = decl != nullptr ? fr (decl->label) : Format::genericLabel (name);
+            p.unit  = decl != nullptr ? fr (decl->unit) : String();
+            p.help  = decl != nullptr ? fr (decl->help)
                                       : (v.unknown ? Format::unknownSkillHelp (v.skillId, skillVersion)
                                                    : Format::genericHelp (name));
             p.inert = decl == nullptr && Format::isReserve (name);
@@ -380,9 +382,9 @@ namespace plug::ui
             {
                 if (! r.hasType (state::id::Route)) continue;
                 if (routes.isNotEmpty()) routes << "\n";
-                routes << (int) r.getProperty (state::id::slot, 0) << " · "
-                       << r.getProperty (state::id::param, "").toString() << "  "
-                       << Format::rawText ((float) (double) r.getProperty (state::id::lo, 0.0)) << " → "
+                routes << "→ "_fr << (int) r.getProperty (state::id::slot, 0) << " "
+                       << r.getProperty (state::id::param, "").toString() << " "
+                       << Format::rawText ((float) (double) r.getProperty (state::id::lo, 0.0)) << "–"_fr
                        << Format::rawText ((float) (double) r.getProperty (state::id::hi, 0.0));
             }
             v.routes = routes;
@@ -399,15 +401,15 @@ namespace plug::ui
         // une seule source de vérité pour l'identité du binaire (incident du 17/09).
         {
             juce::StringArray parts;
-            parts.addTokens (v.buildStamp, "·", "");
+            parts.addTokens (v.buildStamp, "·"_fr, "");
             parts.trim();
-            v.shortStamp = parts.size() >= 2 ? parts[0] + " · " + parts[1] : v.buildStamp;
+            v.shortStamp = parts.size() >= 2 ? parts[0] + " · "_fr + parts[1] : v.buildStamp;
         }
         v.juceVersion = juce::SystemStats::getJUCEVersion();
         for (const auto& id : SkillRegistry::instance().ids())
             if (const auto* info = SkillRegistry::instance().info (id))
                 if (! info->factice)
-                    v.skills.push_back ({ info->id, info->label, info->version });
+                    v.skills.push_back ({ info->id, fr (info->label), info->version });
         return v;
     }
 
@@ -471,7 +473,7 @@ namespace plug::ui
 
     String Presenter::skillLabel (const String& skillId) const
     {
-        if (const auto* info = SkillRegistry::instance().info (skillId)) return info->label;
+        if (const auto* info = SkillRegistry::instance().info (skillId)) return fr (info->label);
         return skillId;
     }
 
@@ -485,13 +487,13 @@ namespace plug::ui
 
         String t;
         if (pattern)
-            t << "Le motif de la ligne " << from1 << " et les réglages de l'emplacement "
-              << from1 << " restent sur place ; seul l'effet déménage (§3.2).";
+            t << "Le motif de la ligne "_fr << from1 << " et les réglages de l'emplacement "_fr
+              << from1 << " restent sur place ; seul l'effet déménage (§3.2)."_fr;
         if (host)
         {
             if (t.isNotEmpty()) t << " ";
             t << "Des valeurs sont arrivées de l'hôte sur cet emplacement — "
-                 "automation ou macro Live probable.";
+                 "automation ou macro Live probable."_fr;
         }
         return t;
     }
@@ -512,7 +514,7 @@ namespace plug::ui
         if (p == nullptr) return;
         ++busy;
         ++editing;
-        proc.undoManager().beginNewTransaction ("Régler " + p->getName (40));
+        proc.undoManager().beginNewTransaction ("Régler "_fr + p->getName (40));
         p->beginChangeGesture();
     }
 
@@ -525,7 +527,7 @@ namespace plug::ui
         // Hors geste (valeur tapée, réglage unique), la commande ouvre sa propre
         // transaction ; un geste de knob n'en ouvre qu'une pour tout le mouvement.
         const bool standalone = busy.load() == 0;
-        if (standalone) { ++busy; ++editing; proc.undoManager().beginNewTransaction ("Régler " + p->getName (40)); }
+        if (standalone) { ++busy; ++editing; proc.undoManager().beginNewTransaction ("Régler "_fr + p->getName (40)); }
 
         // On écrit la valeur DANS L'ARBRE, avec l'UndoManager du pilote. L'APVTS écoute
         // son propre arbre : il relaie au paramètre, donc à l'hôte. Le recopiage
@@ -546,7 +548,7 @@ namespace plug::ui
 
     void Presenter::setSkill (int slot1, const String& skillId)
     {
-        Command c (*this, "Poser " + skillLabel (skillId) + " en " + String (slot1));
+        Command c (*this, "Poser "_fr + skillLabel (skillId) + " en " + String (slot1));
         // StateEdit, pas StateSchema : la pose libère aussi les entrées que la skill
         // arrivante ne déclare pas (ETAT Rév. 9 Q1, décision pilote du 17/09).
         StateEdit::setSkill (proc.stateTree(), slot1, skillId, &proc.undoManager());
@@ -554,7 +556,7 @@ namespace plug::ui
 
     void Presenter::clearSlot (int slot1)
     {
-        Command c (*this, "Vider " + String (slot1));
+        Command c (*this, "Vider "_fr + String (slot1));
         StateEdit::clearSlot (proc.stateTree(), slot1, &proc.undoManager());
     }
 
@@ -563,10 +565,10 @@ namespace plug::ui
         // Le nom lu dans l'historique doit dire QUOI, D'OÙ et VERS OÙ : « Déplacer FM
         // de 3 vers 5 ». « Déplacer » seul ne se relit pas trois gestes plus tard.
         const auto source = slotView (from1);
-        const String what = source.present ? skillLabel (source.skillId) : String ("l'emplacement vide");
-        const String verb = mode == MoveMode::Swap ? String ("Échanger ")
-                          : mode == MoveMode::Copy ? String ("Copier ")
-                                                   : String ("Déplacer ");
+        const String what = source.present ? skillLabel (source.skillId) : "l'emplacement vide"_fr;
+        const String verb = mode == MoveMode::Swap ? "Échanger "_fr
+                          : mode == MoveMode::Copy ? "Copier "_fr
+                                                   : "Déplacer "_fr;
         Command c (*this, verb + what + " de " + String (from1) + " vers " + String (to1));
         StateEdit::moveSlot (proc.stateTree(), from1, to1,
                              mode == MoveMode::Swap ? StateEdit::Mode::Swap
@@ -577,51 +579,51 @@ namespace plug::ui
 
     void Presenter::setActive (int slot1, bool on)
     {
-        Command c (*this, String (on ? "Activer" : "Contourner") + " l'emplacement " + String (slot1));
+        Command c (*this, fr (on ? "Activer" : "Contourner") + " l'emplacement "_fr + String (slot1));
         state::setParam (proc.stateTree(), slotGridId (slot1, "active"), on ? 1.0f : 0.0f, &proc.undoManager());
     }
 
     void Presenter::setTail (int slot1, bool ring)
     {
-        Command c (*this, String (ring ? "Laisser la queue" : "Couper la queue") + " · emplacement " + String (slot1));
+        Command c (*this, fr (ring ? "Laisser la queue" : "Couper la queue") + " · emplacement "_fr + String (slot1));
         state::setTail (proc.stateTree(), slot1, ring, &proc.undoManager());
     }
 
     void Presenter::setLocked (int slot1, const String& paramName, bool locked)
     {
-        Command c (*this, String (locked ? "Verrouiller " : "Déverrouiller ")
+        Command c (*this, fr (locked ? "Verrouiller " : "Déverrouiller ")
                               + labelOf (proc.stateTree(), slot1, paramName));
         state::setLocked (proc.stateTree(), slot1, paramName, locked, &proc.undoManager());
     }
 
     void Presenter::setRange (int slot1, const String& paramName, float min, float max)
     {
-        Command c (*this, "Plage de " + labelOf (proc.stateTree(), slot1, paramName));
+        Command c (*this, "Plage de "_fr + labelOf (proc.stateTree(), slot1, paramName));
         state::setRange (proc.stateTree(), slot1, paramName, min, max, &proc.undoManager());
     }
 
     void Presenter::setProb (int slot1, const String& paramName, float prob)
     {
-        Command c (*this, "Probabilité de " + labelOf (proc.stateTree(), slot1, paramName));
+        Command c (*this, "Probabilité de "_fr + labelOf (proc.stateTree(), slot1, paramName));
         state::setProb (proc.stateTree(), slot1, paramName, prob, &proc.undoManager());
     }
 
     void Presenter::setTransition (int slot1, const String& paramName, bool glide)
     {
-        Command c (*this, String (glide ? "Glissement sur " : "Saut sur ")
+        Command c (*this, fr (glide ? "Glissement sur " : "Saut sur ")
                               + labelOf (proc.stateTree(), slot1, paramName));
         state::setTransition (proc.stateTree(), slot1, paramName, glide, &proc.undoManager());
     }
 
     void Presenter::setStepOn (int slot1, int step1, bool on)
     {
-        Command c (*this, String (on ? "Activer le pas " : "Éteindre le pas ") + String (step1));
+        Command c (*this, fr (on ? "Activer le pas " : "Éteindre le pas ") + String (step1));
         state::setStepOn (proc.stateTree(), slot1, step1, on, &proc.undoManager());
     }
 
     void Presenter::setStepExplicit (int slot1, int step1, const String& paramName, float value)
     {
-        Command c (*this, "Valeur du pas " + String (step1) + " · " + labelOf (proc.stateTree(), slot1, paramName));
+        Command c (*this, "Valeur du pas "_fr + String (step1) + " · "_fr + labelOf (proc.stateTree(), slot1, paramName));
         auto& s = proc.stateTree();
         state::setStepMode (s, slot1, step1, StepMode::Explicit, &proc.undoManager());
         state::setExplicit (s, slot1, step1, paramName, value, &proc.undoManager());
@@ -629,19 +631,19 @@ namespace plug::ui
 
     void Presenter::generate (int slot1, int first1, int last1, float density)
     {
-        Command c (*this, "Générer les pas " + String (first1) + " à " + String (last1));
+        Command c (*this, "Générer les pas "_fr + String (first1) + " à "_fr + String (last1));
         state::generate (proc.stateTree(), slot1, first1, last1, density, &proc.undoManager());
     }
 
     void Presenter::capture (int slot1, int first1, int last1)
     {
-        Command c (*this, "Figer les pas " + String (first1) + " à " + String (last1));
+        Command c (*this, "Figer les pas "_fr + String (first1) + " à "_fr + String (last1));
         state::capture (proc.stateTree(), slot1, first1, last1, &proc.undoManager());
     }
 
     void Presenter::setMasterSeed (juce::uint32 seed)
     {
-        Command c (*this, "Nouvelle graine");
+        Command c (*this, "Nouvelle graine"_fr);
         state::setMasterSeed (proc.stateTree(), seed, &proc.undoManager());
     }
 
