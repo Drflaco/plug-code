@@ -97,6 +97,7 @@ namespace plug::ui
             p->addListener (this);
         }
 
+        library.rescan();
         proc.stateTree().addListener (this);
         startTimerHz (30);
     }
@@ -121,6 +122,15 @@ namespace plug::ui
         pending.bits |= bits;
         if (slot1 >= 1 && slot1 <= kSlots)
             pending.slots |= (juce::uint16) (1u << (slot1 - 1));
+
+        // Dès que l'ÉTAT bouge, le preset affiché ne le décrit plus : « geste1 * ».
+        // La sélection, les préférences et le mode A/B ne comptent pas — ils ne sont
+        // pas dans le preset (décision pilote du 16/09).
+        constexpr juce::uint32 kStateBits = ViewMask::Slots | ViewMask::Params | ViewMask::Line
+                                          | ViewMask::Master | ViewMask::Macros
+                                          | ViewMask::Generation | ViewMask::Sequencer;
+        if ((bits & kStateBits) != 0) presetModified = true;
+
         triggerAsyncUpdate();
     }
 
@@ -176,6 +186,11 @@ namespace plug::ui
 
     void Presenter::valueTreeChildOrderChanged (ValueTree& parent, int, int) { markNode (parent); }
     void Presenter::valueTreeParentChanged (ValueTree&)                      { mark (ViewMask::All); }
+
+    // apvts.replaceState() : l'arbre entier change d'objet sous nos pieds (projet ouvert,
+    // preset chargé). Le processeur retire son écouteur le temps du remplacement, pas
+    // nous : c'est par ici que la vue apprend qu'elle doit tout relire.
+    void Presenter::valueTreeRedirected (ValueTree&)                         { mark (ViewMask::All); }
 
     void Presenter::handleAsyncUpdate()
     {
@@ -242,10 +257,6 @@ namespace plug::ui
         v.fade  = state::readParam (s, slotGridId (v.slot1, "fade"));
         v.hasPattern = StateQuery::lineHasPattern (s, v.slot1);
         v.hostDriven = (hostDriven & (juce::uint16) (1u << (v.slot1 - 1))) != 0;
-        // La latence par emplacement n'est déclarée nulle part : SkillInfo ne la porte pas
-        // et le moteur ne publie que la somme. Neutralisée à 0 plutôt qu'inventée
-        // (REGIME §5) ; la question est posée au pilote dans le rapport de l'étape 0.
-        v.latency = 0;
 
         const float density = (float) (double) s.getChildWithName (state::id::Generation)
                                                  .getProperty (state::id::density, 1.0);
@@ -377,6 +388,15 @@ namespace plug::ui
     {
         AboutView v;
         v.buildStamp = buildStamp();
+        // Le bouton de la barre ne tient que « Plug 0.3.0 · commit 484061a » ; la date de
+        // compilation vit dans le panneau. Découpé ici, jamais réécrit par un widget :
+        // une seule source de vérité pour l'identité du binaire (incident du 17/09).
+        {
+            juce::StringArray parts;
+            parts.addTokens (v.buildStamp, "·", "");
+            parts.trim();
+            v.shortStamp = parts.size() >= 2 ? parts[0] + " · " + parts[1] : v.buildStamp;
+        }
         v.juceVersion = juce::SystemStats::getJUCEVersion();
         for (const auto& id : SkillRegistry::instance().ids())
             if (const auto* info = SkillRegistry::instance().info (id))
@@ -400,12 +420,27 @@ namespace plug::ui
     PresetView Presenter::presetView() const
     {
         PresetView v;
-        const auto dir = PlugProcessor::presetsDirectory();
-        v.folder = dir.getFullPathName();
-        if (dir.isDirectory())
-            for (const auto& f : dir.findChildFiles (juce::File::findFiles, false, "*.plugstate"))
-                v.names.add (f.getFileNameWithoutExtension());
-        v.names.sort (true);
+        v.folder = PresetLibrary::userDir().getFullPathName();
+        v.currentName = presetName;
+        v.modified = presetModified;
+        for (int i = 0; i < library.size(); ++i)
+        {
+            v.names.add (library.name (i));
+            if (library.name (i) == presetName) v.currentIndex = i;
+        }
+        return v;
+    }
+
+    UndoView Presenter::undoView() const
+    {
+        // Le NOM de la transaction est ce qui rend la granularité visible : le pilote
+        // doit lire « Annuler : Verrouiller Rapport », pas « Annuler ».
+        auto& um = proc.undoManager();
+        UndoView v;
+        v.canUndo = um.canUndo();
+        v.canRedo = um.canRedo();
+        v.undoName = um.getUndoDescription();
+        v.redoName = um.getRedoDescription();
         return v;
     }
 
@@ -484,7 +519,13 @@ namespace plug::ui
         // transaction ; un geste de knob n'en ouvre qu'une pour tout le mouvement.
         const bool standalone = busy.load() == 0;
         if (standalone) { ++busy; proc.undoManager().beginNewTransaction ("Régler " + p->getName (40)); }
-        p->setValueNotifyingHost (p->convertTo0to1 (raw));
+
+        // On écrit la valeur DANS L'ARBRE, avec l'UndoManager du pilote. L'APVTS écoute
+        // son propre arbre : il relaie au paramètre, donc à l'hôte. Le recopiage
+        // périodique de l'APVTS ne trouvera plus rien à écrire, et le geste reste
+        // annulable alors même que ce recopiage, lui, ne l'est plus (parade du piège
+        // APVTS/undo ; voir les deux UndoManager dans PlugProcessor.h).
+        state::setParam (proc.stateTree(), gridId, raw, &proc.undoManager());
         if (standalone) --busy;
     }
 
@@ -498,7 +539,9 @@ namespace plug::ui
     void Presenter::setSkill (int slot1, const String& skillId)
     {
         Command c (*this, "Poser " + skillLabel (skillId) + " dans l'emplacement " + String (slot1));
-        state::setSkill (proc.stateTree(), slot1, skillId, &proc.undoManager());
+        // StateEdit, pas StateSchema : la pose libère aussi les entrées que la skill
+        // arrivante ne déclare pas (ETAT Rév. 9 Q1, décision pilote du 17/09).
+        StateEdit::setSkill (proc.stateTree(), slot1, skillId, &proc.undoManager());
     }
 
     void Presenter::clearSlot (int slot1)
@@ -524,8 +567,7 @@ namespace plug::ui
     void Presenter::setActive (int slot1, bool on)
     {
         Command c (*this, String (on ? "Activer" : "Contourner") + " l'emplacement " + String (slot1));
-        if (auto* p = proc.state().getParameter (slotGridId (slot1, "active")))
-            p->setValueNotifyingHost (on ? 1.0f : 0.0f);
+        state::setParam (proc.stateTree(), slotGridId (slot1, "active"), on ? 1.0f : 0.0f, &proc.undoManager());
     }
 
     void Presenter::setTail (int slot1, bool ring)
@@ -597,16 +639,43 @@ namespace plug::ui
         JUCE_ASSERT_MESSAGE_THREAD
         ScopedStateReplacement guard (this);   // un chargement de preset ne marque jamais hostDriven (Q4)
         const bool ok = proc.loadPresetFile (f);
+        if (ok)
+        {
+            // Le drapeau se pose APRÈS : le chargement a fait pleuvoir des notifications
+            // qui, toutes, ont marqué l'état comme modifié. Il ne l'est pas : il EST le preset.
+            presetName = f.getFileNameWithoutExtension();
+            presetModified = false;
+        }
         mark (ViewMask::All);
         return ok;
+    }
+
+    bool Presenter::loadPresetIndex (int index)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const auto f = library.file (index);
+        return f != juce::File() && loadPreset (f);
     }
 
     bool Presenter::savePreset (const juce::File& f)
     {
         JUCE_ASSERT_MESSAGE_THREAD
         const bool ok = proc.savePresetFile (f);
+        if (ok)
+        {
+            presetName = f.getFileNameWithoutExtension();
+            presetModified = false;
+            library.rescan();          // le nouveau nom doit paraître dans le menu tout de suite
+        }
         mark (ViewMask::Presets);
         return ok;
+    }
+
+    void Presenter::rescanPresets()
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        library.rescan();
+        mark (ViewMask::Presets);
     }
 
     void Presenter::undo()

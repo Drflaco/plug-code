@@ -13,6 +13,7 @@
 //     lit son propre geste dans l'historique, pas « setProperty ».
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "../PresetLibrary.h"
 #include "Prefs.h"
 #include "ViewTypes.h"
 #include <array>
@@ -58,6 +59,7 @@ namespace plug::ui
         AboutView aboutView() const;
         PrefsView prefsView() const;
         PresetView presetView() const;
+        UndoView undoView() const;
 
         // Emplacements affichés = max (préférence, plus haut emplacement occupé) (Q6).
         int displayedSlots() const;
@@ -90,7 +92,10 @@ namespace plug::ui
         void capture (int slot1, int first1, int last1);
         void setMasterSeed (juce::uint32 seed);
         bool loadPreset (const juce::File& f);
+        // Charge une entrée de la bibliothèque (même route que loadPreset : un fichier).
+        bool loadPresetIndex (int index);
         bool savePreset (const juce::File& f);
+        void rescanPresets();
         void undo();
         void redo();
 
@@ -128,6 +133,7 @@ namespace plug::ui
         void valueTreeChildRemoved (juce::ValueTree&, juce::ValueTree&, int) override;
         void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override;
         void valueTreeParentChanged (juce::ValueTree&) override;
+        void valueTreeRedirected (juce::ValueTree&) override;
         void handleAsyncUpdate() override;
         void timerCallback() override;
         void parameterValueChanged (int parameterIndex, float newValue) override;
@@ -148,6 +154,9 @@ namespace plug::ui
 
         PlugProcessor& proc;
         Prefs preferences;
+        PresetLibrary library;          // la bibliothèque du menu [Preset ▾] (utilisateur puis livré)
+        juce::String presetName;        // nom du preset courant, vide tant que rien n'a été chargé
+        bool presetModified = false;    // l'état a bougé depuis : la barre affiche « geste1 * »
         juce::ListenerList<Listener> listeners;
 
         // Vrai tant qu'une commande, un geste de knob ou un remplacement d'état court.

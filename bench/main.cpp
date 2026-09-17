@@ -1,13 +1,17 @@
 // PlugBench — banc J2 hors hôte.
 // Vérifie : compte et identifiants de la grille, drapeaux non automatisables,
 // aller-retour d'état, coût par bloc à 48 kHz / 128 du processeur à vide
-// (latence et bypass : voir PlugRender depuis J3).
+// (latence et bypass : voir PlugRender depuis J3), et depuis le J4b étape 1 le
+// piège APVTS/undo : une automation qui joue ne doit pas entrer dans l'historique
+// d'annulation du pilote (ETAT Rév. 9, a) « Piège connu »).
 // Usage : PlugBench [fichier_rapport] [nb_blocs]
 // Code de retour 0 si tout passe.
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "PlugProcessor.h"
+#include "StateSchema.h"
+#include "ui/Presenter.h"
 #include <cstdio>
 #include <set>
 
@@ -166,6 +170,96 @@ int main (int argc, char* argv[])
 
         check (s.p999Us < budgetUs, "p99.9 sous le budget", log);
         p.releaseResources();
+    }
+
+    //==========================================================================
+    // 5. Undo et automation — le piège APVTS/undo (ETAT Rév. 9, a) « Piège connu »).
+    //
+    // Ce que fait Live : l'hôte écrit dans les paramètres pendant qu'un clip
+    // automatisé joue ; l'APVTS recopie ces valeurs dans l'arbre à son propre timer,
+    // AVEC l'UndoManager qu'on lui a donné. Si c'est celui du pilote, chaque valeur
+    // automatisée devient une action annulable, et Ctrl+Z défait l'automation au
+    // lieu de défaire le geste du pilote.
+    //
+    // Le flush est forcé ici par `copyState()`, qui appelle exactement la même
+    // `flushParameterValuesToValueTree()` que le timer : `runDispatchLoopUntil` est
+    // compilé hors du binaire par JUCE_MODAL_LOOPS_PERMITTED=0, et on ne relâche pas
+    // une contrainte du produit pour une mesure. La confirmation dans Live (clip
+    // automatisé qui joue, puis Ctrl+Z) reste au pilote.
+    {
+        plug::PlugProcessor p;
+        auto& um = p.undoManager();
+        auto& view = p.presenter();
+
+        // a) Un geste du pilote : une transaction nommée.
+        view.setTail (2, false);
+        const juce::String userName = um.getUndoDescription();
+        const int userActions = um.getNumActionsInCurrentTransaction();
+        check (um.canUndo() && userName.isNotEmpty(),
+               "undo : le geste du pilote ouvre une transaction nommée « " + userName + " » ("
+                   + juce::String (userActions) + " action(s))", log);
+
+        // b) L'hôte automatise : un clip qui joue, c'est-à-dire des valeurs qui arrivent
+        //    en continu ET un flush toutes les 20 à 500 ms. On reproduit les deux :
+        //    8 tours de 4 valeurs, un flush par tour. Hors de tout geste d'interface,
+        //    hors de toute commande du Presenter.
+        constexpr int kTicks = 8, kPerTick = 4;
+        auto* automated = p.state().getParameter ("slot03.main");
+        const float beforeAutomation = plug::state::readParam (p.stateTree(), "slot03.main");
+        for (int t = 0; t < kTicks; ++t)
+        {
+            for (int i = 0; i < kPerTick; ++i)
+                automated->setValueNotifyingHost (0.20f + 0.02f * (float) (t * kPerTick + i));
+            p.state().copyState();                   // le flush, tel que le timer le ferait
+        }
+        const float afterAutomation = plug::state::readParam (p.stateTree(), "slot03.main");
+
+        const int afterActions = um.getNumActionsInCurrentTransaction();
+        const int polluted = afterActions - userActions;
+
+        log << "\nUndo et automation (J4b étape 1) :\n"
+            << "  transaction du pilote : « " << userName << " », " << userActions << " action(s)\n"
+            << "  " << (kTicks * kPerTick) << " valeurs automatisées sur slot03.main en " << kTicks
+            << " flush : " << juce::String (beforeAutomation, 3) << " vers " << juce::String (afterAutomation, 3) << "\n"
+            << "  actions ajoutées à la transaction par l'automation : " << polluted << "\n"
+            << "  transaction à annuler après l'automation : « " << um.getUndoDescription() << " »\n";
+
+        check (std::abs (afterAutomation - 0.82f) < 1.0e-2f,
+               "undo : l'automation atteint bien l'arbre (la vue la voit) — " + juce::String (afterAutomation, 3), log);
+
+        // c) L'épreuve : Ctrl+Z doit défaire le geste du pilote, pas l'automation.
+        um.undo();
+        const bool tailRestored = plug::state::slot (p.stateTree(), 2)
+                                      .getProperty (plug::state::id::tail, "ring").toString() == "ring";
+        const float afterUndo = plug::state::readParam (p.stateTree(), "slot03.main");
+        const bool automationUndone = std::abs (afterUndo - afterAutomation) > 1.0e-4f;
+
+        log << "  après Ctrl+Z : geste du pilote rétabli = " << (tailRestored ? "oui" : "NON")
+            << ", automation défaite = " << (automationUndone ? "OUI" : "non")
+            << " (slot03.main = " << juce::String (afterUndo, 3) << ")\n";
+
+        check (polluted == 0, "undo : l'automation n'ajoute AUCUNE action à la transaction du pilote ("
+                                  + juce::String (polluted) + ")", log);
+        check (tailRestored, "undo : Ctrl+Z rétablit le geste du pilote", log);
+        check (! automationUndone, "undo : Ctrl+Z ne défait pas l'automation de l'hôte", log);
+
+        // d) La contrepartie que la parade ne doit PAS coûter : un réglage venu de
+        //    l'interface reste annulable, et l'hôte le voit passer.
+        const float knobBefore = plug::state::readParam (p.stateTree(), "slot04.main");
+        view.setParam ("slot04.main", 0.80f);
+        const float knobSet = plug::state::readParam (p.stateTree(), "slot04.main");
+        const float hostSees = p.state().getParameter ("slot04.main")->getValue();
+        um.undo();
+        const float knobBack = plug::state::readParam (p.stateTree(), "slot04.main");
+
+        log << "  réglage d'interface slot04.main : " << juce::String (knobBefore, 3) << " vers "
+            << juce::String (knobSet, 3) << " (paramètre hôte " << juce::String (hostSees, 3)
+            << "), après Ctrl+Z " << juce::String (knobBack, 3) << "\n";
+
+        check (std::abs (knobSet - 0.80f) < 1.0e-6f && std::abs (hostSees - 0.80f) < 1.0e-6f,
+               "undo : un réglage d'interface atteint l'arbre ET le paramètre exposé à l'hôte", log);
+        check (std::abs (knobBack - knobBefore) < 1.0e-6f,
+               "undo : un réglage d'interface reste annulable (retour à " + juce::String (knobBack, 3) + ")", log);
     }
 
     //==========================================================================

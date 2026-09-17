@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 17 Sep 2026 3:01:16pm
+PlugRender — matrice J3 — 17 Sep 2026 3:30:46pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -106,6 +106,7 @@ PlugRender — matrice J3 — 17 Sep 2026 3:01:16pm
 [OK]   T15 Swap : FM arrivÃ© en 5, paramB re-verrouillÃ© depuis SA dÃ©claration
 [OK]   T15 Swap : DÃ©lai arrivÃ© en 1, paramB libÃ©rÃ© depuis SA dÃ©claration
 [OK]   T15 Swap : un verrou posÃ© Ã  la main ne survit pas au changement d'effet (Q1)
+[OK]   T15 Swap : une entrÃ©e que la skill arrivante ne dÃ©clare PAS ressort libre (Q1, 17/09)
 [OK]   T15 Insert : 1-2-3 devient dÃ©lai, gain, FM (ordre relatif gardÃ©, Â§3.2)
 [OK]   T15 Copy : la cible reÃ§oit l'effet et ses bases, l'original ne bouge pas
 [OK]   T16 clearSlot : l'emplacement est vide

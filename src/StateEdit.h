@@ -5,10 +5,14 @@
 //     l'emplacement : `active`, `glide`, `fade`, `tail`, plages, probabilités,
 //     transitions, la Line, le Mod, les routes macro — l'ordre de la chaîne EST
 //     l'indice de l'emplacement (§3.2), une automation ne déménage pas ;
-//   · les VERROUS se re-posent depuis la déclaration de la skill qui ARRIVE
-//     (amendement J3-5, décision pilote Q1 du 17/09) : un verrou dit quelque
-//     chose du sens d'un paramètre, et « paramB verrouillé parce que c'est le
-//     rapport FM » est un mensonge quand un délai prend la place ;
+//   · les VERROUS se re-posent ENTIÈREMENT depuis la skill qui ARRIVE (ETAT
+//     Rév. 9 Q1, complétée par la décision pilote du 17/09) : les entrées qu'elle
+//     DÉCLARE reprennent leur classe (amendement J3-5), celles qu'elle NE DÉCLARE
+//     PAS repassent LIBRES. Un verrou dit quelque chose du sens d'un paramètre :
+//     « paramB verrouillé parce que c'est le rapport FM » est un mensonge quand un
+//     délai prend la place, et verrouiller une entrée qu'aucune skill n'occupe n'a
+//     aucun sens. `state::setSkill` (StateSchema) ne bouge pas : c'est StateEdit
+//     qui complète, par `state::setLocked` ;
 //   · composé UNIQUEMENT des fonctions publiques de StateSchema : ce fichier
 //     n'a aucune connaissance privée du schéma, et le schéma ne bouge pas.
 // Tout passe par l'UndoManager fourni (§3.6) : un appel = une action annulable.
@@ -17,6 +21,11 @@
 
 namespace plug::StateEdit
 {
+    // Pose une skill dans un emplacement AVEC la règle complète des verrous ci-dessus.
+    // C'est le seul chemin de pose de l'interface : `state::setSkill` seule laisserait
+    // debout les verrous des entrées que la skill arrivante n'occupe pas.
+    void setSkill (juce::ValueTree& s, int slot1, const juce::String& skillId, juce::UndoManager* um);
+
     // Swap   : les deux emplacements échangent leur effet.
     // Insert : l'effet se déplace et les autres se décalent en gardant leur ordre
     //          relatif — c'est le geste de glisser un onglet entre deux autres (§3.2).

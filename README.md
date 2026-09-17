@@ -69,7 +69,8 @@ Les fichiers vivent dans `presets/` et sont lus depuis, par ordre de priorité :
   déterministe comparé octet par octet), `PlugRender render --in --state --out`,
   `PlugRender bench` (coût du socle), `PlugRender gen-input`.
 - **PlugBench** — banc J2 : grille, presets, aller-retour d'état, coût par bloc
-  du processeur complet.
+  du processeur complet, et depuis le J4b le piège APVTS/undo (une automation qui
+  joue ne doit pas entrer dans l'historique d'annulation du pilote).
 - **PlugSkillTest** — le vérificateur du contrat de skill (§3.9) : identité,
   aides, latence déclarée contre latence réelle, blocs vides et irréguliers,
   silence après reset, bornes, déterminisme, coût par bloc. Une skill n'entre au
@@ -140,6 +141,16 @@ Deux options CMake commandent l'éditeur rendu par `createEditor()` : `PLUG_UI_V
 jusqu'à la fin du J4b). `AVENIR.md`, à la racine, liste ce que la v1 ne fait pas
 et l'assume ; il est embarqué dans le binaire (`juce_add_binary_data`) et lu par
 `ui::Presenter::avenirText()`.
+
+**Deux UndoManager, et pourquoi.** L'APVTS recopie périodiquement dans l'arbre les
+valeurs venues de l'hôte, avec l'UndoManager qu'on lui donne : un clip automatisé
+qui joue écrivait donc dans l'historique du pilote, et Ctrl+Z rembobinait
+l'automation au lieu de défaire son geste (mesuré : `measure/MESURES_J4b.md`).
+`PlugProcessor` tient désormais `undo` (celui du pilote) et `flushUndo` (donné à
+l'APVTS, qui jette tout ce qu'il reçoit). Les réglages venus de l'interface restent
+annulables parce que `ui::Presenter::setParam` écrit **dans l'arbre** avec
+l'UndoManager du pilote — l'APVTS relaie ensuite au paramètre, donc à l'hôte.
+`PlugBench` vérifie les deux sens à chaque exécution.
 
 ## Échafaudage J2 : éditeur générique
 

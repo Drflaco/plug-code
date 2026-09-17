@@ -24,6 +24,10 @@ namespace plug
         void rescan();
         int size() const noexcept { return (int) entries.size(); }
         juce::String name (int index) const;
+        // Le fichier derrière une entrée. Le menu [Preset ▾] du J4b charge par le même
+        // chemin que « Charger un fichier… » (PlugProcessor::loadPresetFile) : une seule
+        // route de chargement à tenir, donc une seule à pouvoir casser.
+        juce::File file (int index) const;
         // Arbre PlugState complet, ou arbre invalide si le fichier est illisible.
         juce::ValueTree load (int index) const;
 

@@ -5,12 +5,6 @@ namespace plug::ui::v1
 {
     using juce::String;
 
-    namespace
-    {
-        constexpr int kStampHeight = 22;
-        constexpr int kPresetHeight = 30;
-    }
-
     //==========================================================================
     PlugEditor::Zone::Zone (const String& name) : title (name)
     {
@@ -31,34 +25,20 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugEditor::PlugEditor (juce::AudioProcessor& processor, Presenter& p)
-        : AudioProcessorEditor (processor), presenter (p)
+        : AudioProcessorEditor (processor), presenter (p), bar (p)
     {
-        const auto prefs = presenter.prefsView();
+        const auto prefsView = presenter.prefsView();
 
-        // L'aide au survol vit dans la fenêtre du plugin, jamais sur le bureau :
-        // un hôte peut détruire l'éditeur à tout moment (JUCE_MODAL_LOOPS_PERMITTED=0).
-        tooltips = std::make_unique<juce::TooltipWindow> (this, prefs.hoverHelp ? prefs.helpDelayMs : 1 << 30);
+        // L'aide au survol vit dans la fenêtre du plugin, jamais sur le bureau : un hôte
+        // peut détruire l'éditeur à tout moment. Délai : préférences (§3.11).
+        tooltips = std::make_unique<juce::TooltipWindow> (this, prefsView.hoverHelp ? prefsView.helpDelayMs : 1 << 30);
 
-        // L'identité du binaire en tête : on ne peut plus écouter un binaire sans
-        // savoir lequel (incident 17/09, §3.11 « à-propos »).
-        stamp.setText (presenter.aboutView().buildStamp, juce::dontSendNotification);
-        stamp.setJustificationType (juce::Justification::centredLeft);
-        stamp.setInterceptsMouseClicks (false, false);
-        stamp.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.85f));
+        bar.onShowAbout = [this] { showAbout(); };
+        bar.onShowPrefs = [this] { showPrefs(); };
 
-        status.setJustificationType (juce::Justification::centredLeft);
-        status.setInterceptsMouseClicks (false, false);
-        status.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.7f));
-        status.setText ("Presets : " + presenter.presetView().folder, juce::dontSendNotification);
-
-        load.onClick = [this] { chooseToLoad(); };
-        save.onClick = [this] { chooseToSave(); };
-
-        content.addAndMakeVisible (stamp);
-        content.addAndMakeVisible (status);
-        content.addAndMakeVisible (load);
-        content.addAndMakeVisible (save);
-        for (auto* z : { &bar, &macros, &tabs, &controls, &edition, &master })
+        content.setInterceptsMouseClicks (false, true);   // un clic dans le vide revient à l'éditeur
+        content.addAndMakeVisible (bar);
+        for (auto* z : { &macros, &tabs, &controls, &edition, &master })
             content.addAndMakeVisible (*z);
         addAndMakeVisible (content);
 
@@ -69,14 +49,21 @@ namespace plug::ui::v1
             c->setFixedAspectRatio ((double) kBaseWidth / (double) kBaseHeight);
             c->setSizeLimits (kBaseWidth / 2, kBaseHeight / 2, kBaseWidth * 2, kBaseHeight * 2);
         }
-        setSize ((int) std::lround (kBaseWidth * prefs.zoom),
-                 (int) std::lround (kBaseHeight * prefs.zoom));
+        setSize ((int) std::lround (kBaseWidth * prefsView.zoom),
+                 (int) std::lround (kBaseHeight * prefsView.zoom));
+
+        // Meilleur effort pour Ctrl+Z / Ctrl+Y : on ÉCOUTE, on ne réclame rien. Le
+        // drapeau EDITOR_WANTS_KEYBOARD_FOCUS du plugin reste FALSE (décision figée) ;
+        // les boutons de la barre refusent le focus pour ne pas capter les touches.
+        setWantsKeyboardFocus (true);
+        addKeyListener (this);
 
         presenter.addListener (this);
     }
 
     PlugEditor::~PlugEditor()
     {
+        removeKeyListener (this);
         presenter.removeListener (this);
     }
 
@@ -88,24 +75,14 @@ namespace plug::ui::v1
 
     void PlugEditor::resized()
     {
-        // Zoom : le contenu est dessiné en 1280×800 logiques et mis à l'échelle. La
-        // mise en page ne connaît donc qu'une seule taille, quelle que soit la fenêtre.
+        // Zoom : le contenu est dessiné en 1280×800 logiques et mis à l'échelle. La mise
+        // en page ne connaît donc qu'une seule taille, quelle que soit la fenêtre.
         const double scale = juce::jmax (0.1, (double) getWidth() / (double) kBaseWidth);
         content.setTransform (juce::AffineTransform::scale ((float) scale));
         content.setBounds (0, 0, kBaseWidth, (int) std::lround (getHeight() / scale));
 
-        auto r = content.getLocalBounds();
-        stamp.setBounds (r.removeFromTop (kStampHeight).reduced (8, 0));
-
-        auto presets = r.removeFromTop (kPresetHeight).reduced (6, 3);
-        load.setBounds (presets.removeFromLeft (150));
-        presets.removeFromLeft (6);
-        save.setBounds (presets.removeFromLeft (150));
-        presets.removeFromLeft (10);
-        status.setBounds (presets);
-
-        r.reduce (6, 6);
-        bar.setBounds (r.removeFromTop (44));
+        auto r = content.getLocalBounds().reduced (6, 6);
+        bar.setBounds (r.removeFromTop (PlugBar::kHeight));
         r.removeFromTop (6);
         macros.setBounds (r.removeFromTop (70));
         r.removeFromTop (6);
@@ -120,58 +97,88 @@ namespace plug::ui::v1
         controls.setBounds (left);
         r.removeFromLeft (6);
         edition.setBounds (r);
+
+        if (about != nullptr) layOutPanel (*about, 620, 130);
+        if (prefs != nullptr) layOutPanel (*prefs, 620, 180);
+    }
+
+    void PlugEditor::mouseDown (const juce::MouseEvent&)
+    {
+        closePanels();
     }
 
     //==========================================================================
-    void PlugEditor::viewChanged (const ViewMask& mask)
+    void PlugEditor::viewChanged (const ViewMask&)
     {
-        // Étape 0 : rien à redessiner encore. Le chemin de notification existe et
-        // fonctionne — les widgets des étapes 1 à 7 s'y branchent un par un.
-        if (mask.has (ViewMask::Presets) || mask.has (ViewMask::Prefs))
-        {
-            status.setText ("Presets : " + presenter.presetView().folder, juce::dontSendNotification);
-            resized();
-        }
+        // Étape 1 : seule la barre a de quoi se relire (nom du preset, « * », état de
+        // l'historique). Les widgets des étapes 2 à 7 s'abonneront et filtreront le masque.
+        bar.refresh();
     }
 
     void PlugEditor::transportChanged (const TransportView&)
     {
-        // Étape 2 : la tête de lecture. Ici, on prouve seulement que le fil arrive.
+        // Étape 2 : la tête de lecture. Ici, le fil arrive et ne sert encore à rien.
+    }
+
+    bool PlugEditor::keyPressed (const juce::KeyPress& key, juce::Component*)
+    {
+        if (key == juce::KeyPress ('z', juce::ModifierKeys::commandModifier, 0))
+        {
+            presenter.undo();
+            bar.refresh();
+            return true;
+        }
+        if (key == juce::KeyPress ('y', juce::ModifierKeys::commandModifier, 0)
+            || key == juce::KeyPress ('z', juce::ModifierKeys::commandModifier
+                                               | juce::ModifierKeys::shiftModifier, 0))
+        {
+            presenter.redo();
+            bar.refresh();
+            return true;
+        }
+        if (key == juce::KeyPress::escapeKey && (about != nullptr || prefs != nullptr))
+        {
+            closePanels();
+            return true;
+        }
+        return false;   // tout le reste retourne à l'hôte : le clavier ne nous appartient pas
     }
 
     //==========================================================================
-    void PlugEditor::chooseToLoad()
+    void PlugEditor::layOutPanel (juce::Component& panel, int w, int h)
     {
-        chooser = std::make_unique<juce::FileChooser> ("Charger un preset Plug",
-                                                        juce::File (presenter.presetView().folder), "*.plugstate");
-        chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-                               [this] (const juce::FileChooser& fc)
-                               {
-                                   const auto f = fc.getResult();
-                                   if (f == juce::File()) return;
-                                   const bool ok = presenter.loadPreset (f);
-                                   status.setText (ok ? "Chargé : " + f.getFileNameWithoutExtension()
-                                                      : "Illisible : " + f.getFileName(),
-                                                    juce::dontSendNotification);
-                               });
+        const auto area = content.getLocalBounds();
+        panel.setBounds (area.getCentreX() - w / 2, area.getY() + 110, w, h);
+        panel.toFront (false);
     }
 
-    void PlugEditor::chooseToSave()
+    void PlugEditor::showAbout()
     {
-        chooser = std::make_unique<juce::FileChooser> ("Enregistrer l'état courant",
-                                                        juce::File (presenter.presetView().folder)
-                                                            .getChildFile ("sans-titre.plugstate"),
-                                                        "*.plugstate");
-        chooser->launchAsync (juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
-                                  | juce::FileBrowserComponent::warnAboutOverwriting,
-                               [this] (const juce::FileChooser& fc)
-                               {
-                                   const auto f = fc.getResult();
-                                   if (f == juce::File()) return;
-                                   const bool ok = presenter.savePreset (f);
-                                   status.setText (ok ? "Enregistré : " + f.getFileNameWithoutExtension()
-                                                      : "Échec de l'enregistrement",
-                                                    juce::dontSendNotification);
-                               });
+        const bool wasOpen = about != nullptr;
+        closePanels();
+        if (wasOpen) return;                 // le même bouton ouvre et referme
+
+        about = std::make_unique<AboutPanel> (presenter);
+        about->onClose = [this] { closePanels(); };
+        content.addAndMakeVisible (*about);
+        layOutPanel (*about, 620, 130);
+    }
+
+    void PlugEditor::showPrefs()
+    {
+        const bool wasOpen = prefs != nullptr;
+        closePanels();
+        if (wasOpen) return;
+
+        prefs = std::make_unique<PrefsPanel>();
+        prefs->onClose = [this] { closePanels(); };
+        content.addAndMakeVisible (*prefs);
+        layOutPanel (*prefs, 620, 180);
+    }
+
+    void PlugEditor::closePanels()
+    {
+        about.reset();
+        prefs.reset();
     }
 }

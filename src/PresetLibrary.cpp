@@ -56,6 +56,11 @@ namespace plug
         return juce::isPositiveAndBelow (index, (int) entries.size()) ? entries[(size_t) index].name : juce::String();
     }
 
+    juce::File PresetLibrary::file (int index) const
+    {
+        return juce::isPositiveAndBelow (index, (int) entries.size()) ? entries[(size_t) index].file : juce::File();
+    }
+
     juce::ValueTree PresetLibrary::load (int index) const
     {
         if (! juce::isPositiveAndBelow (index, (int) entries.size())) return {};

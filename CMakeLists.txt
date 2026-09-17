@@ -131,7 +131,11 @@ set(PLUG_UI_SOURCES
     src/ui/Presenter.h
     src/ui/Presenter.cpp
     src/ui/v1/PlugEditor.h
-    src/ui/v1/PlugEditor.cpp)
+    src/ui/v1/PlugEditor.cpp
+    src/ui/v1/PlugBar.h
+    src/ui/v1/PlugBar.cpp
+    src/ui/v1/PlugPanels.h
+    src/ui/v1/PlugPanels.cpp)
 
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}

@@ -1,5 +1,6 @@
 #include "StateEdit.h"
 #include "GridMap.h"
+#include "Skill.h"
 #include "StateSchema.h"
 #include <array>
 #include <vector>
@@ -37,15 +38,39 @@ namespace plug::StateEdit
 
         void write (ValueTree& s, int slot1, const Payload& p, juce::UndoManager* um)
         {
-            // setSkill pose l'identité, la version du registre ET re-pose les verrous et
-            // transitions déclarés (J3-5) : c'est exactement la règle Q1, donc on l'appelle
-            // au lieu de la réécrire. La version enregistrée est ensuite restaurée : elle
-            // suit l'effet, même quand elle est plus ancienne que celle du registre — un
-            // preset qui référence une skill v1 la garde en v1 après un déménagement.
-            state::setSkill (s, slot1, p.skill, um);
+            // La version enregistrée est restaurée APRÈS la pose : elle suit l'effet,
+            // même plus ancienne que celle du registre — un preset qui référence une
+            // skill v1 la garde en v1 après un déménagement.
+            setSkill (s, slot1, p.skill, um);
             state::slot (s, slot1).setProperty (state::id::skillVersion, p.skillVersion, um);
             for (int m = 0; m < grid::kModulableCount; ++m)
                 state::setParam (s, gridId (slot1, m), p.base[(size_t) m], um);
+        }
+    }
+
+    //==========================================================================
+    void setSkill (ValueTree& s, int slot1, const String& skillId, juce::UndoManager* um)
+    {
+        if (! juce::isPositiveAndNotGreaterThan (slot1, state::kSlots)) return;
+
+        // 1. StateSchema pose l'identité, la version du registre, et rend aux entrées
+        //    DÉCLARÉES leur classe de verrou et leur transition (amendement J3-5).
+        state::setSkill (s, slot1, skillId, um);
+
+        // 2. Ce que StateSchema ne fait pas, et qui manquait : les entrées que la skill
+        //    arrivante NE déclare PAS sont libérées. Sans ce passage, un verrou posé pour
+        //    l'effet précédent survivrait à son départ et parlerait d'un paramètre qui
+        //    n'existe plus (décision pilote du 17/09, ETAT Rév. 9 Q1).
+        const auto* info = SkillRegistry::instance().info (skillId);
+        for (int m = 0; m < grid::kModulableCount; ++m)
+        {
+            bool declared = false;
+            if (info != nullptr)
+                for (const auto& d : info->params)
+                    if (d.modulable == m) { declared = true; break; }
+
+            if (! declared)
+                state::setLocked (s, slot1, grid::kModulableName[(size_t) m], false, um);
         }
     }
 

@@ -61,7 +61,9 @@ namespace plug::ui
         std::array<ParamView, kSlotParams> params {};
         bool hasPattern = false;        // la ligne porte un motif (c-8)
         bool hostDriven = false;        // des valeurs sont arrivées de l'hôte (heuristique d-1)
-        int latency = 0;
+        // Pas de `latency` ici : aucun widget des sept étapes n'en a besoin, et ni le
+        // registre ni le moteur ne déclarent la latence PAR emplacement (décision
+        // pilote du 17/09). Un champ qui vaudrait toujours 0 mentirait.
     };
 
     struct StepView
@@ -116,7 +118,8 @@ namespace plug::ui
 
     struct AboutView
     {
-        juce::String buildStamp;
+        juce::String buildStamp;    // la ligne complète : version, commit, date de compilation
+        juce::String shortStamp;    // « Plug 0.3.0 · commit 484061a » — ce qui tient dans la barre
         juce::String juceVersion;
         std::vector<AboutSkillView> skills;
     };
@@ -133,9 +136,21 @@ namespace plug::ui
 
     struct PresetView
     {
-        juce::String currentName;
+        juce::String currentName;   // vide tant que rien n'a été chargé ni enregistré
+        bool modified = false;      // l'état a bougé depuis : la barre affiche « geste1 * »
         juce::String folder;
-        juce::StringArray names;
+        juce::StringArray names;    // la bibliothèque : dossier utilisateur d'abord, livré ensuite
+        int currentIndex = -1;      // entrée de la bibliothèque correspondant au nom courant, -1 sinon
+    };
+
+    // Ce qu'un bouton Annuler / Refaire a besoin de savoir : s'il est vivant, et le
+    // NOM de la transaction — c'est ce nom qui rend la granularité visible (§3.11).
+    struct UndoView
+    {
+        bool canUndo = false;
+        bool canRedo = false;
+        juce::String undoName;
+        juce::String redoName;
     };
 
     //==========================================================================

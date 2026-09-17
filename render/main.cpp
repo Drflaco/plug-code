@@ -556,7 +556,9 @@ namespace
             state::setRange (s, 1, "main", 0.2f, 0.4f, nullptr);
             state::setStepOn (s, 1, 4, false, nullptr);
             state::setTail (s, 1, false, nullptr);
-            state::setLocked (s, 1, "paramA", true, nullptr);  // verrou posé à la main sur une entrée libre
+            state::setLocked (s, 1, "paramA", true, nullptr);  // à la main, sur une entrée que les DEUX déclarent
+            state::setLocked (s, 1, "paramD", true, nullptr);  // …et sur une entrée qu'AUCUNE des deux ne déclare
+            state::setLocked (s, 5, "paramE", true, nullptr);  // idem côté délai
 
             check (state::readParamSpec (state::slot (s, 1), "paramB").locked,
                    "T15 core.fm pose paramB verrouillé à la pose (amendement J3-5)");
@@ -584,6 +586,9 @@ namespace
                    "T15 Swap : Délai arrivé en 1, paramB libéré depuis SA déclaration");
             check (! state::readParamSpec (state::slot (s, 1), "paramA").locked,
                    "T15 Swap : un verrou posé à la main ne survit pas au changement d'effet (Q1)");
+            check (! state::readParamSpec (state::slot (s, 1), "paramD").locked
+                       && ! state::readParamSpec (state::slot (s, 5), "paramE").locked,
+                   "T15 Swap : une entrée que la skill arrivante ne déclare PAS ressort libre (Q1, 17/09)");
 
             // Insert : l'effet va au bout, les autres se décalent en gardant leur ordre.
             auto t = state::createDefault();

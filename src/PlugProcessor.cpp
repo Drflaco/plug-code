@@ -32,7 +32,8 @@ namespace plug
         : AudioProcessor (BusesProperties()
                               .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-          apvts (*this, &undo, "PlugState", grid::createLayout())
+          // &flushUndo, pas &undo : voir le commentaire des deux UndoManager dans l'en-tête.
+          apvts (*this, &flushUndo, "PlugState", grid::createLayout())
     {
         jassert (getParameters().size() == grid::kTotalCount);
 
@@ -80,6 +81,7 @@ namespace plug
         ui::Presenter::ScopedStateReplacement guard (view.get());
         apvts.state.removeListener (this);
         apvts.replaceState (tree);
+        undo.clearUndoHistory();             // l'APVTS ne vide que le sien (voir l'en-tête)
         apvts.state.addListener (this);
         publishState();
     }
@@ -98,6 +100,7 @@ namespace plug
         ui::Presenter::ScopedStateReplacement guard (view.get());   // un preset ne marque jamais hostDriven (Q4)
         apvts.state.removeListener (this);
         apvts.replaceState (tree);           // chemin d'état normal : le moteur ne voit rien passer
+        undo.clearUndoHistory();             // l'APVTS ne vide que le sien (voir l'en-tête)
         apvts.state.addListener (this);
         publishState();                      // modèle reconstruit et latence redéclarée, hors audio
         return true;
@@ -370,6 +373,7 @@ namespace plug
                 // automatise, et la vue ne doit pas s'en persuader (d-1, Q4).
                 ui::Presenter::ScopedStateReplacement guard (view.get());
                 apvts.replaceState (tree);
+                undo.clearUndoHistory();     // l'APVTS ne vide que le sien (voir l'en-tête)
                 apvts.state.addListener (this);
                 publishState();
             }

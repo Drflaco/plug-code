@@ -107,7 +107,20 @@ namespace plug
         void publishState();
         void dumpTiming (const char* reason);
 
+        // DEUX gestionnaires d'annulation — c'est la parade au piège APVTS/undo
+        // (ETAT Rév. 9 a) « Piège connu » ; mesuré au J4b étape 1, measure/MESURES_J4b.md) :
+        //   · `undo` est celui du PILOTE. Toutes les éditions de l'interface y passent,
+        //     y compris les valeurs de paramètre, que ui::Presenter écrit DANS L'ARBRE
+        //     (l'APVTS relaie au paramètre, donc à l'hôte) : d'où leur annulabilité.
+        //   · `flushUndo` est celui qu'on donne à l'APVTS. Il ne reçoit que le recopiage
+        //     périodique des valeurs venues de l'HÔTE, et les jette aussitôt (0 unité
+        //     gardée). Sans lui, un clip automatisé qui joue ajoutait une action à la
+        //     transaction courante, et Ctrl+Z rembobinait l'automation au lieu de
+        //     défaire le geste du pilote — mesuré, 1 action coalescée par paramètre.
+        // Conséquence à ne pas oublier : `apvts.replaceState()` vide l'historique de
+        // CELUI QU'IL TIENT, donc plus celui du pilote — on le vide explicitement.
         juce::UndoManager undo;
+        juce::UndoManager flushUndo { 0, 0 };
         PresetLibrary presets;
         int currentPreset = 0;
         juce::AudioProcessorValueTreeState apvts;
