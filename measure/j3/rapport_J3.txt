@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 16 Sep 2026 11:21:11pm
+PlugRender — matrice J3 — 17 Sep 2026 1:12:18am
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -27,9 +27,6 @@ PlugRender — matrice J3 — 16 Sep 2026 11:21:11pm
 [OK]   T10 transport arrÃªtÃ© : rendu dÃ©terministe
 [OK]   T10 sans position hÃ´te : roue libre Ã  120 BPM dÃ©terministe
 [OK]   T11 auto-tests des modules factices
-  [OK] factice.gain : main 0,25 → gain 0,5
-  [OK] factice.delay : impulsion retardée de 10 échantillons (10)
-  [OK] factice.latent : impulsion retardée de 256 = latence déclarée 256
   [OK] core.filter : passe-bas 200 Hz, sinus 6 kHz attÃ©nuÃ© de 60.0 dB (≥ 40 attendus)
   [OK] core.filter : passe-bas 200 Hz, sinus 50 Hz Ã  0.05 dB (|g| ≤ 1,5)
   [OK] core.filter : passe-haut 200 Hz : 50 Hz Ã  -24.0 dB, 6 kHz à -0.00 dB
@@ -86,11 +83,18 @@ PlugRender — matrice J3 — 16 Sep 2026 11:21:11pm
   [OK] core.repitch : inertie : 30 ms aprÃ¨s le pas, 500.0 Hz sans inertie (500 visés, arrivée immédiate) et 966.7 Hz à 500 ms (le moteur est à peine parti)
   [OK] core.repitch : Ã©cart stÃ©rÃ©o : diffÃ©rence gauche/droite 0.000000000 au centre, 1.415 à fond (> 0,2 attendu)
   [OK] core.repitch : 128 paliers de hauteur Ã  128 Ã©chantillons : crÃªte 0.5000 (entrée 0,5), plus grand écart entre deux échantillons 0.0202 (la pente propre du signal vaut déjà 0,06), latence 194 inchangée
+  [OK] factice.gain : main 0,25 → gain 0,5
+  [OK] factice.delay : impulsion retardée de 10 échantillons (10)
+  [OK] factice.latent : impulsion retardée de 256 = latence déclarée 256
 
 [OK]   T12 44,1 kHz : deux passes identiques octet par octet
 [OK]   T12 44,1 kHz : blocs irrÃ©guliers, rendu identique
 [OK]   T12 44,1 kHz : latence dÃ©clarÃ©e constante = 256
 [OK]   T13 rendu 48 kHz identique Ã  la rÃ©fÃ©rence figÃ©e
 [OK]   T13 rendu 44,1 kHz identique Ã  la rÃ©fÃ©rence figÃ©e
+[OK]   T14 48000 Hz : état par défaut, sortie identique à l'entrée
+[OK]   T14 48000 Hz : idem en blocs irréguliers
+[OK]   T14 44100 Hz : état par défaut, sortie identique à l'entrée
+[OK]   T14 44100 Hz : idem en blocs irréguliers
 
 Résultat : TOUT PASSE
