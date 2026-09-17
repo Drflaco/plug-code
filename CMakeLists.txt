@@ -68,6 +68,11 @@ option(PLUG_J2_GENERIC_EDITOR "Éditeur générique JUCE (échafaudage J2)" ON)
 # se construit. PLUG_J2_GENERIC_EDITOR ne disparaît qu'à l'étape 7.
 option(PLUG_UI_V1 "Interface v1 (J4b)" ON)
 
+# Chronomètre du rendu du séquenceur (J4b étape 4). JAMAIS dans le binaire livré :
+# il journalise p50/p99 de paint() dans %APPDATA%\LascauxLab\Plug\measure\.
+# PlugBench le compile, lui, pour mesurer 600 paint() forcés hors hôte.
+option(PLUG_UI_TIMING "Chronomètre du rendu du séquenceur (mesure, hors livraison)" OFF)
+
 # La liste « À venir » (Q5 du pilote, 17/09), embarquée dans le binaire : une
 # absence annoncée n'est pas un défaut. Lue par ui::Presenter::avenirText().
 juce_add_binary_data(PlugData SOURCES AVENIR.md)
@@ -154,7 +159,13 @@ set(PLUG_UI_SOURCES
     src/ui/v1/PlugControls.h
     src/ui/v1/PlugControls.cpp
     src/ui/v1/PlugMacros.h
-    src/ui/v1/PlugMacros.cpp)
+    src/ui/v1/PlugMacros.cpp
+    src/ui/v1/PlugSequencer.h
+    src/ui/v1/PlugSequencer.cpp
+    src/ui/v1/PlugInspector.h
+    src/ui/v1/PlugInspector.cpp
+    src/ui/v1/PlugEdition.h
+    src/ui/v1/PlugEdition.cpp)
 
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}
@@ -191,7 +202,8 @@ target_compile_definitions(Plug PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
     PLUG_J2_TIMING=1
     PLUG_J2_GENERIC_EDITOR=$<BOOL:${PLUG_J2_GENERIC_EDITOR}>
-    PLUG_UI_V1=$<BOOL:${PLUG_UI_V1}>)
+    PLUG_UI_V1=$<BOOL:${PLUG_UI_V1}>
+    PLUG_UI_TIMING=$<BOOL:${PLUG_UI_TIMING}>)
 target_link_libraries(Plug
     PRIVATE juce::juce_audio_utils PlugData
     PUBLIC  juce::juce_recommended_config_flags
@@ -206,7 +218,8 @@ target_compile_definitions(PlugBench PRIVATE
     ${PLUG_COMMON_DEFS}
     PLUG_J2_TIMING=0
     PLUG_J2_GENERIC_EDITOR=0
-    PLUG_UI_V1=0
+    PLUG_UI_V1=1
+    PLUG_UI_TIMING=1
     JUCE_STANDALONE_APPLICATION=1
     PLUG_NO_PLUGIN_FACTORY=1)
 target_link_libraries(PlugBench

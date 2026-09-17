@@ -73,7 +73,7 @@ namespace
                       LockClass::Free, true, "Hz", dispCut },
                     { M_RES,    "Résonance",
                       "Pointe à la coupure : Q de 0,5 (amorti) à 12 (environ +21 dB). Libre : la pointe suit la coupure sans risque de resynchronisation.",
-                      LockClass::Free, true, "", dispRes },
+                      LockClass::Free, true, "Q", dispRes },
                     { M_TYPE,   "Type",
                       "Type de filtre en trois paliers : 0 à 0,33 passe-bas, 0,34 à 0,66 passe-bande, 0,67 à 1 passe-haut. Verrouillé par défaut : changer de palier en cours de séquence déplace la sortie d'un tap à l'autre et s'entend comme une marche ; déverrouille-le si c'est l'effet cherché.",
                       LockClass::LockedByDefault, false, "", dispType },

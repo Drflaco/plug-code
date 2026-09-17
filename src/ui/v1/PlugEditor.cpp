@@ -26,7 +26,7 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugEditor::PlugEditor (juce::AudioProcessor& processor, Presenter& p)
-        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p), macros (p), controls (p)
+        : AudioProcessorEditor (processor), presenter (p), bar (p), tabs (p), macros (p), controls (p), edition (p)
     {
         const auto prefsView = presenter.prefsView();
 
@@ -44,8 +44,8 @@ namespace plug::ui::v1
         content.addAndMakeVisible (controls);
         // Le menu d'effet vit dans les onglets : les contrôles le lui demandent.
         controls.onChooseSkill = [this] (int slot1) { tabs.openSkillMenu (slot1); };
-        for (auto* z : { &edition, &master })
-            content.addAndMakeVisible (*z);
+        content.addAndMakeVisible (edition);
+        content.addAndMakeVisible (master);
         addAndMakeVisible (content);
 
         // Ratio verrouillé : la mise en page dense du §3.7 n'a qu'une proportion juste.
@@ -78,6 +78,7 @@ namespace plug::ui::v1
         tabs.refresh();
         macros.refresh();
         controls.refresh();
+        edition.refresh();
     }
 
     PlugEditor::~PlugEditor()
@@ -110,10 +111,10 @@ namespace plug::ui::v1
         master.setBounds (r.removeFromBottom (86));
         r.removeFromBottom (6);
 
-        // Partage principal : contrôles à gauche, édition à droite (préférence 2/3–1/3).
-        const double part = presenter.prefsView().ratioTwoThirds ? 2.0 / 3.0 : 1.0 / 3.0;
-        auto left = r.removeFromLeft ((int) std::lround (r.getWidth() * part));
-        controls.setBounds (left);
+        // Contrôles à gauche, édition à droite. Ce partage-ci est FIXE : la préférence
+        // 2/3–1/3 gouverne le partage séquenceur / inspecteur DANS la zone d'édition
+        // (étape 4 §C), pour que le séquenceur garde toute la largeur de ses 32 pas.
+        controls.setBounds (r.removeFromLeft ((int) std::lround (r.getWidth() * 0.34)));
         r.removeFromLeft (6);
         edition.setBounds (r);
 
@@ -137,11 +138,13 @@ namespace plug::ui::v1
         tabs.refresh();
         macros.refresh();
         controls.refresh();
+        edition.refresh();
     }
 
-    void PlugEditor::transportChanged (const TransportView&)
+    void PlugEditor::transportChanged (const TransportView& t)
     {
-        // Étape 2 : la tête de lecture. Ici, le fil arrive et ne sert encore à rien.
+        // 30 Hz : la zone d'édition ne repeint que les deux colonnes qui changent.
+        edition.setTransport (t);
     }
 
     bool PlugEditor::keyPressed (const juce::KeyPress& key, juce::Component*)

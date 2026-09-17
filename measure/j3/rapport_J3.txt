@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 17 Sep 2026 4:22:40pm
+PlugRender — matrice J3 — 17 Sep 2026 4:38:20pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique

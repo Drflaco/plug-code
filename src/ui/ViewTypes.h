@@ -169,6 +169,24 @@ namespace plug::ui
         int currentIndex = -1;      // entrée de la bibliothèque correspondant au nom courant, -1 sinon
     };
 
+    // De quoi est faite une sélection de pas (c-7) : c'est ce compte qui arme
+    // « Figer » et qui écrit l'avertissement de re-dérivation AVANT le clic (d-2).
+    struct StepCountsView
+    {
+        int generated = 0;
+        int explicitCount = 0;
+        int off = 0;
+        int total = 0;          // pas dans la sélection, bornes comprises
+    };
+
+    // L'état de génération : graine maîtresse, compteur de tirages, densité courante.
+    struct GenerationView
+    {
+        juce::int64 masterSeed = 0;
+        int counter = 0;
+        float density = 1.0f;
+    };
+
     // Ce qu'un bouton Annuler / Refaire a besoin de savoir : s'il est vivant, et le
     // NOM de la transaction — c'est ce nom qui rend la granularité visible (§3.11).
     struct UndoView

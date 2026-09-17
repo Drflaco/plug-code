@@ -439,6 +439,28 @@ namespace plug::ui
         return v;
     }
 
+    StepCountsView Presenter::stepCountsView (int slot1, int first1, int last1) const
+    {
+        const auto c = StateQuery::stepCounts (proc.stateTree(), slot1, first1, last1);
+        StepCountsView v;
+        v.generated = c.generated;
+        v.explicitCount = c.explicitCount;
+        v.off = c.off;
+        v.total = juce::jmax (0, juce::jmin (kSteps, juce::jmax (first1, last1))
+                                     - juce::jmax (1, juce::jmin (first1, last1)) + 1);
+        return v;
+    }
+
+    GenerationView Presenter::generationView() const
+    {
+        auto gen = proc.stateTree().getChildWithName (state::id::Generation);
+        GenerationView v;
+        v.masterSeed = (juce::int64) gen.getProperty (state::id::masterSeed, 0);
+        v.counter = (int) gen.getProperty (state::id::counter, 0);
+        v.density = (float) (double) gen.getProperty (state::id::density, 1.0);
+        return v;
+    }
+
     UndoView Presenter::undoView() const
     {
         // Le NOM de la transaction est ce qui rend la granularité visible : le pilote
@@ -645,6 +667,18 @@ namespace plug::ui
     {
         Command c (*this, "Nouvelle graine"_fr);
         state::setMasterSeed (proc.stateTree(), seed, &proc.undoManager());
+    }
+
+    void Presenter::setDensity (float density)
+    {
+        Command c (*this, "Densité du tirage"_fr);
+        // La densité vit dans le nœud Generation, que StateSchema n'expose pas par une
+        // fonction dédiée : on écrit la propriété par son identifiant public, comme
+        // StateEdit le fait pour skillVersion. StateSchema reste intouché.
+        auto gen = proc.stateTree().getChildWithName (state::id::Generation);
+        if (gen.isValid())
+            gen.setProperty (state::id::density, (double) juce::jlimit (0.0f, 1.0f, density), &proc.undoManager());
+        mark (ViewMask::Generation);
     }
 
     bool Presenter::loadPreset (const juce::File& f)

@@ -9,6 +9,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
+#include "BlockTimer.h"
 #include "PlugProcessor.h"
 #include "StateSchema.h"
 #include "ui/Presenter.h"
@@ -299,6 +300,54 @@ int main (int argc, char* argv[])
                "lisibilité : le Rapport de core.fm s'affiche « " + fm.params[2].valueText + " »", log);
         log << "       core.fm : Profondeur « " << fm.params[0].valueText
             << " », Fréquence « " << fm.params[1].valueText << " »\n";
+    }
+
+    //==========================================================================
+    // 7. Rendu du séquenceur (J4b étape 4 ; règle du pilote : aucune allocation par
+    // frame). On ne peut pas faire tourner l'éditeur à 60 Hz sans hôte : on force donc
+    // 600 paint() sur une Image, ce qui exécute exactement le même code de dessin sans
+    // le compositeur de Windows. C'est un plancher, pas une promesse d'affichage — la
+    // mesure dans Live reste au pilote.
+    {
+        plug::PlugProcessor p;
+        auto& view = p.presenter();
+        view.setSkill (1, "core.fm");
+        view.setSkill (2, "core.delay");
+        view.generate (1, 1, 32, 0.7f);              // un motif réel, pas une grille vide
+        view.setLineModeB (1, true);                 // le mode qui dessine des barres
+
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p.createEditor());
+        if (ed == nullptr)
+        {
+            log << "\n[note] rendu : aucun éditeur (PLUG_UI_V1=OFF)\n";
+        }
+        else
+        {
+            ed->setSize (1280, 800);
+            juce::Image img (juce::Image::ARGB, ed->getWidth(), ed->getHeight(), true);
+
+            plug::BlockTimer t;
+            for (int i = 0; i < 700; ++i)
+            {
+                if (i == 100) t.reset();             // 100 tours de chauffe, 600 mesurés
+                juce::Graphics g (img);
+                t.begin();
+                ed->paintEntireComponent (g, true);
+                t.end (1);
+            }
+            const auto s = t.compute();
+            log << "\nRendu de l'éditeur (600 paint() forcés sur une Image 1280x800) :\n"
+                << "  moyenne " << juce::String (s.meanUs, 1) << " us\n"
+                << "  p50     " << juce::String (s.p50Us, 1) << " us\n"
+                << "  p99     " << juce::String (s.p99Us, 1) << " us\n"
+                << "  max     " << juce::String (s.maxUs, 1) << " us\n";
+
+            // 16,7 ms = une frame à 60 Hz. Ici on redessine TOUTE l'interface à chaque
+            // tour, là où l'affichage réel ne repeint que ce qui a changé : tenir sous
+            // la moitié d'une frame dans ce cas défavorable est la marge visée.
+            check (s.p99Us < 8000.0, "rendu : p99 de l'éditeur entier sous 8 ms ("
+                                         + juce::String (s.p99Us, 1) + " us)", log);
+        }
     }
 
     //==========================================================================

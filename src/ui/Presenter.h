@@ -60,6 +60,9 @@ namespace plug::ui
         PrefsView prefsView() const;
         PresetView presetView() const;
         UndoView undoView() const;
+        // De quoi est faite une sélection de pas, et où en est la génération.
+        StepCountsView stepCountsView (int slot1, int first1, int last1) const;
+        GenerationView generationView() const;
 
         // Emplacements affichés = max (préférence, plus haut emplacement occupé) (Q6).
         int displayedSlots() const;
@@ -91,6 +94,7 @@ namespace plug::ui
         void generate (int slot1, int first1, int last1, float density);
         void capture (int slot1, int first1, int last1);
         void setMasterSeed (juce::uint32 seed);
+        void setDensity (float density);
         bool loadPreset (const juce::File& f);
         // Charge une entrée de la bibliothèque (même route que loadPreset : un fichier).
         bool loadPresetIndex (int index);

@@ -87,7 +87,35 @@ mécanisme ; Live prouve le cas réel.
 
 ---
 
-## Rendu du séquenceur
+## Rendu du séquenceur (étape 4)
 
-À venir : compteur `PLUG_UI_TIMING` (Debug seulement), p50/p99 de `paint()` du
-séquenceur à 60 Hz. Étape 2.
+**La règle du pilote** : aucune allocation par frame. La géométrie des 16 × 32
+cases vit dans des tableaux redimensionnés dans `resized()` ; les étiquettes de
+ligne, les libellés de paramètre et les textes de l'inspecteur sont composés à la
+notification ; `paint()` ne fabrique ni `juce::String` ni `Path` dynamique. La tête
+de lecture ne repeint que les **deux colonnes** qui changent (`repaint (rect)`).
+
+**Comment c'est mesuré** — `PlugBench`, section 7, permanente. On ne peut pas faire
+tourner l'éditeur à 60 Hz sans hôte : on force donc **600 `paint()`** (après 100
+tours de chauffe) sur une `Image` ARGB 1280×800, ce qui exécute exactement le même
+code de dessin, sans le compositeur de Windows. L'état mesuré n'est pas une grille
+vide : `core.fm` en 1, `core.delay` en 2, 32 pas générés sur la ligne 1, et cette
+ligne en **mode B** — celui qui dessine une barre par pas.
+
+| Grandeur | Éditeur ENTIER, une frame |
+| --- | --- |
+| moyenne | **2166 µs** |
+| p50 | **2147 µs** |
+| p99 | **2654 µs** |
+| max | 3007 µs |
+
+Une frame à 60 Hz vaut 16 700 µs : le p99 en occupe **16 %**, et c'est le cas
+défavorable — on redessine *toute* l'interface à chaque tour, là où l'affichage réel
+ne repeint que ce qui a changé. Le banc échoue si le p99 dépasse 8 ms.
+
+**Le chiffre est un plancher, pas une promesse d'affichage** : il ne contient ni le
+compositeur, ni la carte graphique, ni l'ordonnancement de Live. L'option CMake
+`PLUG_UI_TIMING` (OFF par défaut, **jamais dans le binaire livré**) ajoute au
+séquenceur un compteur qui écrit ses p50/p99 dans
+`%APPDATA%\LascauxLab\Plug\measure\` : c'est par là que la mesure dans l'hôte se
+fera, et elle reste au pilote.
