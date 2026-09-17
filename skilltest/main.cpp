@@ -102,6 +102,25 @@ namespace
             lockClasses &= (d.lockClass == LockClass::Free || d.lockClass == LockClass::LockedByDefault || d.lockClass == LockClass::Structural);
         check (lockClasses, "classe de verrou déclarée pour chaque paramètre (§3.3.1)");
 
+        // 1 bis. Lisibilité (J4b c-2). `unit` et `display` sont OPTIONNELS : une skill
+        // qui ne les remplit pas reste conforme, l'interface retombe sur 0,00–1,00.
+        // Mais une fonction fournie doit dire quelque chose aux trois points de la
+        // course, sans quoi le knob afficherait du vide là où il promet une unité.
+        {
+            bool displays = true;
+            int declared = 0;
+            for (const auto& d : info->params)
+            {
+                if (d.display == nullptr) continue;
+                ++declared;
+                for (float v : { 0.0f, 0.5f, 1.0f })
+                    displays &= d.display (v).isNotEmpty();
+            }
+            check (displays, declared == 0
+                                 ? juce::String ("aucun texte de valeur déclaré : repli 0,00–1,00 (J4b c-2, étape 3)")
+                                 : juce::String (declared) + " paramètre(s) à texte déclaré : non vide en 0, 0,5 et 1");
+        }
+
         // 2. Latence déclarée : constante entre deux prepare, jamais négative (§4.3).
         const int maxBlock = 512;
         skill->prepare (sr, maxBlock);

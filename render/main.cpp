@@ -17,6 +17,8 @@
 #include "Engine.h"
 #include "GridMap.h"
 #include "PresetLibrary.h"
+#include "StateEdit.h"
+#include "StateQuery.h"
 #include "StateSchema.h"
 #include "StepValue.h"
 #include "dummies/DummySkills.h"
@@ -533,6 +535,204 @@ namespace
                 check (d2 < 0, "T14 " + juce::String ((int) rate) + " Hz : idem en blocs irréguliers"
                                   + (d2 < 0 ? juce::String() : " (1re différence à " + juce::String (d2) + ")"));
             }
+        }
+
+        //======================================================================
+        // J4b étape 0 — les six fonctions pures nouvelles (StateEdit, StateQuery) et
+        // le cliché d'interface du moteur. Elles n'entrent dans aucun rendu : la
+        // matrice grandit, elle ne rétrécit pas, et T13 reste le juge du son.
+
+        // T15 — StateEdit::moveSlot : ce qui suit l'effet, ce qui reste, et les verrous
+        // re-posés depuis la skill qui arrive (§3.2, amendement J3-5, décision Q1).
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setSkill (s, 1, "core.fm", nullptr);       // paramB = Rapport, verrouillé par défaut
+            state::setSkill (s, 5, "core.delay", nullptr);    // paramB = Amortissement, libre
+            state::setParam (s, "slot01.paramA", 0.73f);
+            state::setParam (s, "slot05.paramA", 0.11f);
+            state::setParam (s, "slot01.glide",  0.60f);
+            state::setParam (s, "slot01.fade",   0.40f);
+            state::setRange (s, 1, "main", 0.2f, 0.4f, nullptr);
+            state::setStepOn (s, 1, 4, false, nullptr);
+            state::setTail (s, 1, false, nullptr);
+            state::setLocked (s, 1, "paramA", true, nullptr);  // verrou posé à la main sur une entrée libre
+
+            check (state::readParamSpec (state::slot (s, 1), "paramB").locked,
+                   "T15 core.fm pose paramB verrouillé à la pose (amendement J3-5)");
+
+            StateEdit::moveSlot (s, 1, 5, StateEdit::Mode::Swap, nullptr);
+
+            check (state::slot (s, 5).getProperty ("skill").toString() == "core.fm"
+                       && state::slot (s, 1).getProperty ("skill").toString() == "core.delay",
+                   "T15 Swap : les deux effets ont échangé d'emplacement");
+            check (std::abs (state::readParam (s, "slot05.paramA") - 0.73f) < 1.0e-6f
+                       && std::abs (state::readParam (s, "slot01.paramA") - 0.11f) < 1.0e-6f,
+                   "T15 Swap : les 13 bases suivent l'effet");
+            check (std::abs (state::readParam (s, "slot01.glide") - 0.60f) < 1.0e-6f
+                       && std::abs (state::readParam (s, "slot01.fade") - 0.40f) < 1.0e-6f,
+                   "T15 Swap : glissement et fondu restent sur l'emplacement");
+            check (std::abs (state::readParamSpec (state::slot (s, 1), "main").min - 0.2f) < 1.0e-6f,
+                   "T15 Swap : la plage de génération reste sur l'emplacement");
+            check (! (bool) state::step (state::slot (s, 1), 4).getProperty ("on"),
+                   "T15 Swap : la ligne reste sur l'emplacement");
+            check (state::slot (s, 1).getProperty ("tail").toString() == "cut",
+                   "T15 Swap : la queue reste sur l'emplacement");
+            check (state::readParamSpec (state::slot (s, 5), "paramB").locked,
+                   "T15 Swap : FM arrivé en 5, paramB re-verrouillé depuis SA déclaration");
+            check (! state::readParamSpec (state::slot (s, 1), "paramB").locked,
+                   "T15 Swap : Délai arrivé en 1, paramB libéré depuis SA déclaration");
+            check (! state::readParamSpec (state::slot (s, 1), "paramA").locked,
+                   "T15 Swap : un verrou posé à la main ne survit pas au changement d'effet (Q1)");
+
+            // Insert : l'effet va au bout, les autres se décalent en gardant leur ordre.
+            auto t = state::createDefault();
+            state::ensureParams (t);
+            state::setSkill (t, 1, "core.fm", nullptr);
+            state::setSkill (t, 2, "core.delay", nullptr);
+            state::setSkill (t, 3, "core.gain", nullptr);
+            StateEdit::moveSlot (t, 1, 3, StateEdit::Mode::Insert, nullptr);
+            check (state::slot (t, 1).getProperty ("skill").toString() == "core.delay"
+                       && state::slot (t, 2).getProperty ("skill").toString() == "core.gain"
+                       && state::slot (t, 3).getProperty ("skill").toString() == "core.fm",
+                   "T15 Insert : 1-2-3 devient délai, gain, FM (ordre relatif gardé, §3.2)");
+
+            // Copy : la cible reçoit, l'original ne bouge pas.
+            auto u = state::createDefault();
+            state::ensureParams (u);
+            state::setSkill (u, 1, "core.fm", nullptr);
+            state::setParam (u, "slot01.paramA", 0.42f);
+            StateEdit::moveSlot (u, 1, 7, StateEdit::Mode::Copy, nullptr);
+            check (state::slot (u, 7).getProperty ("skill").toString() == "core.fm"
+                       && state::slot (u, 1).getProperty ("skill").toString() == "core.fm"
+                       && std::abs (state::readParam (u, "slot07.paramA") - 0.42f) < 1.0e-6f
+                       && state::readParamSpec (state::slot (u, 7), "paramB").locked,
+                   "T15 Copy : la cible reçoit l'effet et ses bases, l'original ne bouge pas");
+        }
+
+        // T16 — StateEdit::clearSlot : l'identité part, les données restent (§3.9).
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setSkill (s, 2, "core.delay", nullptr);
+            state::setParam (s, "slot02.paramA", 0.55f);
+            state::setRange (s, 2, "main", 0.1f, 0.9f, nullptr);
+            state::setStepOn (s, 2, 3, false, nullptr);
+
+            StateEdit::clearSlot (s, 2, nullptr);
+
+            check (state::slot (s, 2).getProperty ("skill").toString().isEmpty(),
+                   "T16 clearSlot : l'emplacement est vide");
+            check (std::abs (state::readParam (s, "slot02.paramA") - 0.55f) < 1.0e-6f
+                       && std::abs (state::readParamSpec (state::slot (s, 2), "main").max - 0.9f) < 1.0e-6f
+                       && ! (bool) state::step (state::slot (s, 2), 3).getProperty ("on"),
+                   "T16 clearSlot : bases, plages et ligne conservées (une skill qui revient les retrouve)");
+        }
+
+        // T17 — StateQuery::haloRange : la plage et son rétrécissement par la densité.
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setRange (s, 1, "main", 0.2f, 0.8f, nullptr);
+
+            ParamSpec ref; ref.min = 0.2f; ref.max = 0.8f;
+            float lo = 0.0f, hi = 0.0f;
+            effectiveRange (ref, 0.5f, lo, hi);
+
+            const auto h = StateQuery::haloRange (s, 1, "main", 0.5f);
+            check (std::abs (h.min - 0.2f) < 1.0e-6f && std::abs (h.max - 0.8f) < 1.0e-6f
+                       && std::abs (h.effLo - lo) < 1.0e-6f && std::abs (h.effHi - hi) < 1.0e-6f,
+                   "T17 haloRange : plage 0,2–0,8, halo resserré à densité 0,5 (" + juce::String (lo, 3)
+                       + "–" + juce::String (hi, 3) + ")");
+            const auto full = StateQuery::haloRange (s, 1, "main", 1.0f);
+            check (std::abs (full.effLo - 0.2f) < 1.0e-6f && std::abs (full.effHi - 0.8f) < 1.0e-6f,
+                   "T17 haloRange : à densité 1 le halo est la plage entière");
+        }
+
+        // T18 — StateQuery::stepDisplayValue : cible du pas, ou base à défaut (c-6).
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setSkill (s, 1, "core.gain", nullptr);
+            state::setParam (s, "slot01.main", 0.37f);
+            check (std::abs (StateQuery::stepDisplayValue (s, 1, 1, "main") - 0.37f) < 1.0e-6f,
+                   "T18 stepDisplayValue : pas en mode base, la base PARAM s'applique");
+
+            state::setRange (s, 1, "main", 0.1f, 0.6f, nullptr);
+            state::generate (s, 1, 1, 8, 0.8f, nullptr);
+            const auto target = stepTargetFromState (s, 1, 3, "main");
+            check (target.has_value()
+                       && std::abs (StateQuery::stepDisplayValue (s, 1, 3, "main") - *target) < 1.0e-9f,
+                   "T18 stepDisplayValue : pas généré, la cible de la fonction pure");
+
+            state::capture (s, 1, 3, 3, nullptr);
+            check (target.has_value()
+                       && std::abs (StateQuery::stepDisplayValue (s, 1, 3, "main") - *target) < 1.0e-6f,
+                   "T18 stepDisplayValue : pas figé, la valeur matérialisée");
+        }
+
+        // T19 — StateQuery::stepCounts : de quoi est faite une sélection (c-7, d-2).
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::generate (s, 1, 1, 8, 0.7f, nullptr);
+            state::capture (s, 1, 1, 3, nullptr);
+            state::setStepOn (s, 1, 5, false, nullptr);
+
+            const auto c = StateQuery::stepCounts (s, 1, 1, 8);
+            check (c.generated == 5 && c.explicitCount == 3 && c.off == 1,
+                   "T19 stepCounts : 5 générés, 3 figés, 1 éteint sur la sélection 1–8 (lu : "
+                       + juce::String (c.generated) + "/" + juce::String (c.explicitCount) + "/" + juce::String (c.off) + ")");
+            const auto out = StateQuery::stepCounts (s, 1, 9, 16);
+            check (out.generated == 0 && out.explicitCount == 0 && out.off == 0,
+                   "T19 stepCounts : hors sélection, rien n'est compté");
+        }
+
+        // T20 — StateQuery::lineHasPattern : l'avertissement du glisser (c-8, d-1).
+        {
+            auto a = state::createDefault(); state::ensureParams (a);
+            check (! StateQuery::lineHasPattern (a, 1), "T20 lineHasPattern : ligne neuve, aucun motif");
+
+            state::setStepOn (a, 1, 2, false, nullptr);
+            check (StateQuery::lineHasPattern (a, 1), "T20 lineHasPattern : un pas éteint suffit");
+
+            auto b = state::createDefault(); state::ensureParams (b);
+            state::generate (b, 1, 4, 4, 0.5f, nullptr);
+            check (StateQuery::lineHasPattern (b, 1), "T20 lineHasPattern : un pas généré suffit");
+
+            auto c = state::createDefault(); state::ensureParams (c);
+            state::setStepMode (c, 1, 7, StepMode::Explicit, nullptr);
+            state::setExplicit (c, 1, 7, "main", 0.5f, nullptr);
+            check (StateQuery::lineHasPattern (c, 1), "T20 lineHasPattern : un pas figé suffit");
+        }
+
+        // T21 — Engine::uiSnapshot : le seul chemin de l'audio vers l'interface (c-1).
+        {
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            StateParamSource params (s);
+            Engine e;
+            e.setParamSource (&params);
+            e.prepare (kSampleRate, 512);
+            e.setState (s);
+
+            const auto before = e.uiSnapshot();
+            check (before.step == -1 && ! before.playing,
+                   "T21 uiSnapshot : avant tout bloc, aucun pas et transport arrêté");
+
+            juce::AudioBuffer<float> b (2, 128);
+            b.clear();
+            juce::MidiBuffer m;
+            Transport tr; tr.bpm = 120.0; tr.ppq = 0.0; tr.playing = true; tr.hasPosition = true;
+            e.process (b, m, tr);
+            const auto snap = e.uiSnapshot();
+            check (snap.step == e.currentStep() && snap.step >= 0 && snap.playing && ! snap.freeRunning,
+                   "T21 uiSnapshot : après un bloc, pas " + juce::String (snap.step) + ", transport en lecture");
+
+            Transport nf; nf.bpm = 120.0; nf.playing = true; nf.hasPosition = false;
+            e.process (b, m, nf);
+            check (e.uiSnapshot().freeRunning,
+                   "T21 uiSnapshot : roue libre signalée quand l'hôte ne donne pas de position");
         }
 
         report << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";

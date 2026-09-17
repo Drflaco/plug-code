@@ -52,6 +52,15 @@ add_subdirectory(external/JUCE)
 # (décision pilote, ETAT Rév. 4).
 option(PLUG_J2_GENERIC_EDITOR "Éditeur générique JUCE (échafaudage J2)" ON)
 
+# Interface v1 du J4b (§3.7). ON : createEditor() rend l'éditeur de src/ui/v1/.
+# OFF : l'échafaudage générique reprend la main — filet de secours tant que la v1
+# se construit. PLUG_J2_GENERIC_EDITOR ne disparaît qu'à l'étape 7.
+option(PLUG_UI_V1 "Interface v1 (J4b)" ON)
+
+# La liste « À venir » (Q5 du pilote, 17/09), embarquée dans le binaire : une
+# absence annoncée n'est pas un défaut. Lue par ui::Presenter::avenirText().
+juce_add_binary_data(PlugData SOURCES AVENIR.md)
+
 # Identité VST3 — FIGÉE. Le couple (fabricant, code) et le nom du produit
 # forment l'identité que Live mémorise dans ses projets. Ne jamais changer.
 set(PLUG_PRODUCT_NAME "Plug")
@@ -89,6 +98,10 @@ set(PLUG_ENGINE_SOURCES
     src/StepValue.cpp
     src/StateSchema.h
     src/StateSchema.cpp
+    src/StateEdit.h
+    src/StateEdit.cpp
+    src/StateQuery.h
+    src/StateQuery.cpp
     src/Clock.h
     src/Modulation.h
     src/Skill.h
@@ -105,8 +118,24 @@ set(PLUG_ENGINE_SOURCES
     src/BuildStamp.h
     src/BlockTimer.h)
 
+# La couche de présentation (J4b a). Elle vit avec l'adaptateur hôte, pas avec le
+# socle : PlugRender et PlugSkillTest n'en compilent pas une ligne. Les noms de
+# fichiers sont uniques dans tout le dépôt — MSBuild met tous les objets dans un
+# même dossier et deux .cpp homonymes s'y écrasent (REGIME §10).
+set(PLUG_UI_SOURCES
+    src/ui/ViewTypes.h
+    src/ui/Format.h
+    src/ui/Format.cpp
+    src/ui/Prefs.h
+    src/ui/Prefs.cpp
+    src/ui/Presenter.h
+    src/ui/Presenter.cpp
+    src/ui/v1/PlugEditor.h
+    src/ui/v1/PlugEditor.cpp)
+
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}
+    ${PLUG_UI_SOURCES}
     src/PlugProcessor.h
     src/PlugProcessor.cpp)
 
@@ -138,9 +167,10 @@ target_compile_definitions(Plug PUBLIC
     ${PLUG_COMMON_DEFS}
     JUCE_VST3_CAN_REPLACE_VST2=0
     PLUG_J2_TIMING=1
-    PLUG_J2_GENERIC_EDITOR=$<BOOL:${PLUG_J2_GENERIC_EDITOR}>)
+    PLUG_J2_GENERIC_EDITOR=$<BOOL:${PLUG_J2_GENERIC_EDITOR}>
+    PLUG_UI_V1=$<BOOL:${PLUG_UI_V1}>)
 target_link_libraries(Plug
-    PRIVATE juce::juce_audio_utils
+    PRIVATE juce::juce_audio_utils PlugData
     PUBLIC  juce::juce_recommended_config_flags
             juce::juce_recommended_lto_flags
             juce::juce_recommended_warning_flags)
@@ -153,10 +183,11 @@ target_compile_definitions(PlugBench PRIVATE
     ${PLUG_COMMON_DEFS}
     PLUG_J2_TIMING=0
     PLUG_J2_GENERIC_EDITOR=0
+    PLUG_UI_V1=0
     JUCE_STANDALONE_APPLICATION=1
     PLUG_NO_PLUGIN_FACTORY=1)
 target_link_libraries(PlugBench
-    PRIVATE juce::juce_audio_utils
+    PRIVATE juce::juce_audio_utils PlugData
     PUBLIC  juce::juce_recommended_config_flags
             juce::juce_recommended_lto_flags
             juce::juce_recommended_warning_flags)

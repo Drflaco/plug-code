@@ -2,9 +2,18 @@
 #include "StateSchema.h"
 #include "skills/Skills.h"
 #include "BuildStamp.h"
+#include "ui/Presenter.h"
 
 #ifndef PLUG_J2_TIMING
  #define PLUG_J2_TIMING 0
+#endif
+
+#ifndef PLUG_UI_V1
+ #define PLUG_UI_V1 0
+#endif
+
+#if PLUG_UI_V1
+ #include "ui/v1/PlugEditor.h"
 #endif
 
 namespace plug
@@ -35,12 +44,19 @@ namespace plug
         plugEngine.setParamSource (&paramSource);
 
         state::ensureSchema (apvts.state);
+
+        // La couche de présentation naît ici : après le catalogue (elle lit les
+        // déclarations des skills) et avant l'écouteur d'arbre du processeur, pour
+        // qu'aucune notification ne parte vers une vue qui n'existe pas encore.
+        view = std::make_unique<ui::Presenter> (*this);
+
         apvts.state.addListener (this);
         publishState();
     }
 
     PlugProcessor::~PlugProcessor()
     {
+        view.reset();                       // elle écoute l'arbre et les paramètres : elle part la première
         apvts.state.removeListener (this);
         cancelPendingUpdate();
         dumpTiming ("destructor");
@@ -60,6 +76,8 @@ namespace plug
         if (! tree.isValid()) return;           // preset illisible : on ne casse pas l'état en place
 
         currentPreset = index;
+        // Les 284 valeurs qui arrivent d'un coup ne sont pas de l'automation (d-1, Q4).
+        ui::Presenter::ScopedStateReplacement guard (view.get());
         apvts.state.removeListener (this);
         apvts.replaceState (tree);
         apvts.state.addListener (this);
@@ -77,6 +95,7 @@ namespace plug
 
         state::ensureSchema (tree);          // un preset d'une version antérieure se migre comme un projet (§3.6)
 
+        ui::Presenter::ScopedStateReplacement guard (view.get());   // un preset ne marque jamais hostDriven (Q4)
         apvts.state.removeListener (this);
         apvts.replaceState (tree);           // chemin d'état normal : le moteur ne voit rien passer
         apvts.state.addListener (this);
@@ -193,7 +212,7 @@ namespace plug
     //==============================================================================
     bool PlugProcessor::hasEditor() const
     {
-       #if PLUG_J2_GENERIC_EDITOR
+       #if PLUG_UI_V1 || PLUG_J2_GENERIC_EDITOR
         return true;
        #else
         return false;
@@ -318,7 +337,12 @@ namespace plug
 
     juce::AudioProcessorEditor* PlugProcessor::createEditor()
     {
-       #if PLUG_J2_GENERIC_EDITOR
+        // L'interface v1 prend la place de l'échafaudage dès qu'elle existe ; l'ancien
+        // éditeur générique reste atteignable par -DPLUG_UI_V1=OFF tant que la v1 se
+        // construit, et disparaît à l'étape 7 (REGIME §8 : un échafaudage porte sa date).
+       #if PLUG_UI_V1
+        return new ui::v1::PlugEditor (*this, presenter());
+       #elif PLUG_J2_GENERIC_EDITOR
         return new ScaffoldEditor (*this);
        #else
         return nullptr;
@@ -342,6 +366,9 @@ namespace plug
             {
                 auto tree = juce::ValueTree::fromXml (*xml);
                 state::ensureSchema (tree);     // migration 1→2 : complète, ne retire rien
+                // Ouvrir un projet pose 284 valeurs d'un coup : ce n'est pas l'hôte qui
+                // automatise, et la vue ne doit pas s'en persuader (d-1, Q4).
+                ui::Presenter::ScopedStateReplacement guard (view.get());
                 apvts.replaceState (tree);
                 apvts.state.addListener (this);
                 publishState();

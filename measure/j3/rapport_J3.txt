@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 17 Sep 2026 1:12:18am
+PlugRender — matrice J3 — 17 Sep 2026 3:01:16pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -96,5 +96,33 @@ PlugRender — matrice J3 — 17 Sep 2026 1:12:18am
 [OK]   T14 48000 Hz : idem en blocs irréguliers
 [OK]   T14 44100 Hz : état par défaut, sortie identique à l'entrée
 [OK]   T14 44100 Hz : idem en blocs irréguliers
+[OK]   T15 core.fm pose paramB verrouillÃ© Ã  la pose (amendement J3-5)
+[OK]   T15 Swap : les deux effets ont Ã©changÃ© d'emplacement
+[OK]   T15 Swap : les 13 bases suivent l'effet
+[OK]   T15 Swap : glissement et fondu restent sur l'emplacement
+[OK]   T15 Swap : la plage de gÃ©nÃ©ration reste sur l'emplacement
+[OK]   T15 Swap : la ligne reste sur l'emplacement
+[OK]   T15 Swap : la queue reste sur l'emplacement
+[OK]   T15 Swap : FM arrivÃ© en 5, paramB re-verrouillÃ© depuis SA dÃ©claration
+[OK]   T15 Swap : DÃ©lai arrivÃ© en 1, paramB libÃ©rÃ© depuis SA dÃ©claration
+[OK]   T15 Swap : un verrou posÃ© Ã  la main ne survit pas au changement d'effet (Q1)
+[OK]   T15 Insert : 1-2-3 devient dÃ©lai, gain, FM (ordre relatif gardÃ©, Â§3.2)
+[OK]   T15 Copy : la cible reÃ§oit l'effet et ses bases, l'original ne bouge pas
+[OK]   T16 clearSlot : l'emplacement est vide
+[OK]   T16 clearSlot : bases, plages et ligne conservÃ©es (une skill qui revient les retrouve)
+[OK]   T17 haloRange : plage 0,2â0,8, halo resserrÃ© Ã  densitÃ© 0,5 (0.350–0.650)
+[OK]   T17 haloRange : Ã  densitÃ© 1 le halo est la plage entiÃ¨re
+[OK]   T18 stepDisplayValue : pas en mode base, la base PARAM s'applique
+[OK]   T18 stepDisplayValue : pas gÃ©nÃ©rÃ©, la cible de la fonction pure
+[OK]   T18 stepDisplayValue : pas figÃ©, la valeur matÃ©rialisÃ©e
+[OK]   T19 stepCounts : 5 gÃ©nÃ©rÃ©s, 3 figÃ©s, 1 Ã©teint sur la sÃ©lection 1â8 (lu : 5/3/1)
+[OK]   T19 stepCounts : hors sÃ©lection, rien n'est comptÃ©
+[OK]   T20 lineHasPattern : ligne neuve, aucun motif
+[OK]   T20 lineHasPattern : un pas Ã©teint suffit
+[OK]   T20 lineHasPattern : un pas gÃ©nÃ©rÃ© suffit
+[OK]   T20 lineHasPattern : un pas figÃ© suffit
+[OK]   T21 uiSnapshot : avant tout bloc, aucun pas et transport arrÃªtÃ©
+[OK]   T21 uiSnapshot : aprÃ¨s un bloc, pas 0, transport en lecture
+[OK]   T21 uiSnapshot : roue libre signalÃ©e quand l'hÃ´te ne donne pas de position
 
 Résultat : TOUT PASSE

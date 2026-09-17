@@ -21,6 +21,18 @@ namespace plug
         virtual float get (int gridIndex) const = 0;
     };
 
+    // Ce que l'interface a le droit de savoir de l'audio, et rien de plus
+    // (J4b c-1, ETAT Rév. 9) : le pas courant, le transport, la roue libre.
+    // Publié dans UN seul atomique écrit en fin de process() : une lecture, pas
+    // de déchirure, aucun verrou. currentStep() lit un int non atomique du thread
+    // audio ; il reste au moteur et à ses tests, il n'est plus le chemin de la vue.
+    struct UiSnapshot
+    {
+        int step = -1;             // pas courant 0..31, -1 tant qu'aucun bloc n'a été traité
+        bool playing = false;
+        bool freeRunning = false;  // sans position hôte : 120 BPM de secours (§3.3.3)
+    };
+
     class Engine
     {
     public:
@@ -42,6 +54,8 @@ namespace plug
         int latencySamples() const noexcept;                    // somme déclarée du modèle publié
         int currentStep() const noexcept;
         bool isFreeRunning() const noexcept;
+        // Hors audio, sans verrou : le seul chemin de l'interface vers la position de lecture.
+        UiSnapshot uiSnapshot() const noexcept;
         // Valeurs composées du dernier bloc traité (tests, interface J4) : une par échantillon.
         const float* valueCurve (int slot0, int modulable) const noexcept;
 

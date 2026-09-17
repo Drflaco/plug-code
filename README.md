@@ -81,6 +81,8 @@ Les fichiers vivent dans `presets/` et sont lus depuis, par ordre de priorité :
 | --- | --- |
 | `src/StepValue.*` | la fonction pure « valeur de ce pas pour cet état » (hash, densité, plage) |
 | `src/StateSchema.*` | l'état v2, migration, Générer, Figer, verrous, routes |
+| `src/StateEdit.*` | déménager et vider un emplacement (§3.2) : ce qui suit l'effet, ce qui reste |
+| `src/StateQuery.*` | lectures pures pour la vue : halo, valeur d'un pas, comptes, motif |
 | `src/Clock.h` | pas à l'échantillon depuis la position hôte, swing, arrêt, saut, roue libre |
 | `src/Engine.*` | composition (contrat J3 b), chaîne, fondus et queues, mélange, publication bornée |
 | `src/Modulation.h` | enveloppe et suiveur, déclenchement transport / audio / MIDI |
@@ -99,6 +101,46 @@ dépend de l'ordre d'initialisation statique n'est pas un catalogue.
 Pour travailler sur une skill sans compiler les autres :
 `cmake -S . -B build_x -DPLUG_SKILLS="filter;gain"`.
 
+## Interface J4b — `src/ui/`, frontière v1/v2, règle du script
+
+L'interface du §3.7 vit dans `src/ui/`, en deux étages qui n'ont pas la même
+espérance de vie :
+
+| Étage | Fichiers | Une v2 |
+| --- | --- | --- |
+| Couche de présentation | `ui/ViewTypes.h`, `ui/Presenter.*`, `ui/Format.*`, `ui/Prefs.*` | **garde** |
+| Widgets | `ui/v1/*` | **remplace** |
+
+Le `Presenter` est possédé par `PlugProcessor`, pas par l'éditeur : Live ferme et
+rouvre la fenêtre sans arrêt, et l'état de session (emplacement sélectionné, pas
+sélectionnés, mode A/B par ligne) doit survivre à la fenêtre, pas au projet. Il
+lit l'arbre et le registre, expose des **valeurs** (`ViewTypes.h`) et reçoit des
+commandes qui ouvrent chacune une transaction d'annulation nommée en français.
+Il apprend qu'un état a changé par `ValueTree::Listener` + `AsyncUpdater` — une
+notification `viewChanged (masque)` par tour de boucle — et la position de lecture
+par un timer à 30 Hz qui lit `Engine::uiSnapshot()`. Jamais `valueCurve` : ce
+tampon appartient au thread audio.
+
+**La règle, et le script qui l'exécute** : un fichier de `src/ui/v1/` n'inclut
+que `ViewTypes.h`, `Presenter.h`, `Format.h`, `Prefs.h`, des en-têtes JUCE et des
+en-têtes standard. Jamais `StateSchema.h`, `Engine.h`, `PlugProcessor.h`,
+`ParameterGrid.h`, `Skill.h` ni `GridMap.h`.
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/check_ui_boundary.ps1
+```
+
+Il échoue si un `#include` sort de la liste. À lancer avant tout commit qui
+touche à `src/ui/` : une règle qu'on peut oublier doit devenir une règle qui
+s'exécute. C'est ce qui rend vraie l'exigence du pilote — « l'interface aura
+plusieurs vies » — au lieu de la laisser à la discipline.
+
+Deux options CMake commandent l'éditeur rendu par `createEditor()` : `PLUG_UI_V1`
+(ON, l'interface v1) et `PLUG_J2_GENERIC_EDITOR` (l'échafaudage, filet de secours
+jusqu'à la fin du J4b). `AVENIR.md`, à la racine, liste ce que la v1 ne fait pas
+et l'assume ; il est embarqué dans le binaire (`juce_add_binary_data`) et lu par
+`ui::Presenter::avenirText()`.
+
 ## Échafaudage J2 : éditeur générique
 
 Sans fenêtre de plug-in, Live ne peut « configurer » aucun paramètre et n'en
@@ -112,6 +154,7 @@ quand l'interface réelle arrive.
 
 - `scripts/build.ps1` — configuration + compilation Release.
 - `scripts/validate.ps1` — pluginval, niveau 5 par défaut.
+- `scripts/check_ui_boundary.ps1` — la frontière v1/v2 de l'interface, exécutable.
 - `scripts/als_inspect.py` — lit un Live Set (.als) : état JUCE des instances
   Plug, paramètres configurés côté Live, enveloppes d'automation.
 - `scripts/wav_align.py` — compare la position des impulsions entre exports

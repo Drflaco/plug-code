@@ -160,6 +160,14 @@ namespace plug
         std::array<SlotRuntime, kSlots> slots;
         DryDelay masterDry;
 
+        // J4b c-1 : pas courant (6 bits, décalé de 1 pour que -1 tienne), transport,
+        // roue libre. Un seul mot : la vue lit un état cohérent ou rien.
+        std::atomic<uint32_t> uiState { 0 };
+        static uint32_t packUi (int step, bool playing, bool freeRunning) noexcept
+        {
+            return (uint32_t) ((step + 1) & 0x3f) | (playing ? 0x40u : 0u) | (freeRunning ? 0x80u : 0u);
+        }
+
         // Tampons préalloués (§4.2)
         juce::AudioBuffer<float> inCopy, dryBuf, wetBuf, chainDry;
         std::array<std::array<std::vector<float>, kM>, kSlots> values;   // courbes composées
@@ -362,6 +370,11 @@ namespace plug
                 if (t.playing) t.ppq += len / spb;
                 pos += len;
             }
+
+            // J4b c-1 : publication de la position de lecture pour l'interface. Un seul
+            // store relâché en fin de bloc — rien à lire, rien à verrouiller, et le rendu
+            // n'en dépend pas (T13 le prouve octet par octet).
+            uiState.store (packUi (clock.currentStep(), tr.playing, clock.isFreeRunning()), std::memory_order_relaxed);
         }
 
         void processBlock (juce::AudioBuffer<float>& buffer, const juce::MidiBuffer& midi, const Transport& tr)
@@ -649,6 +662,15 @@ namespace plug
     int Engine::latencySamples() const noexcept { return impl->models[(size_t) impl->published.load()].latency; }
     int Engine::currentStep() const noexcept { return impl->clock.currentStep(); }
     bool Engine::isFreeRunning() const noexcept { return impl->clock.isFreeRunning(); }
+    UiSnapshot Engine::uiSnapshot() const noexcept
+    {
+        const uint32_t p = impl->uiState.load (std::memory_order_relaxed);
+        UiSnapshot s;
+        s.step = (int) (p & 0x3fu) - 1;
+        s.playing = (p & 0x40u) != 0;
+        s.freeRunning = (p & 0x80u) != 0;
+        return s;
+    }
     const float* Engine::valueCurve (int slot0, int modulable) const noexcept
     {
         return impl->values[(size_t) juce::jlimit (0, kSlots - 1, slot0)][(size_t) juce::jlimit (0, kM - 1, modulable)].data();

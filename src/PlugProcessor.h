@@ -3,15 +3,20 @@
 // Garantit : la grille de 284 paramètres figée (Rév. 2), l'état v2 sérialisé en
 // XML dans le même blob que les paramètres (§3.6), la latence déclarée = celle
 // du moteur, le bypass hôte aligné sur cette latence (§4.3), aucune allocation
-// dans processBlock (§4.2). L'éditeur générique JUCE reste l'échafaudage J2,
-// jusqu'au J4 (décision pilote, ETAT Rév. 4).
+// dans processBlock (§4.2). Il possède aussi la couche de présentation du J4b
+// (ui::Presenter) : l'état de session doit survivre à la fenêtre, que Live ferme
+// et rouvre sans arrêt, mais pas au projet. L'éditeur générique J2 reste en
+// réserve derrière PLUG_J2_GENERIC_EDITOR jusqu'à l'étape 7.
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterGrid.h"
 #include "BlockTimer.h"
 #include "Engine.h"
 #include "PresetLibrary.h"
+#include <memory>
 #include <vector>
+
+namespace plug::ui { class Presenter; }
 
 namespace plug
 {
@@ -76,6 +81,9 @@ namespace plug
         juce::ValueTree& stateTree() noexcept { return apvts.state; }
         juce::UndoManager& undoManager() noexcept { return undo; }
         Engine& engine() noexcept { return plugEngine; }
+        // La couche de présentation (J4b a) : créée après le catalogue, détruite avec
+        // l'instance. Jamais nulle une fois le constructeur passé.
+        ui::Presenter& presenter() noexcept { return *view; }
 
         const BlockTimer& blockTimer() const noexcept { return timer; }
         void resetBlockTimer() noexcept { timer.reset(); }
@@ -105,6 +113,7 @@ namespace plug
         juce::AudioProcessorValueTreeState apvts;
         ApvtsParamSource paramSource;
         Engine plugEngine;
+        std::unique_ptr<ui::Presenter> view;
 
         // Bypass hôte : le sec retardé de la latence déclarée (§4.3), préalloué.
         std::vector<std::vector<float>> bypassRing;

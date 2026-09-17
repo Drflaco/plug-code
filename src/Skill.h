@@ -27,6 +27,16 @@ namespace plug
         const char* help;               // aide au survol (§3.11) ; pour un verrou, dit pourquoi
         LockClass lockClass;
         bool glideByDefault;            // transition initiale : glissement (true) ou saut
+
+        // J4b c-2 (ETAT Rév. 9) : la lisibilité d'un paramètre appartient à la skill,
+        // elle seule sait que 0,62 se dit « 3,00 » et que l'unité est un rapport.
+        // Les deux champs sont OPTIONNELS et À DÉFAUT : les neuf skills du catalogue
+        // compilent sans y toucher (leur initialisation par accolades tient cinq
+        // membres), et se remplissent une par une à l'étape 3. display == nullptr
+        // signifie « aucun texte déclaré » : l'interface retombe sur 0,00–1,00 brut,
+        // échelle des enveloppes de Live, donc corrélable à l'écran (Q3).
+        const char* unit = "";                              // unité affichée après la valeur ; "" = aucune
+        juce::String (*display) (float raw) = nullptr;      // texte d'une valeur brute 0..1 ; pure, sans état
     };
 
     struct SkillInfo
