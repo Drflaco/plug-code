@@ -167,7 +167,9 @@ set(PLUG_UI_SOURCES
     src/ui/v1/PlugEdition.h
     src/ui/v1/PlugEdition.cpp
     src/ui/v1/PlugMaster.h
-    src/ui/v1/PlugMaster.cpp)
+    src/ui/v1/PlugMaster.cpp
+    src/ui/v1/PlugPrefsPanel.h
+    src/ui/v1/PlugPrefsPanel.cpp)
 
 set(PLUG_CORE_SOURCES
     ${PLUG_ENGINE_SOURCES}

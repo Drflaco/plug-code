@@ -397,6 +397,56 @@ int main (int argc, char* argv[])
     }
 
     //==========================================================================
+    // 8. Préférences HORS état (§3.11, J4b étape 6). Un preset qui embarquerait le zoom
+    // rendrait un projet dépendant de l'écran sur lequel il a été fait. On touche aux
+    // six préférences et on vérifie que l'état sérialisé ne bouge pas d'UN OCTET —
+    // c'est la seule preuve qui vaille, l'intention ne suffit pas.
+    {
+        plug::PlugProcessor p;
+        auto& view = p.presenter();
+
+        juce::MemoryBlock before;
+        p.getStateInformation (before);
+
+        const auto initial = view.prefsView();
+        view.toggleRatio();
+        view.setPrefZoom (1.25);
+        view.setPrefHoverHelp (! initial.hoverHelp);
+        view.setPrefHelpDelayMs (1234);
+        view.setPrefDefaultMixLaw (2);
+        view.setPrefShownSlots (16);
+
+        juce::MemoryBlock after;
+        p.getStateInformation (after);
+
+        const auto now = view.prefsView();
+        check (now.zoom > 1.2 && now.helpDelayMs == 1234 && now.shownSlots == 16,
+               "préférences : les six réglages sont bien pris (" + juce::String (now.helpDelayMs)
+                   + " ms, " + juce::String (now.shownSlots) + " emplacements)", log);
+        check (before == after, "préférences : PlugState n'a gagné AUCUN octet ("
+                                    + juce::String ((int) before.getSize()) + " octets avant et après)", log);
+
+        // Et le contenu du panneau : le fichier embarqué, et le catalogue réel.
+        check (view.avenirText().contains (juce::String::fromUTF8 ("À venir")),
+               "à propos : AVENIR.md est embarqué et lisible", log);
+        const auto about = view.aboutView();
+        int withLatency = 0;
+        for (const auto& s : about.skills) if (s.latencyKnown) ++withLatency;
+        check ((int) about.skills.size() == 9 && withLatency == 9,
+               "à propos : 9 effets au catalogue, latence connue pour " + juce::String (withLatency), log);
+        check (view.masterView().lawChoices.size() == 3,
+               "à propos : les libellés de choix viennent de la grille ("
+                   + view.masterView().lawChoices.joinIntoString (", ") + ")", log);
+
+        view.setPrefShownSlots (initial.shownSlots);   // on remet la machine du pilote en l'état
+        view.setPrefZoom (initial.zoom);
+        view.setPrefHoverHelp (initial.hoverHelp);
+        view.setPrefHelpDelayMs (initial.helpDelayMs);
+        view.setPrefDefaultMixLaw (initial.defaultMixLaw);
+        if (view.prefsView().ratioTwoThirds != initial.ratioTwoThirds) view.toggleRatio();
+    }
+
+    //==========================================================================
     log << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
 
     std::printf ("%s", log.toRawUTF8());

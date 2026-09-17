@@ -35,6 +35,15 @@ namespace plug::ui
             return StepModeView::Base;
         }
 
+        // Les libellés d'une entrée à choix, tels que la grille les déclare à l'hôte.
+        // Une seule vérité : ParameterGrid.cpp. Le Presenter la fait traverser.
+        juce::StringArray choicesOf (juce::AudioProcessorValueTreeState& apvts, const String& gridId)
+        {
+            if (auto* c = dynamic_cast<juce::AudioParameterChoice*> (apvts.getParameter (gridId)))
+                return c->choices;
+            return {};
+        }
+
         const SkillParamDecl* declFor (const SkillInfo* info, int modulable) noexcept
         {
             if (info == nullptr) return nullptr;
@@ -348,6 +357,7 @@ namespace plug::ui
         v.law    = (int) std::lround (state::readParam (s, "master.mixLaw"));
         v.volumeText = display::dB (grid::gainLinear (v.volume));
         v.mixText = display::sig (100.0 * (double) v.mix);
+        v.lawChoices = choicesOf (proc.state(), "master.mixLaw");
 
         // §3.10 : le moteur n'applique que le mélange et le volume. Les six autres entrées
         // existent dans la grille figée et ne sont lues par personne — elles s'affichent
@@ -361,6 +371,7 @@ namespace plug::ui
             e.raw = state::readParam (s, e.id);
             e.inert = true;
             e.help = Format::masterInertHelp();
+            e.choices = choicesOf (proc.state(), e.id);
             v.inertEntries.push_back (e);
         }
         return v;
@@ -409,9 +420,28 @@ namespace plug::ui
         }
         v.juceVersion = juce::SystemStats::getJUCEVersion();
         for (const auto& id : SkillRegistry::instance().ids())
-            if (const auto* info = SkillRegistry::instance().info (id))
-                if (! info->factice)
-                    v.skills.push_back ({ info->id, fr (info->label), info->version });
+        {
+            const auto* info = SkillRegistry::instance().info (id);
+            if (info == nullptr || info->factice) continue;
+
+            AboutSkillView s;
+            s.id = info->id;
+            s.label = fr (info->label);
+            s.version = info->version;
+            s.mixLaw = info->mixLaw == MixLaw::Minus6 ? "-6 dB" : (info->mixLaw == MixLaw::Zero ? "0 dB" : "-3 dB");
+
+            // La latence n'est pas DÉCLARÉE par SkillInfo : on la demande à une instance
+            // préparée à 48 kHz. C'est le seul moyen de la connaître sans toucher au
+            // contrat §3.9 — et si l'instance ne se crée pas, on n'écrit rien plutôt
+            // que d'afficher un zéro qui mentirait.
+            if (auto skill = SkillRegistry::instance().create (id))
+            {
+                skill->prepare (48000.0, 512);
+                s.latency = skill->latencySamples();
+                s.latencyKnown = true;
+            }
+            v.skills.push_back (std::move (s));
+        }
         return v;
     }
 

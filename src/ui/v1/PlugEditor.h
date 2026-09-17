@@ -23,6 +23,7 @@
 #include "PlugMaster.h"
 #include "PlugMacros.h"
 #include "PlugPanels.h"
+#include "PlugPrefsPanel.h"
 #include "PlugTabs.h"
 #include <memory>
 
@@ -66,6 +67,7 @@ namespace plug::ui::v1
         void showAbout();
         void showPrefs();
         void closePanels();
+        void applyPrefs();       // zoom et délai d'aide, tout de suite
         void layOutPanel (juce::Component& panel, int w, int h);
 
         Presenter& presenter;
@@ -80,7 +82,7 @@ namespace plug::ui::v1
         PlugEdition edition;
         PlugMaster master;
         std::unique_ptr<AboutPanel> about;
-        std::unique_ptr<PrefsPanel> prefs;
+        std::unique_ptr<PlugPrefsPanel> prefs;
         std::unique_ptr<juce::TooltipWindow> tooltips;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlugEditor)

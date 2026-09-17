@@ -46,15 +46,4 @@ namespace plug::ui::v1
         juce::Label identity, note;
     };
 
-    // L'emplacement du panneau Préférences. Vide jusqu'à l'étape 6 : il est là pour
-    // que le pilote voie OÙ ça vivra, pas pour faire semblant que ça existe.
-    class PrefsPanel : public Panel
-    {
-    public:
-        PrefsPanel();
-        void resized() override;
-
-    private:
-        juce::Label todo;
-    };
 }

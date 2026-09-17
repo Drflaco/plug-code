@@ -120,7 +120,7 @@ namespace plug::ui::v1
         edition.setBounds (r);
 
         if (about != nullptr) layOutPanel (*about, 620, 130);
-        if (prefs != nullptr) layOutPanel (*prefs, 620, 180);
+        if (prefs != nullptr) layOutPanel (*prefs, PlugPrefsPanel::kWidth, PlugPrefsPanel::kHeight);
     }
 
     void PlugEditor::mouseDown (const juce::MouseEvent&)
@@ -213,10 +213,25 @@ namespace plug::ui::v1
         closePanels();
         if (wasOpen) return;
 
-        prefs = std::make_unique<PrefsPanel>();
+        prefs = std::make_unique<PlugPrefsPanel> (presenter);
         prefs->onClose = [this] { closePanels(); };
+        prefs->onPrefsChanged = [this] { applyPrefs(); };
         content.addAndMakeVisible (*prefs);
-        layOutPanel (*prefs, 620, 180);
+        layOutPanel (*prefs, PlugPrefsPanel::kWidth, PlugPrefsPanel::kHeight);
+    }
+
+    void PlugEditor::applyPrefs()
+    {
+        // Le pilote qui coupe l'aide ne la perd pas : un re-clic la rend. Et le zoom
+        // change la taille de la fenêtre, pas la mise en page — elle reste en 1280×800
+        // logiques, mise à l'échelle par setTransform dans resized().
+        const auto p = presenter.prefsView();
+        if (tooltips != nullptr)
+            tooltips->setMillisecondsBeforeTipAppears (p.hoverHelp ? p.helpDelayMs : 1 << 30);
+
+        const int w = (int) std::lround (kBaseWidth * p.zoom);
+        if (w != getWidth()) setSize (w, (int) std::lround (kBaseHeight * p.zoom));
+        else                 resized();
     }
 
     void PlugEditor::closePanels()

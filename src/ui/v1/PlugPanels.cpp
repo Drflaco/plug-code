@@ -70,22 +70,4 @@ namespace plug::ui::v1
         note.setBounds (r);
     }
 
-    //==========================================================================
-    PrefsPanel::PrefsPanel() : Panel ("Préférences — étape 6"_fr)
-    {
-        todo.setText ("Ratio, zoom, aide au survol et son délai, loi de mélange par défaut, "
-                      "nombre d'emplacements affichés, et la liste « À venir ». "
-                      "Le fichier existe déjà : %APPDATA%\\LascauxLab\\Plug\\prefs.xml."_fr,
-                      juce::dontSendNotification);
-        todo.setJustificationType (juce::Justification::topLeft);
-        todo.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.55f));
-        todo.setInterceptsMouseClicks (false, false);
-        addAndMakeVisible (todo);
-    }
-
-    void PrefsPanel::resized()
-    {
-        Panel::resized();
-        todo.setBounds (bodyArea());
-    }
 }

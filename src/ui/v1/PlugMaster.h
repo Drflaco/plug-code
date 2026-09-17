@@ -55,7 +55,8 @@ namespace plug::ui::v1
         juce::Slider volume, mix;
         std::array<juce::TextButton, 3> law;      // -6 dB | -3 dB | 0 dB
         std::vector<Inert> inerts;                // drive, tone, comp, lowFreq
-        juce::TextButton routing, quality;        // choix : [Pré | Post] et Éco/Normal/Haute
+        juce::TextButton routing, quality;        // entrées à choix, libellés venus de la grille
+        juce::StringArray routingChoices, qualityChoices;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlugMaster)
     };

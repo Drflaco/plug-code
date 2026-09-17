@@ -123,6 +123,10 @@ namespace plug::ui
         float raw = 0.0f;
         bool inert = false;             // §3.10 non implémenté : libellé + « (J4c) », grisé
         juce::String help;
+        // Les libellés d'une entrée à CHOIX, tels que la grille les déclare à l'hôte.
+        // Ils traversent la couche au lieu d'être redits par un widget : la vérité
+        // reste dans ParameterGrid.cpp, que la frontière v1/v2 interdit d'inclure.
+        juce::StringArray choices;
     };
 
     struct MasterView
@@ -133,6 +137,7 @@ namespace plug::ui
         // Textes composés par la couche de présentation : un widget ne convertit rien,
         // et surtout pas une valeur de grille en décibels (il ne connaît pas GridMap).
         juce::String volumeText, mixText;
+        juce::StringArray lawChoices;   // « -6 dB », « -3 dB », « 0 dB » — depuis la grille
         std::vector<MasterEntryView> inertEntries;   // drive, tone, comp, grave, routage, qualité
     };
 
@@ -143,7 +148,14 @@ namespace plug::ui
         juce::String routes;            // routes en texte, lecture seule (Q2) ; édition : « À venir »
     };
 
-    struct AboutSkillView { juce::String id, label; int version = 1; };
+    struct AboutSkillView
+    {
+        juce::String id, label;
+        int version = 1;
+        juce::String mixLaw;            // loi naturelle déclarée par la skill (§3.7)
+        int latency = 0;                // latence déclarée à 48 kHz
+        bool latencyKnown = false;      // faux = on ne l'a pas su : on n'écrit rien plutôt que zéro
+    };
 
     struct AboutView
     {

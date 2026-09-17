@@ -7,15 +7,9 @@ namespace plug::ui::v1
 
     namespace
     {
-        // Les libellés des deux entrées à choix. Ils doublent ceux de ParameterGrid.cpp,
-        // que la frontière v1/v2 interdit d'inclure ici ; ils sont figés avec la grille
-        // (Rév. 2), donc ce doublon ne peut pas dériver sans que la grille change — et
-        // la grille ne change plus.
-        const char* const kRouting[] = { "Pré", "Post" };
-        const char* const kQuality[] = { "Éco", "Normal", "Haute" };
-
-        constexpr int kLawIds[] = { 0, 1, 2 };
-        const char* const kLawText[] = { "-6 dB", "-3 dB", "0 dB" };
+        // Aucun libellé de choix n'est écrit ici : ils traversent la couche depuis la
+        // grille (MasterEntryView::choices, MasterView::lawChoices). Une seule vérité,
+        // ParameterGrid.cpp — et ce que le pilote lit est ce que l'hôte lit.
         const char* const kLawHelp =
             "Loi de mélange du master (§3.7), entre le sec retardé et la chaîne :\n"
             "-6 dB — linéaire. Les deux gains somment à 1 : c'est la loi juste quand le "
@@ -61,11 +55,10 @@ namespace plug::ui::v1
 
         for (size_t i = 0; i < law.size(); ++i)
         {
-            law[i].setButtonText (String::fromUTF8 (kLawText[i]));
             law[i].setWantsKeyboardFocus (false);
             law[i].setTooltip (String::fromUTF8 (kLawHelp));
             law[i].setClickingTogglesState (false);
-            law[i].onClick = [this, i] { presenter.setParam ("master.mixLaw", (float) kLawIds[i]); refresh(); };
+            law[i].onClick = [this, i] { presenter.setParam ("master.mixLaw", (float) i); refresh(); };
             addAndMakeVisible (law[i]);
         }
 
@@ -181,6 +174,7 @@ namespace plug::ui::v1
 
         for (size_t i = 0; i < law.size(); ++i)
         {
+            law[i].setButtonText (v.lawChoices[(int) i]);     // le libellé de la grille
             const bool on = ((int) i == v.law);
             law[i].setColour (juce::TextButton::buttonColourId,
                               juce::Colours::white.withAlpha (on ? 0.22f : 0.08f));
@@ -200,17 +194,13 @@ namespace plug::ui::v1
                 slot.label->setTooltip (e.help);
             }
 
-            if (e.id == "master.driveRouting")
+            if (e.id == "master.driveRouting" || e.id == "master.quality")
             {
-                const int k = juce::jlimit (0, 1, (int) std::lround (e.raw));
-                routing.setButtonText (String::fromUTF8 (kRouting[k]) + "  (J4c)");
-                routing.setTooltip (e.help);
-            }
-            else if (e.id == "master.quality")
-            {
-                const int k = juce::jlimit (0, 2, (int) std::lround (e.raw));
-                quality.setButtonText (String::fromUTF8 (kQuality[k]) + "  (J4c)");
-                quality.setTooltip (e.help);
+                auto& b = (e.id == "master.quality") ? quality : routing;
+                const int k = juce::jlimit (0, juce::jmax (0, e.choices.size() - 1), (int) std::lround (e.raw));
+                b.setButtonText (e.choices[k] + "  (J4c)");
+                b.setTooltip (e.help);
+                (e.id == "master.quality" ? qualityChoices : routingChoices) = e.choices;
             }
         }
     }
@@ -219,7 +209,7 @@ namespace plug::ui::v1
     void PlugMaster::showRoutingMenu()
     {
         juce::PopupMenu m;
-        for (int i = 0; i < 2; ++i) m.addItem (i + 1, String::fromUTF8 (kRouting[i]));
+        for (int i = 0; i < routingChoices.size(); ++i) m.addItem (i + 1, routingChoices[i]);
         m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&routing),
                          [this] (int r) { if (r > 0) { presenter.setParam ("master.driveRouting", (float) (r - 1)); refresh(); } });
     }
@@ -227,7 +217,7 @@ namespace plug::ui::v1
     void PlugMaster::showQualityMenu()
     {
         juce::PopupMenu m;
-        for (int i = 0; i < 3; ++i) m.addItem (i + 1, String::fromUTF8 (kQuality[i]));
+        for (int i = 0; i < qualityChoices.size(); ++i) m.addItem (i + 1, qualityChoices[i]);
         m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&quality),
                          [this] (int r) { if (r > 0) { presenter.setParam ("master.quality", (float) (r - 1)); refresh(); } });
     }
