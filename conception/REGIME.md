@@ -128,10 +128,15 @@ Trois répétitions décroissantes espacées de 50 ms : le symptôme exact. Le c
 Tout échafaudage porte sa date de péremption dans son nom, son commentaire et
 l'ETAT. Il n'y a pas de honte à en poser ; il y a un danger à les oublier.
 
-Ceux encore debout : l'éditeur générique et ses deux boutons de preset
-(`PLUG_J2_GENERIC_EDITOR`, retiré au J4b), le chronomètre `PLUG_J2_TIMING`.
+Celui encore debout : le chronomètre `PLUG_J2_TIMING`. S'y ajoute, du côté de
+l'interface, l'option `PLUG_UI_TIMING` (OFF par défaut, jamais livrée) qui
+chronomètre le rendu du séquenceur.
+
 Ceux retirés : le crochet d'état J3, le crochet de latence J2 — dont l'un a
-causé l'incident ci-dessus en survivant sur le disque après sa mort dans le code.
+causé l'incident ci-dessus en survivant sur le disque après sa mort dans le code —
+et, **au J4b étape 7, l'éditeur générique et ses deux boutons de preset**
+(`PLUG_J2_GENERIC_EDITOR`), remplacés par l'interface du §3.7. Sa date de
+péremption était écrite ici depuis le J2 ; elle est arrivée, il est parti.
 
 ---
 

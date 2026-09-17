@@ -40,7 +40,7 @@ namespace plug::ui::v1
 
         IconButton (const juce::String& componentName, Icon iconToDraw);
 
-        void setLabelText (const juce::String& text);   // hors paint : à la notification
+        void setLabelText (const juce::String& newText);   // hors paint : à la notification
         void paintButton (juce::Graphics&, bool isOver, bool isDown) override;
 
     private:

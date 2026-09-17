@@ -5,8 +5,8 @@
 // du moteur, le bypass hôte aligné sur cette latence (§4.3), aucune allocation
 // dans processBlock (§4.2). Il possède aussi la couche de présentation du J4b
 // (ui::Presenter) : l'état de session doit survivre à la fenêtre, que Live ferme
-// et rouvre sans arrêt, mais pas au projet. L'éditeur générique J2 reste en
-// réserve derrière PLUG_J2_GENERIC_EDITOR jusqu'à l'étape 7.
+// et rouvre sans arrêt, mais pas au projet. L'éditeur générique J2 a été retiré
+// au J4b étape 7 — un échafaudage porte sa date, elle est arrivée (REGIME §8).
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterGrid.h"
@@ -36,7 +36,7 @@ namespace plug
         void processBlockBypassed (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
         //==============================================================================
-        // Échafaudage J2 conservé jusqu'au J4 (ETAT Rév. 4) : option CMake PLUG_J2_GENERIC_EDITOR.
+        // L'interface v1 du §3.7 (src/ui/v1/). Plus d'option : c'est L'éditeur.
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
 

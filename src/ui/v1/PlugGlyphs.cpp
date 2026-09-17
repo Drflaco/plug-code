@@ -81,10 +81,12 @@ namespace plug::ui::v1
         setWantsKeyboardFocus (false);   // le clavier reste à l'hôte et à l'éditeur
     }
 
-    void IconButton::setLabelText (const juce::String& text)
+    // `newText` et non `text` : juce::Button a déjà un membre `text`, et le masquer
+    // rend le code ambigu à la relecture (C4458).
+    void IconButton::setLabelText (const juce::String& newText)
     {
-        if (labelText == text) return;
-        labelText = text;
+        if (labelText == newText) return;
+        labelText = newText;
         repaint();
     }
 

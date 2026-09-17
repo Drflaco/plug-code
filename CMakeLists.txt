@@ -58,15 +58,10 @@ endif()
 
 add_subdirectory(external/JUCE)
 
-# Échafaudage J2 : éditeur générique JUCE pour que Live puisse « configurer »
-# et automatiser les paramètres. Pas l'interface du produit. Reste ON jusqu'au J4
-# (décision pilote, ETAT Rév. 4).
-option(PLUG_J2_GENERIC_EDITOR "Éditeur générique JUCE (échafaudage J2)" ON)
-
-# Interface v1 du J4b (§3.7). ON : createEditor() rend l'éditeur de src/ui/v1/.
-# OFF : l'échafaudage générique reprend la main — filet de secours tant que la v1
-# se construit. PLUG_J2_GENERIC_EDITOR ne disparaît qu'à l'étape 7.
-option(PLUG_UI_V1 "Interface v1 (J4b)" ON)
+# Plus d'option d'éditeur : l'interface v1 du §3.7 (src/ui/) EST l'éditeur, et
+# createEditor() la rend sans condition. L'échafaudage J2 — liste de curseurs
+# générique, bandeau d'identité, deux boutons de preset — a été retiré au J4b
+# étape 7 : il portait sa date de péremption, elle est arrivée (REGIME §8).
 
 # Chronomètre du rendu du séquenceur (J4b étape 4). JAMAIS dans le binaire livré :
 # il journalise p50/p99 de paint() dans %APPDATA%\LascauxLab\Plug\measure\.
@@ -205,8 +200,6 @@ target_compile_definitions(Plug PUBLIC
     ${PLUG_COMMON_DEFS}
     JUCE_VST3_CAN_REPLACE_VST2=0
     PLUG_J2_TIMING=1
-    PLUG_J2_GENERIC_EDITOR=$<BOOL:${PLUG_J2_GENERIC_EDITOR}>
-    PLUG_UI_V1=$<BOOL:${PLUG_UI_V1}>
     PLUG_UI_TIMING=$<BOOL:${PLUG_UI_TIMING}>)
 target_link_libraries(Plug
     PRIVATE juce::juce_audio_utils PlugData
@@ -221,8 +214,6 @@ target_include_directories(PlugBench PRIVATE src)
 target_compile_definitions(PlugBench PRIVATE
     ${PLUG_COMMON_DEFS}
     PLUG_J2_TIMING=0
-    PLUG_J2_GENERIC_EDITOR=0
-    PLUG_UI_V1=1
     PLUG_UI_TIMING=1
     JUCE_STANDALONE_APPLICATION=1
     PLUG_NO_PLUGIN_FACTORY=1)

@@ -434,6 +434,13 @@ namespace plug::ui
             // préparée à 48 kHz. C'est le seul moyen de la connaître sans toucher au
             // contrat §3.9 — et si l'instance ne se crée pas, on n'écrit rien plutôt
             // que d'afficher un zéro qui mentirait.
+            //
+            // OUI, cela ALLOUE : prepare() construit les lignes à retard des neuf skills
+            // (core.grain en tête). C'est assumé et borné — une fois, à l'ouverture du
+            // panneau « À propos », sur le message thread, jamais pendant l'audio ni par
+            // frame. L'alternative était un champ `latencySamples` dans SkillInfo, donc
+            // une modification du contrat §3.9 et des neuf skills pour un renseignement
+            // d'affichage : décision pilote du 17/09, on garde l'instanciation.
             if (auto skill = SkillRegistry::instance().create (id))
             {
                 skill->prepare (48000.0, 512);

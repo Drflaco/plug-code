@@ -136,11 +136,26 @@ touche à `src/ui/` : une règle qu'on peut oublier doit devenir une règle qui
 s'exécute. C'est ce qui rend vraie l'exigence du pilote — « l'interface aura
 plusieurs vies » — au lieu de la laisser à la discipline.
 
-Deux options CMake commandent l'éditeur rendu par `createEditor()` : `PLUG_UI_V1`
-(ON, l'interface v1) et `PLUG_J2_GENERIC_EDITOR` (l'échafaudage, filet de secours
-jusqu'à la fin du J4b). `AVENIR.md`, à la racine, liste ce que la v1 ne fait pas
-et l'assume ; il est embarqué dans le binaire (`juce_add_binary_data`) et lu par
-`ui::Presenter::avenirText()`.
+**Ce que l'interface contient** (zones du §3.7) : la barre — menu de presets,
+annuler / refaire dont l'aide dit le NOM de la transaction, identité du binaire,
+préférences ; les huit macros ; les onglets d'emplacements, avec le choix de
+l'effet et le glisser-réordonner (échanger, insérer, copier) ; les contrôles de
+l'effet, halo de génération compris ; la zone d'édition, séquenceur 16 × 32 à
+gauche et inspecteur de pas à droite, poignée « ║ » entre les deux ; le master et
+la sortie. `AVENIR.md`, à la racine, liste ce que la v1 ne fait pas et l'assume :
+il est embarqué dans le binaire (`juce_add_binary_data`), lu par
+`ui::Presenter::avenirText()` et affiché dans l'onglet « À venir » des
+préférences — la liste ne peut donc pas diverger du fichier du dépôt.
+
+**Il n'y a plus d'option d'éditeur** : `createEditor()` rend l'interface v1 sans
+condition. L'échafaudage J2 — liste de curseurs générique, bandeau d'identité,
+deux boutons de preset — a été retiré au J4b étape 7 (REGIME §8). Les presets se
+chargent par le menu de la barre.
+
+**Mesure du rendu** : l'option CMake `PLUG_UI_TIMING` (OFF par défaut, jamais
+livrée) chronomètre `paint()` du séquenceur et écrit ses p50/p99 dans
+`%APPDATA%\LascauxLab\Plug\measure\`. Les chiffres hors hôte sont dans
+`measure/MESURES_J4b.md`.
 
 **Deux UndoManager, et pourquoi.** L'APVTS recopie périodiquement dans l'arbre les
 valeurs venues de l'hôte, avec l'UndoManager qu'on lui donne : un clip automatisé
@@ -151,15 +166,6 @@ l'APVTS, qui jette tout ce qu'il reçoit). Les réglages venus de l'interface re
 annulables parce que `ui::Presenter::setParam` écrit **dans l'arbre** avec
 l'UndoManager du pilote — l'APVTS relaie ensuite au paramètre, donc à l'hôte.
 `PlugBench` vérifie les deux sens à chaque exécution.
-
-## Échafaudage J2 : éditeur générique
-
-Sans fenêtre de plug-in, Live ne peut « configurer » aucun paramètre et n'en
-automatise donc aucun (mesuré le 16/09/2026 : le sélecteur d'automation ne
-propose que « Device On »). Le plugin J2 embarque l'éditeur générique de JUCE
-(liste de curseurs standard) derrière l'option CMake `PLUG_J2_GENERIC_EDITOR`
-(ON par défaut). Ce n'est pas l'interface du produit ; l'option passe à OFF
-quand l'interface réelle arrive.
 
 ## Scripts
 

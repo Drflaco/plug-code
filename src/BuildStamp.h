@@ -1,4 +1,5 @@
-// BuildStamp — l'identité du binaire, affichée en tête de l'éditeur (J4a, 17/09).
+// BuildStamp — l'identité du binaire, affichée dans la barre et l'à-propos de
+// l'interface v1 (J4a, 17/09 ; J4b étapes 1 et 6).
 // Garantit : on ne peut plus écouter un binaire sans savoir lequel. Un vieux
 // module chargé par l'hôte s'est fait passer une soirée entière pour un défaut
 // du moteur ; le commit et l'heure de compilation à l'écran l'auraient dit tout
@@ -31,27 +32,4 @@ namespace plug
              + juce::String::fromUTF8 ("  ·  compilé le ") + __DATE__
              + juce::String::fromUTF8 (" à ") + __TIME__;
     }
-
-    // Bandeau d'identité posé au-dessus de l'éditeur générique (échafaudage J2,
-    // jusqu'à l'interface du §3.7 au J4b, qui le reprendra dans son à-propos §3.11).
-    class BuildStampBar : public juce::Component
-    {
-    public:
-        BuildStampBar()
-        {
-            label.setText (buildStamp(), juce::dontSendNotification);
-            label.setJustificationType (juce::Justification::centredLeft);
-            label.setInterceptsMouseClicks (false, false);
-            label.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.85f));
-            addAndMakeVisible (label);
-        }
-
-        void paint (juce::Graphics& g) override { g.fillAll (juce::Colours::black.withAlpha (0.55f)); }
-        void resized() override { label.setBounds (getLocalBounds().reduced (8, 0)); }
-
-        static constexpr int kHeight = 22;
-
-    private:
-        juce::Label label;
-    };
 }

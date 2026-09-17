@@ -8,13 +8,7 @@
  #define PLUG_J2_TIMING 0
 #endif
 
-#ifndef PLUG_UI_V1
- #define PLUG_UI_V1 0
-#endif
-
-#if PLUG_UI_V1
- #include "ui/v1/PlugEditor.h"
-#endif
+#include "ui/v1/PlugEditor.h"
 
 namespace plug
 {
@@ -213,143 +207,15 @@ namespace plug
     }
 
     //==============================================================================
-    bool PlugProcessor::hasEditor() const
-    {
-       #if PLUG_UI_V1 || PLUG_J2_GENERIC_EDITOR
-        return true;
-       #else
-        return false;
-       #endif
-    }
-
-   #if PLUG_J2_GENERIC_EDITOR
-    namespace
-    {
-        // Échafaudage J4a : la liste de curseurs de JUCE, coiffée de l'identité du
-        // binaire et de deux boutons de preset. C'est le [Preset ▾] du §3.7 sous sa
-        // forme brute — il rend le pilote autonome avant l'interface du J4b, qui le
-        // remplacera. Rien ici n'est un paramètre : ni l'hôte ni l'état n'en savent rien.
-        class PresetBar : public juce::Component
-        {
-        public:
-            static constexpr int kHeight = 30;
-
-            explicit PresetBar (PlugProcessor& p) : proc (p)
-            {
-                load.setButtonText ("Charger un preset...");
-                save.setButtonText ("Enregistrer sous...");
-                for (auto* b : { &load, &save }) addAndMakeVisible (*b);
-
-                status.setJustificationType (juce::Justification::centredLeft);
-                status.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.7f));
-                status.setInterceptsMouseClicks (false, false);
-                addAndMakeVisible (status);
-                status.setText ("Presets : " + PlugProcessor::presetsDirectory().getFullPathName(), juce::dontSendNotification);
-
-                load.onClick = [this] { chooseToLoad(); };
-                save.onClick = [this] { chooseToSave(); };
-            }
-
-            void paint (juce::Graphics& g) override { g.fillAll (juce::Colours::black.withAlpha (0.35f)); }
-
-            void resized() override
-            {
-                auto r = getLocalBounds().reduced (6, 3);
-                load.setBounds (r.removeFromLeft (150));
-                r.removeFromLeft (6);
-                save.setBounds (r.removeFromLeft (150));
-                r.removeFromLeft (10);
-                status.setBounds (r);
-            }
-
-        private:
-            void chooseToLoad()
-            {
-                // launchAsync : les boucles modales sont interdites dans un plugin
-                // (JUCE_MODAL_LOOPS_PERMITTED=0), et l'hôte n'attend pas.
-                chooser = std::make_unique<juce::FileChooser> ("Charger un preset Plug",
-                                                                PlugProcessor::presetsDirectory(), "*.plugstate");
-                chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-                                       [this] (const juce::FileChooser& fc)
-                                       {
-                                           const auto f = fc.getResult();
-                                           if (f == juce::File()) return;
-                                           const bool ok = proc.loadPresetFile (f);
-                                           status.setText (ok ? "Chargé : " + f.getFileNameWithoutExtension()
-                                                              : "Illisible : " + f.getFileName(),
-                                                            juce::dontSendNotification);
-                                       });
-            }
-
-            void chooseToSave()
-            {
-                chooser = std::make_unique<juce::FileChooser> ("Enregistrer l'état courant",
-                                                                PlugProcessor::presetsDirectory().getChildFile ("sans-titre.plugstate"),
-                                                                "*.plugstate");
-                chooser->launchAsync (juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
-                                          | juce::FileBrowserComponent::warnAboutOverwriting,
-                                       [this] (const juce::FileChooser& fc)
-                                       {
-                                           const auto f = fc.getResult();
-                                           if (f == juce::File()) return;
-                                           const bool ok = proc.savePresetFile (f);
-                                           status.setText (ok ? "Enregistré : " + f.getFileNameWithoutExtension()
-                                                              : "Échec de l'enregistrement",
-                                                            juce::dontSendNotification);
-                                       });
-            }
-
-            PlugProcessor& proc;
-            juce::TextButton load, save;
-            juce::Label status;
-            std::unique_ptr<juce::FileChooser> chooser;
-        };
-
-        // Conteneur : les deux barres en haut, la liste de paramètres en dessous.
-        // La liste est un éditeur enfant plutôt qu'une classe de base, pour qu'elle
-        // occupe la place qui lui reste au lieu d'être recouverte.
-        class ScaffoldEditor : public juce::AudioProcessorEditor
-        {
-        public:
-            explicit ScaffoldEditor (PlugProcessor& p)
-                : AudioProcessorEditor (p), presets (p), generic (p)
-            {
-                addAndMakeVisible (stamp);
-                addAndMakeVisible (presets);
-                addAndMakeVisible (generic);
-                setSize (juce::jmax (620, generic.getWidth()),
-                         juce::jmin (760, generic.getHeight() + BuildStampBar::kHeight + PresetBar::kHeight));
-                setResizable (true, true);
-            }
-
-            void resized() override
-            {
-                auto r = getLocalBounds();
-                stamp.setBounds (r.removeFromTop (BuildStampBar::kHeight));
-                presets.setBounds (r.removeFromTop (PresetBar::kHeight));
-                generic.setBounds (r);
-            }
-
-        private:
-            BuildStampBar stamp;
-            PresetBar presets;
-            juce::GenericAudioProcessorEditor generic;
-        };
-    }
-   #endif
+    bool PlugProcessor::hasEditor() const { return true; }
 
     juce::AudioProcessorEditor* PlugProcessor::createEditor()
     {
-        // L'interface v1 prend la place de l'échafaudage dès qu'elle existe ; l'ancien
-        // éditeur générique reste atteignable par -DPLUG_UI_V1=OFF tant que la v1 se
-        // construit, et disparaît à l'étape 7 (REGIME §8 : un échafaudage porte sa date).
-       #if PLUG_UI_V1
+        // L'interface v1 EST l'éditeur. L'échafaudage J2 (liste de curseurs générique,
+        // bandeau d'identité, deux boutons de preset) a été retiré au J4b étape 7 : il
+        // portait sa date de péremption depuis le premier jour, elle est arrivée
+        // (REGIME §8). Le chargement de preset vit désormais dans le menu de la barre.
         return new ui::v1::PlugEditor (*this, presenter());
-       #elif PLUG_J2_GENERIC_EDITOR
-        return new ScaffoldEditor (*this);
-       #else
-        return nullptr;
-       #endif
     }
 
     //==============================================================================

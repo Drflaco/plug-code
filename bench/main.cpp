@@ -319,7 +319,7 @@ int main (int argc, char* argv[])
         std::unique_ptr<juce::AudioProcessorEditor> ed (p.createEditor());
         if (ed == nullptr)
         {
-            log << "\n[note] rendu : aucun éditeur (PLUG_UI_V1=OFF)\n";
+            log << "\n[note] rendu : createEditor() n'a rien rendu\n";
         }
         else
         {

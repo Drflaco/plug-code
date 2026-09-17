@@ -4,6 +4,20 @@ Ce fichier ne raconte rien : il porte des chiffres et la manière de les refaire
 Le rendu audio n'entre pas ici — il est jugé par `PlugRender test` T13, octet par
 octet, contre `measure/j4a/ref/`.
 
+## En un coup d'œil — phase 1 close
+
+| Ce qui a été mesuré | Avant | Après | Où |
+| --- | --- | --- | --- |
+| Automation qui joue → historique d'annulation | **1 action** polluante, Ctrl+Z rembobinait l'automation | **0 action**, Ctrl+Z défait le geste du pilote | PlugBench §5 |
+| Rendu de l'éditeur ENTIER, une frame | — | p50 **2,6 ms**, p99 **3,1 ms** (19 % d'une frame à 60 Hz) | PlugBench §7 |
+| Un événement de glisser dans le séquenceur | **2673 µs** | **79,5 µs** (facteur 33) | PlugBench §7 |
+| Préférences dans l'état sauvegardé | — | **0 octet** : 60 280 avant, 60 280 après | PlugBench §8 |
+| Libellés accentués des skills | « DÃ©calage stÃ©rÃ©o » | **15 points de code**, intact | PlugBench §6 |
+| Emplacements actifs sur l'état par défaut | alternance vue à l'écran | **16/16**, modèle prouvé juste | PlugBench §6 |
+| Matrice de rendu audio | 36 cas | **71 cas**, T13 vert aux deux taux | PlugRender test |
+
+Toutes ces mesures sont **permanentes** : le banc échoue si l'une régresse.
+
 ---
 
 ## Undo et automation (étape 1)
