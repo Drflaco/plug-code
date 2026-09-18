@@ -286,13 +286,19 @@ namespace plug::ui
 
             p.name = name;
             p.declared = decl != nullptr;
+            // Correction 1 de la phase 2 (18/09) : non déclarée par une skill CONNUE = inerte
+            // (tiret, grisée), comme la réserve — le moteur ne la lit pas. Une skill inconnue
+            // (§3.9) garde ses entrées génériques visibles : ses données sont conservées.
+            p.inert = decl == nullptr && (v.unknown ? Format::isReserve (name)
+                                                    : Format::isInertWhenUndeclared (name));
             // fr(...) et non String(...) : ce sont des octets UTF-8 déclarés par la skill.
-            p.label = decl != nullptr ? fr (decl->label) : Format::genericLabel (name);
+            p.label = decl != nullptr ? fr (decl->label)
+                                      : (p.inert ? Format::inertLabel() : Format::genericLabel (name));
             p.unit  = decl != nullptr ? fr (decl->unit) : String();
             p.help  = decl != nullptr ? fr (decl->help)
                                       : (v.unknown ? Format::unknownSkillHelp (v.skillId, skillVersion)
-                                                   : Format::genericHelp (name));
-            p.inert = decl == nullptr && Format::isReserve (name);
+                                                   : (p.inert ? Format::inertHelp (name)
+                                                              : Format::genericHelp (name)));
 
             const auto spec = state::readParamSpec (sl, name);
             p.locked = spec.locked;

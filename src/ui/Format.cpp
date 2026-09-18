@@ -67,6 +67,25 @@ namespace plug::ui::Format
         return "Entrée générique de l'emplacement : la skill en place ne l'a pas déclarée."_fr;
     }
 
+    bool isInertWhenUndeclared (const String& paramName)
+    {
+        return paramName != "main" && paramName != "mix" && paramName != "gain";
+    }
+
+    String inertLabel()
+    {
+        return "—"_fr;   // tiret cadratin : présent dans Segoe UI et Verdana
+    }
+
+    String inertHelp (const String& paramName)
+    {
+        if (isReserve (paramName)) return "Réserve : aucune skill ne l'occupe."_fr;
+        if (paramName.startsWith ("param") && paramName.length() == 6)
+            return "Paramètre "_fr + paramName.substring (5).toUpperCase()
+                   + " : la skill en place ne le déclare pas — inerte, la bouger n'a aucun effet sur le son."_fr;
+        return "Entrée non déclarée par la skill en place : inerte."_fr;
+    }
+
     //==========================================================================
     String slotSettingLabel (const String& which)
     {

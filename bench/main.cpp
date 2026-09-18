@@ -300,6 +300,25 @@ int main (int argc, char* argv[])
                "lisibilité : le Rapport de core.fm s'affiche « " + fm.params[2].valueText + " »", log);
         log << "       core.fm : Profondeur « " << fm.params[0].valueText
             << " », Fréquence « " << fm.params[1].valueText << " »\n";
+
+        // Correction 1 de la phase 2 (18/09) : core.filter ne déclare que main, paramA,
+        // paramB et stereo. paramC..F et res1..3 doivent ressortir INERTES et au tiret ;
+        // mix et gain jamais — le socle les compose toujours.
+        view.setSkill (2, "core.filter");
+        const auto filtre = view.slotView (2);
+        int inertes = 0, actifs2 = 0;
+        juce::String faux;
+        for (int m = 0; m < plug::ui::kSlotParams; ++m)
+        {
+            const auto& q = filtre.params[(size_t) m];
+            const bool attendu = (m >= 3 && m <= 6) || m >= 10;   // paramC..F, res1..3
+            if (q.inert) ++inertes; else ++actifs2;
+            if (q.inert != attendu || (attendu && q.label != juce::String::fromUTF8 ("—")))
+                faux << " " << q.name;
+        }
+        check (faux.isEmpty() && inertes == 7 && actifs2 == 6,
+               "vue : core.filter — 7 entrées non déclarées inertes au tiret, 6 actives ("
+                   + juce::String (inertes) + " inertes" + (faux.isEmpty() ? juce::String() : ", faux :" + faux) + ")", log);
     }
 
     //==========================================================================

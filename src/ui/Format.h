@@ -27,11 +27,21 @@ namespace plug::ui::Format
 
     // Libellé d'un paramètre d'emplacement qu'aucune skill ne déclare.
     // mix / gain : le socle les compose toujours, ils ont un sens partout.
-    // stereo / res1..3 : réserve, « — », inerte.
     // paramA..F : « Paramètre A » … « Paramètre F » — jamais l'identifiant de grille.
+    //   (utilisé quand la skill en place est INCONNUE : ses données restent visibles, §3.9)
+    // stereo / res1..3 : réserve, « — ».
     juce::String genericLabel (const juce::String& paramName);
     juce::String genericHelp  (const juce::String& paramName);
-    bool isReserve (const juce::String& paramName);   // vrai pour stereo, res1..3 non déclarés
+    bool isReserve (const juce::String& paramName);   // vrai pour stereo, res1..3
+
+    // Correction 1 de la phase 2 (18/09) : une entrée que la skill en place ne déclare
+    // pas n'est lue par PERSONNE — le filtre ne lit que ses quatre entrées, paramC..F
+    // n'existent que dans la grille. Elle reçoit donc le traitement de la réserve :
+    // tiret, grisée, inerte. Seuls main, mix et gain échappent à la règle (le socle
+    // les compose toujours). La skill inconnue (§3.9) garde ses données visibles.
+    bool isInertWhenUndeclared (const juce::String& paramName);   // paramA..F, stereo, res1..3
+    juce::String inertLabel();                                   // « — »
+    juce::String inertHelp (const juce::String& paramName);      // dit QUELLE entrée, et qu'elle ne fait rien
 
     // Réglages d'emplacement, jamais des valeurs de pas (§3.3.2).
     juce::String slotSettingLabel (const juce::String& which);   // active, glide, fade, tail
