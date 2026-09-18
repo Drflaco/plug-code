@@ -67,6 +67,7 @@ namespace plug::ui::v1
             juce::String label;          // « 3  FM » ou « 3 » en compact, composée à la notification
             juce::String name;           // le libellé de l'effet, gardé pour recomposer
             juce::String paramLabel;     // le paramètre montré en mode B
+            juce::Colour ink;            // sa couleur (6a) : barres, bouton B, chevron
             bool modeB = false;
             bool present = false;
             bool selected = false;

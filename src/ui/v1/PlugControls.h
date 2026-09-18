@@ -30,7 +30,8 @@ namespace plug::ui::v1
         explicit Knob (Presenter&);
 
         // Le knob suit l'emplacement SÉLECTIONNÉ : sa cible change avec lui.
-        void setView (const ParamView&, int slot1);
+        // `shownInLine` : la ligne du séquenceur montre ce paramètre (6a) — la pastille est pleine.
+        void setView (const ParamView&, int slot1, bool shownInLine);
         void paint (juce::Graphics&) override;
         void mouseDown (const juce::MouseEvent&) override;
         void mouseDrag (const juce::MouseEvent&) override;
@@ -39,11 +40,13 @@ namespace plug::ui::v1
 
     private:
         void send (float raw);
+        juce::Rectangle<int> captionArea() const;   // le nom sous le cadran : cliquer = montrer dans la ligne
 
         Presenter& presenter;
         int slot1 = 1;
         juce::String gridId, caption, value;
         ParamView view;
+        bool shown = false;
         bool gesturing = false;
         bool onSteps = false;     // le geste en cours pose sur la sélection (partielle) plutôt que la base
         float gestureStart = 0.0f;
@@ -56,7 +59,9 @@ namespace plug::ui::v1
     public:
         ParamRow (Presenter&, int slot1, int modulable);
 
-        void setView (const ParamView&, int slot1);
+        // `shownInLine` : la ligne du séquenceur montre ce paramètre (6a). Cliquer le
+        // NOM le montre ; le curseur, lui, règle.
+        void setView (const ParamView&, int slot1, bool shownInLine);
         void paint (juce::Graphics&) override;
         void mouseDown (const juce::MouseEvent&) override;
         void mouseDrag (const juce::MouseEvent&) override;
@@ -81,6 +86,7 @@ namespace plug::ui::v1
         int slot1 = 1, modulable = 0;
         juce::String gridId, caption, value, lockTag;
         bool showTag = false;   // le mot du cadenas ne s'écrit que s'il tient à côté du libellé
+        bool shown = false;     // la ligne montre ce paramètre : pastille pleine
         ParamView view;
         bool gesturing = false;
         bool onSteps = false;   // le geste en cours pose sur la sélection (partielle) plutôt que la base

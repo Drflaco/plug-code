@@ -298,6 +298,7 @@ namespace plug::ui
             auto& p = v.params[(size_t) m];
 
             p.name = name;
+            p.index = m;
             p.declared = decl != nullptr;
             // Correction 1 de la phase 2 (18/09) : non déclarée par une skill CONNUE = inerte
             // (tiret, grisée), comme la réserve — le moteur ne la lit pas. Une skill inconnue
@@ -346,6 +347,7 @@ namespace plug::ui
         v.length = grid::seqLength (state::readParam (s, "seq.length"));
         v.modeB = lineModeB[(size_t) (v.slot1 - 1)];
         v.shownParam = shownParam[(size_t) (v.slot1 - 1)];
+        v.shownIndex = juce::jmax (0, grid::modulableIndex (v.shownParam));
 
         for (int i = 1; i <= kSteps; ++i)
         {
@@ -902,6 +904,15 @@ namespace plug::ui
         JUCE_ASSERT_MESSAGE_THREAD
         if (! juce::isPositiveAndNotGreaterThan (slot1, kSlots)) return;
         shownParam[(size_t) (slot1 - 1)] = paramName;
+        mark (ViewMask::Session | ViewMask::Line, slot1);
+    }
+
+    void Presenter::showParam (int slot1, const String& paramName)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        if (! juce::isPositiveAndNotGreaterThan (slot1, kSlots)) return;
+        shownParam[(size_t) (slot1 - 1)] = paramName;
+        lineModeB[(size_t) (slot1 - 1)] = true;
         mark (ViewMask::Session | ViewMask::Line, slot1);
     }
 

@@ -122,3 +122,41 @@ namespace plug::ui::v1
         }
     }
 }
+
+namespace plug::ui::v1::glyph
+{
+    juce::Colour paramColour (int index)
+    {
+        static const juce::uint32 palette[13] =
+        {
+            0xff7fb3d5,   // main   — bleu, la teinte du halo
+            0xffe2b34a,   // paramA — ambre
+            0xff8fd18f,   // paramB — vert
+            0xffd98fd1,   // paramC — mauve
+            0xfff28c73,   // paramD — corail
+            0xff79d3c9,   // paramE — turquoise
+            0xffc9c26f,   // paramF — olive
+            0xffc8c8c8,   // mix    — gris clair
+            0xffd0a884,   // gain   — sable
+            0xffa3a8e6,   // stereo — lavande
+            0xff8a8a8a, 0xff8a8a8a, 0xff8a8a8a   // res1..3 — réserve, gris
+        };
+        return juce::Colour (palette[(size_t) juce::jlimit (0, 12, index)]);
+    }
+
+    void swatch (juce::Graphics& g, juce::Rectangle<float> area, juce::Colour colour, bool lit)
+    {
+        const float d = juce::jmin (area.getWidth(), area.getHeight());
+        const auto c = area.withSizeKeepingCentre (d, d);
+        if (lit)
+        {
+            g.setColour (colour);
+            g.fillEllipse (c);
+        }
+        else
+        {
+            g.setColour (colour.withAlpha (0.55f));
+            g.drawEllipse (c.reduced (0.5f), 1.0f);
+        }
+    }
+}

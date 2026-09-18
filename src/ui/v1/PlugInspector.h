@@ -39,7 +39,8 @@ namespace plug::ui::v1
         public:
             Row (Presenter&, PlugInspector&);
 
-            void setView (const ParamView&, int slot1, int step1);
+            // `shownInLine` : la ligne du séquenceur montre ce paramètre (6a) ; cliquer le nom le montre.
+            void setView (const ParamView&, int slot1, int step1, bool shownInLine);
             void paint (juce::Graphics&) override;
             void mouseDown (const juce::MouseEvent&) override;
             void mouseDrag (const juce::MouseEvent&) override;
@@ -49,6 +50,7 @@ namespace plug::ui::v1
             enum class Grab { None, Value, Min, Max, Prob };
 
             juce::Rectangle<int> lockArea() const;
+            juce::Rectangle<int> nameArea() const;
             juce::Rectangle<int> valueArea() const;
             juce::Rectangle<int> rangeArea() const;
             juce::Rectangle<int> probArea() const;
@@ -58,6 +60,7 @@ namespace plug::ui::v1
             PlugInspector& owner;
             ParamView view;
             int slot1 = 1, step1 = 1;
+            bool shown = false;   // la ligne montre ce paramètre : pastille pleine (6a)
             juce::String caption, valueText, rangeText, probText, transitionText, lockTag;
             Grab grab = Grab::None;
             // Valeurs à la prise : le glisser part d'ici. Les relire dans la View à chaque

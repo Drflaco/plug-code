@@ -132,6 +132,10 @@ namespace plug::ui
         bool selectionIsPartial() const noexcept { return stepFirst != 1 || stepLast != kSteps; }
         void setLineModeB (int slot1, bool modeB);
         void setShownParam (int slot1, const juce::String& paramName);
+        // Point 6a (pilote, 18/09) : cliquer un paramètre dans le panneau de l'effet ou
+        // dans l'inspecteur = la ligne de l'emplacement le MONTRE en barres. Une commande,
+        // une notification : paramètre montré + mode B.
+        void showParam (int slot1, const juce::String& paramName);
         void toggleRatio();
         void setPrefZoom (double zoom);
         void setPrefHoverHelp (bool on);

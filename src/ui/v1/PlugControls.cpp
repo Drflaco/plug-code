@@ -48,22 +48,36 @@ namespace plug::ui::v1
                "Sélectionne des pas pour leur poser une valeur."_fr;
     }
 
-    void Knob::setView (const ParamView& v, int slot)
+    static String showInLineHelp()
+    {
+        return "\nCliquer le nom : la ligne du séquenceur montre ce paramètre en barres (mode B)."_fr;
+    }
+
+    void Knob::setView (const ParamView& v, int slot, bool shownInLine)
     {
         slot1 = slot;
+        shown = shownInLine;
         gridId = slotGridId (slot, v.name.toRawUTF8());
         view = v;
         caption = v.label;
         value = v.valueText;                       // composé ici, jamais dans paint()
         setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String())
-                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter)));
+                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter))
+                    + (v.inert ? String() : showInLineHelp()));
         repaint();
     }
+
+    juce::Rectangle<int> Knob::captionArea() const { return getLocalBounds().removeFromBottom (32).removeFromTop (16); }
 
     void Knob::paint (juce::Graphics& g)
     {
         auto r = getLocalBounds().toFloat();
         auto text = r.removeFromBottom (32.0f);
+
+        // La pastille de couleur du paramètre, à gauche du nom (6a).
+        if (! view.inert)
+            glyph::swatch (g, juce::Rectangle<float> (text.getX() + 6.0f, text.getY() + 4.0f, 8.0f, 8.0f),
+                           glyph::paramColour (view.index), shown);
         auto dial = r.withSizeKeepingCentre (juce::jmin (r.getWidth(), r.getHeight()),
                                              juce::jmin (r.getWidth(), r.getHeight())).reduced (8.0f);
 
@@ -121,9 +135,11 @@ namespace plug::ui::v1
         else         presenter.setParam (gridId, v);
     }
 
-    void Knob::mouseDown (const juce::MouseEvent&)
+    void Knob::mouseDown (const juce::MouseEvent& e)
     {
-        if (view.inert || view.structural) return;
+        if (view.inert) return;
+        if (captionArea().contains (e.getPosition())) { presenter.showParam (slot1, view.name); return; }
+        if (view.structural) return;
         gestureStart = view.raw;
         gesturing = true;
         // Un geste = UNE transaction nommée. Sélection partielle : elle porte sur les pas
@@ -160,9 +176,10 @@ namespace plug::ui::v1
     {
     }
 
-    void ParamRow::setView (const ParamView& v, int slot)
+    void ParamRow::setView (const ParamView& v, int slot, bool shownInLine)
     {
         slot1 = slot;
+        shown = shownInLine;
         view = v;
         gridId = slotGridId (slot, v.name.toRawUTF8());
         caption = v.label;
@@ -179,7 +196,8 @@ namespace plug::ui::v1
                         + juce::GlyphArrangement::getStringWidthInt (tagFont, lockTag) + 8 <= kCaptionW;
         }
         setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String())
-                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter)));
+                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter))
+                    + (v.inert ? String() : showInLineHelp()));
         repaint();
     }
 
@@ -208,9 +226,13 @@ namespace plug::ui::v1
                             juce::Colours::white.withAlpha (view.locked || view.structural ? 0.8f : 0.3f),
                             view.locked || view.structural);
 
+        // La pastille de couleur du paramètre (6a), puis le nom.
+        if (! view.inert)
+            glyph::swatch (g, captionArea().toFloat().removeFromLeft (10.0f).withSizeKeepingCentre (8.0f, 8.0f),
+                           glyph::paramColour (view.index), shown);
         g.setColour (ink);
         g.setFont (12.0f);
-        g.drawText (caption, captionArea(), juce::Justification::centredLeft, true);
+        g.drawText (caption, captionArea().withTrimmedLeft (12), juce::Justification::centredLeft, true);
 
         if (showTag)
         {
@@ -272,6 +294,8 @@ namespace plug::ui::v1
             if (! view.structural) presenter.setLocked (slot1, view.name, ! view.locked);
             return;
         }
+        // Le nom : la ligne du séquenceur montre ce paramètre (6a).
+        if (captionArea().contains (e.getPosition())) { presenter.showParam (slot1, view.name); return; }
         const auto s = sliderArea();
         if (s.isEmpty() || ! s.expanded (0, 6).contains (e.getPosition())) return;
 
@@ -444,15 +468,20 @@ namespace plug::ui::v1
         chooseButton.setVisible (empty);
         if (empty) emptyHint.setText (Format::emptySlotText(), juce::dontSendNotification);
 
-        main.setView (v.params[0], slot1);                // grid::kModulable[0] = « main »
+        // Ce que la ligne montre (6a) : lu UNE fois, puis chaque contrôle sait si c'est lui.
+        const auto lv = presenter.lineView (slot1);
+        const auto shownIn = [&lv] (const ParamView& p) { return lv.modeB && lv.shownParam == p.name; };
+
+        main.setView (v.params[0], slot1, shownIn (v.params[0]));   // grid::kModulable[0] = « main »
         for (size_t i = 0; i < rows.size(); ++i)
         {
             static constexpr int kIndices[] = { 1, 2, 3, 4, 5, 6, 9, 10, 11, 12 };
-            rows[i]->setView (v.params[(size_t) kIndices[i]], slot1);
+            const auto& p = v.params[(size_t) kIndices[i]];
+            rows[i]->setView (p, slot1, shownIn (p));
             rows[i]->setVisible (! empty);
         }
-        mixRow->setView (v.params[7], slot1);             // mix et gain : le socle les compose
-        gainRow->setView (v.params[8], slot1);            // toujours, quelle que soit la skill
+        mixRow->setView (v.params[7], slot1, shownIn (v.params[7]));    // mix et gain : le socle les compose
+        gainRow->setView (v.params[8], slot1, shownIn (v.params[8]));   // toujours, quelle que soit la skill
 
         applySlotSettings (v);
     }

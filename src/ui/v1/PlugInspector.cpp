@@ -16,6 +16,7 @@ namespace plug::ui::v1
     PlugInspector::Row::Row (Presenter& p, PlugInspector& o) : presenter (p), owner (o) {}
 
     juce::Rectangle<int> PlugInspector::Row::lockArea() const { return getLocalBounds().removeFromLeft (kLockW); }
+    juce::Rectangle<int> PlugInspector::Row::nameArea() const { return getLocalBounds().withTrimmedLeft (kLockW).withWidth (kNameW); }
 
     juce::Rectangle<int> PlugInspector::Row::valueArea() const
     {
@@ -38,9 +39,9 @@ namespace plug::ui::v1
                                .withWidth (kTransW).reduced (2, 3);
     }
 
-    void PlugInspector::Row::setView (const ParamView& v, int slot, int step)
+    void PlugInspector::Row::setView (const ParamView& v, int slot, int step, bool shownInLine)
     {
-        view = v; slot1 = slot; step1 = step;
+        view = v; slot1 = slot; step1 = step; shown = shownInLine;
         caption = v.label;
         valueText = v.valueText;
         rangeText = Format::rawText (v.min) + "–"_fr + Format::rawText (v.max);
@@ -49,7 +50,8 @@ namespace plug::ui::v1
         lockTag = Format::lockWord (v.locked, v.lockedByDefault, v.structural);
         setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String())
                         + "\nValeur : glisser · Plage : glisser les deux moitiés · Proba : glisser"_fr
-                        + "\nTransition vers le pas suivant : cliquer"_fr);
+                        + "\nTransition vers le pas suivant : cliquer"_fr
+                        + "\nCliquer le nom : la ligne du séquenceur montre ce paramètre en barres (mode B)."_fr);
         repaint();
     }
 
@@ -63,8 +65,12 @@ namespace plug::ui::v1
                             juce::Colours::white.withAlpha (view.locked || view.structural ? 0.8f : 0.3f),
                             view.locked || view.structural);
 
+        // La pastille de couleur du paramètre (6a), puis le nom.
+        if (! view.inert)
+            glyph::swatch (g, nameArea().toFloat().removeFromLeft (10.0f).withSizeKeepingCentre (7.0f, 7.0f),
+                           glyph::paramColour (view.index), shown);
         g.setColour (ink);
-        g.drawText (caption, getLocalBounds().withTrimmedLeft (kLockW).withWidth (kNameW - 26),
+        g.drawText (caption, nameArea().withTrimmedLeft (11).withWidth (kNameW - 37),
                     juce::Justification::centredLeft, true);
         if (lockTag.isNotEmpty())
         {
@@ -131,6 +137,8 @@ namespace plug::ui::v1
             owner.refresh();
             return;
         }
+        // Le nom : la ligne du séquenceur montre ce paramètre (6a).
+        if (nameArea().contains (e.getPosition())) { presenter.showParam (slot1, view.name); return; }
         grabRaw = view.raw; grabMin = view.min; grabMax = view.max; grabProb = view.prob;
 
         if (valueArea().contains (e.getPosition()))
@@ -354,13 +362,14 @@ namespace plug::ui::v1
                        juce::dontSendNotification);
 
         // Les entrées déclarées, puis mix et gain que le socle compose toujours.
+        const auto lv = presenter.lineView (slot1);   // ce que la ligne montre (6a), lu une fois
         int used = 0;
         for (int m = 0; m < kSlotParams; ++m)
         {
             const auto& p = sv.params[(size_t) m];
             const bool keep = p.declared || p.name == "mix" || p.name == "gain";
             if (! keep) continue;
-            rows[(size_t) used]->setView (p, slot1, first);
+            rows[(size_t) used]->setView (p, slot1, first, lv.modeB && lv.shownParam == p.name);
             rows[(size_t) used]->setVisible (true);
             ++used;
         }

@@ -26,6 +26,16 @@ namespace plug::ui::v1::glyph
 
     // Cadenas : fermé (verrouillé) ou ouvert. Sert les contrôles du §3.3.1.
     void padlock (juce::Graphics&, juce::Rectangle<float> area, juce::Colour, bool closed);
+
+    // Point 6a (pilote, 18/09) : UNE couleur par entrée modulable (ParamView::index,
+    // 0..12), la même dans le panneau de l'effet, l'inspecteur et les barres du
+    // séquenceur. C'est ce qui rend le lien lisible : la pastille à côté du nom et la
+    // ligne qui le montre ont la même teinte. Treize teintes choisies pour rester
+    // distinctes sur fond sombre ; la réserve (10..12) reste grise.
+    juce::Colour paramColour (int index);
+
+    // La pastille : pleine si la ligne montre ce paramètre, en anneau sinon.
+    void swatch (juce::Graphics&, juce::Rectangle<float> area, juce::Colour, bool lit);
 }
 
 namespace plug::ui::v1

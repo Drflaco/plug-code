@@ -51,6 +51,7 @@ namespace plug::ui
     struct ParamView
     {
         juce::String name;              // nom interne du paramètre (main, paramA…), pour renvoyer une commande
+        int index = 0;                  // 0..12, sa place parmi les entrées modulables : porte sa COULEUR (6a)
         bool modulable = true;          // une valeur par pas est possible
         bool declared = false;          // la skill en place l'a déclaré : libellé, aide et unité sont les siens
         juce::String label;             // « Rapport », ou le générique de Format.h
@@ -107,6 +108,7 @@ namespace plug::ui
         int length = 16;                // longueur de boucle courante (seq.length)
         bool modeB = false;             // mode A/B de CETTE ligne : mémoire d'instance, hors preset (Q7)
         juce::String shownParam { "main" };   // le paramètre dessiné en mode B
+        int shownIndex = 0;             // le même, en indice 0..12 : sa couleur (6a)
     };
 
     struct TransportView

@@ -363,6 +363,15 @@ int main (int argc, char* argv[])
                    && nomGeste.startsWith (juce::String::fromUTF8 ("Coupure à ")) && nomGeste.endsWith (juce::String::fromUTF8 ("sur 8 pas")),
                "geste A : un mouvement = une transaction « " + nomGeste + " », deux Ctrl+Z rendent la ligne ("
                    + juce::String (view.stepCountsView (2, 5, 12).explicitCount) + " figé(s))", log);
+
+        // Point 6a (18/09) : montrer un paramètre = la ligne passe en mode B sur lui, et
+        // l'indice de couleur suit ; chaque ParamView porte son indice 0..12.
+        view.showParam (2, "paramA");
+        const auto lb = view.lineView (2);
+        check (lb.modeB && lb.shownParam == "paramA" && lb.shownIndex == 1
+                   && filtre.params[1].index == 1 && filtre.params[9].index == 9,
+               "lien 6a : showParam (paramA) → mode B, paramètre montré « " + lb.shownParam + " », indice "
+                   + juce::String (lb.shownIndex), log);
     }
 
     //==========================================================================
@@ -508,6 +517,7 @@ int main (int argc, char* argv[])
         view.setPrefDefaultMixLaw (initial.defaultMixLaw);
         if (view.prefsView().ratioTwoThirds != initial.ratioTwoThirds) view.toggleRatio();
     }
+
 
 
     //==========================================================================

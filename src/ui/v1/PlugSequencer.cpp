@@ -165,13 +165,9 @@ namespace plug::ui::v1
             row.present = sv.present;
             row.selected = (slot1 == selectedSlot);
 
-            const int shownIndex = juce::jmax (0, [&sv, &lv]
-            {
-                for (int m = 0; m < kSlotParams; ++m)
-                    if (sv.params[(size_t) m].name == lv.shownParam) return m;
-                return 0;
-            }());
+            const int shownIndex = juce::jlimit (0, kSlotParams - 1, lv.shownIndex);
             row.paramLabel = sv.params[(size_t) shownIndex].label;
+            row.ink = glyph::paramColour (shownIndex);   // la couleur du paramètre montré (6a)
 
             for (int s = 0; s < kSteps; ++s)
             {
@@ -273,10 +269,11 @@ namespace plug::ui::v1
                 }
                 else if (info.modeB)
                 {
-                    // Mode B : la hauteur DIT la valeur affichée du pas (fonction pure).
+                    // Mode B : la hauteur DIT la valeur affichée du pas (fonction pure), dans
+                    // la COULEUR du paramètre montré (6a) ; le mode reste dit par le badge.
                     const int fill = juce::jmax (1, (int) ((float) b.getHeight()
                                                             * juce::jlimit (0.0f, 1.0f, c.value)));
-                    g.setColour (modeInk (c.mode).withAlpha (0.75f));
+                    g.setColour (info.ink.withAlpha (c.mode == StepModeView::Base ? 0.55f : 0.85f));
                     g.fillRect (b.getX(), b.getBottom() - fill, b.getWidth(), fill);
                 }
                 else
@@ -301,11 +298,14 @@ namespace plug::ui::v1
             }
 
             // Bouton A/B et chevron du paramètre montré : tracés, jamais des glyphes.
+            // En mode B, le bouton et le chevron prennent la couleur du paramètre montré :
+            // on lit d'un coup d'œil QUOI la ligne dessine, sans ouvrir le menu (6a).
             const auto mb = modeButtonBounds (row);
-            g.setColour (juce::Colours::white.withAlpha (info.modeB ? 0.8f : 0.35f));
+            g.setColour (info.modeB ? info.ink.withAlpha (0.95f) : juce::Colours::white.withAlpha (0.35f));
             g.drawRect (mb, 1);
             g.drawText (info.modeB ? "B" : "A", mb, juce::Justification::centred, false);
-            glyph::chevronDown (g, paramButtonBounds (row).toFloat(), juce::Colours::white.withAlpha (0.45f));
+            glyph::chevronDown (g, paramButtonBounds (row).toFloat(),
+                                info.modeB ? info.ink.withAlpha (0.9f) : juce::Colours::white.withAlpha (0.45f));
         }
 
        #if PLUG_UI_TIMING
@@ -378,6 +378,7 @@ namespace plug::ui::v1
             const auto& p = sv.params[(size_t) m];
             if (! p.declared && p.inert) continue;          // une réserve n'a rien à montrer
             menu.addItem (juce::PopupMenu::Item (p.label).setID (m + 1)
+                              .setColour (glyph::paramColour (p.index))   // la même teinte partout (6a)
                               .setTicked (p.name == presenter.lineView (slot1).shownParam));
         }
 
