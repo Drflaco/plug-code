@@ -61,13 +61,24 @@ namespace plug::ui::v1
         void mouseUp (const juce::MouseEvent&) override;
 
     private:
+        // Correction 2 de la phase 2 (18/09) : la ligne mesure 251 px logiques dans le
+        // panneau, et ses marges fixes (150 + 110) rendaient la zone du curseur NÉGATIVE.
+        // Le « caret fantôme » vu par le pilote était le trait de base d'un curseur de
+        // largeur −9 px, posé sur le premier chiffre de la valeur ; et aucun curseur
+        // n'était cliquable. Règle : cadenas, libellé et valeur ont une largeur fixe et
+        // sobre, le curseur prend CE QUI RESTE, et sous kMinSlider il n'existe pas —
+        // ni halo, ni remplissage, ni trait, jamais un pixel sur le texte.
+        static constexpr int kLockW = 20, kCaptionW = 100, kValueW = 72, kGap = 4, kMinSlider = 24;
         juce::Rectangle<int> lockArea() const;
-        juce::Rectangle<int> sliderArea() const;
+        juce::Rectangle<int> captionArea() const;
+        juce::Rectangle<int> valueArea() const;
+        juce::Rectangle<int> sliderArea() const;    // vide si la place manque
         void sendFromX (int x);
 
         Presenter& presenter;
         int slot1 = 1, modulable = 0;
         juce::String gridId, caption, value, lockTag;
+        bool showTag = false;   // le mot du cadenas ne s'écrit que s'il tient à côté du libellé
         ParamView view;
         bool gesturing = false;
     };

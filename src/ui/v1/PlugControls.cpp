@@ -147,15 +147,34 @@ namespace plug::ui::v1
         caption = v.label;
         value = v.valueText;
         lockTag = Format::lockWord (v.locked, v.lockedByDefault, v.structural);
+        // Mesuré ICI, à la notification, jamais dans paint() : le mot du cadenas ne
+        // s'écrit que s'il tient à droite du libellé sans le recouvrir. Sinon le cadenas
+        // et l'aide au survol portent seuls l'information (§3.3.1 : visible sans chercher).
+        showTag = false;
+        if (lockTag.isNotEmpty())
+        {
+            const juce::Font captionFont (juce::FontOptions (12.0f)), tagFont (juce::FontOptions (10.0f));
+            showTag = juce::GlyphArrangement::getStringWidthInt (captionFont, caption)
+                        + juce::GlyphArrangement::getStringWidthInt (tagFont, lockTag) + 8 <= kCaptionW;
+        }
         setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String()));
         repaint();
     }
 
-    juce::Rectangle<int> ParamRow::lockArea() const { return getLocalBounds().removeFromLeft (20); }
+    juce::Rectangle<int> ParamRow::lockArea() const { return getLocalBounds().removeFromLeft (kLockW); }
+
+    juce::Rectangle<int> ParamRow::captionArea() const
+    {
+        return getLocalBounds().withTrimmedLeft (kLockW + 2).withWidth (kCaptionW);
+    }
+
+    juce::Rectangle<int> ParamRow::valueArea() const { return getLocalBounds().removeFromRight (kValueW); }
 
     juce::Rectangle<int> ParamRow::sliderArea() const
     {
-        return getLocalBounds().withTrimmedLeft (150).withTrimmedRight (110).reduced (0, 7);
+        const auto r = getLocalBounds().withTrimmedLeft (kLockW + 2 + kCaptionW + kGap)
+                                       .withTrimmedRight (kValueW + kGap).reduced (0, 7);
+        return r.getWidth() >= kMinSlider ? r : juce::Rectangle<int>();
     }
 
     void ParamRow::paint (juce::Graphics& g)
@@ -169,22 +188,23 @@ namespace plug::ui::v1
 
         g.setColour (ink);
         g.setFont (12.0f);
-        g.drawText (caption, getLocalBounds().withTrimmedLeft (22).withWidth (126),
-                    juce::Justification::centredLeft, true);
+        g.drawText (caption, captionArea(), juce::Justification::centredLeft, true);
 
-        if (lockTag.isNotEmpty())
+        if (showTag)
         {
             g.setColour (juce::Colours::white.withAlpha (0.4f));
             g.setFont (10.0f);
-            g.drawText (lockTag, getLocalBounds().withTrimmedLeft (22).withWidth (126),
-                        juce::Justification::centredRight, false);
+            g.drawText (lockTag, captionArea(), juce::Justification::centredRight, false);
         }
 
-        auto s = sliderArea();
-        g.setColour (juce::Colours::white.withAlpha (0.12f));
-        g.fillRoundedRectangle (s.toFloat(), 2.0f);
+        const auto s = sliderArea();
+        if (! s.isEmpty())
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.12f));
+            g.fillRoundedRectangle (s.toFloat(), 2.0f);
+        }
 
-        if (! view.inert)
+        if (! view.inert && ! s.isEmpty())
         {
             // Halo : la plage de génération, puis la plage effective à la densité courante.
             if (! view.locked && ! view.structural)
@@ -208,13 +228,13 @@ namespace plug::ui::v1
 
         g.setColour (juce::Colours::white.withAlpha (view.inert ? 0.3f : 0.7f));
         g.setFont (12.0f);
-        g.drawText (value, getLocalBounds().removeFromRight (104), juce::Justification::centredLeft, true);
+        g.drawText (value, valueArea(), juce::Justification::centredLeft, true);
     }
 
     void ParamRow::sendFromX (int x)
     {
         const auto s = sliderArea();
-        if (s.getWidth() <= 0) return;
+        if (s.isEmpty()) return;
         presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, (float) (x - s.getX()) / (float) s.getWidth()));
     }
 
@@ -228,7 +248,8 @@ namespace plug::ui::v1
             if (! view.structural) presenter.setLocked (slot1, view.name, ! view.locked);
             return;
         }
-        if (! sliderArea().expanded (0, 6).contains (e.getPosition())) return;
+        const auto s = sliderArea();
+        if (s.isEmpty() || ! s.expanded (0, 6).contains (e.getPosition())) return;
 
         gesturing = true;
         presenter.beginGesture (gridId);
