@@ -65,6 +65,19 @@ namespace plug::ui
                         return fr (d.label);
             return Format::genericLabel (name);
         }
+
+        // Le texte d'une valeur brute pour un paramètre d'emplacement : display + unité
+        // déclarés par la skill, ou le repli 0,00–1,00 (même composition que slotView).
+        String valueTextOf (const ValueTree& s, int slot1, const String& name, float raw)
+        {
+            auto sl = state::slot (s, slot1);
+            const auto id = sl.getProperty (state::id::skill, "").toString();
+            if (const auto* info = SkillRegistry::instance().info (id))
+                for (const auto& d : info->params)
+                    if (name == String (grid::kModulableName[(size_t) d.modulable]))
+                        return Format::valueText (raw, d.display != nullptr ? d.display (raw) : String(), fr (d.unit));
+            return Format::valueText (raw, String(), String());
+        }
     }
 
     //==========================================================================
@@ -706,6 +719,46 @@ namespace plug::ui
         auto& s = proc.stateTree();
         state::setStepMode (s, slot1, step1, StepMode::Explicit, &proc.undoManager());
         state::setExplicit (s, slot1, step1, paramName, value, &proc.undoManager());
+    }
+
+    void Presenter::setStepsExplicit (int slot1, int first1, int last1, const String& paramName, float value)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const int a = juce::jlimit (1, kSteps, juce::jmin (first1, last1));
+        const int b = juce::jlimit (1, kSteps, juce::jmax (first1, last1));
+        const float v = juce::jlimit (0.0f, 1.0f, value);
+        auto& s = proc.stateTree();
+
+        // « Coupure à 333 Hz sur 16 pas » : le libellé et le texte de la valeur sont ceux
+        // de la skill (c-2), jamais 0,62 brut quand elle sait dire mieux.
+        const String name = labelOf (s, slot1, paramName) + " à "_fr + valueTextOf (s, slot1, paramName, v)
+                            + (a == b ? " · pas "_fr + String (a) : " sur "_fr + String (b - a + 1) + " pas"_fr);
+
+        // Seul, la commande ouvre sa transaction ; dans un geste, elle prend celle du geste
+        // et la renomme avec la valeur posée — même discipline que setParam.
+        std::unique_ptr<Command> own;
+        if (stepsGesture == nullptr) own = std::make_unique<Command> (*this, name);
+        else                         proc.undoManager().setCurrentTransactionName (name);
+
+        for (int i = a; i <= b; ++i)
+        {
+            state::setStepMode (s, slot1, i, StepMode::Explicit, &proc.undoManager());
+            state::setExplicit (s, slot1, i, paramName, v, &proc.undoManager());
+        }
+    }
+
+    void Presenter::beginStepsGesture (int slot1, int first1, int last1, const String& paramName)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const int n = juce::jmax (first1, last1) - juce::jmin (first1, last1) + 1;
+        stepsGesture = std::make_unique<Command> (*this, labelOf (proc.stateTree(), slot1, paramName)
+                                                             + " sur "_fr + String (n) + " pas"_fr);
+    }
+
+    void Presenter::endStepsGesture()
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        stepsGesture.reset();
     }
 
     void Presenter::generate (int slot1, int first1, int last1, float density)

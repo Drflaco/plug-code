@@ -60,6 +60,10 @@ namespace plug::ui::v1
             int slot1 = 1, step1 = 1;
             juce::String caption, valueText, rangeText, probText, transitionText, lockTag;
             Grab grab = Grab::None;
+            // Valeurs à la prise : le glisser part d'ici. Les relire dans la View à chaque
+            // événement ajoutait la distance totale à une valeur qui la contenait déjà.
+            float grabRaw = 0.0f, grabMin = 0.0f, grabMax = 1.0f, grabProb = 1.0f;
+            int grabFirst = 1, grabLast = 1;   // les pas visés par la colonne « Pas » (correction 4)
         };
 
         Presenter& presenter;

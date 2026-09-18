@@ -41,9 +41,11 @@ namespace plug::ui::v1
         void send (float raw);
 
         Presenter& presenter;
+        int slot1 = 1;
         juce::String gridId, caption, value;
         ParamView view;
         bool gesturing = false;
+        bool onSteps = false;     // le geste en cours pose sur la sélection (partielle) plutôt que la base
         float gestureStart = 0.0f;
     };
 
@@ -81,6 +83,7 @@ namespace plug::ui::v1
         bool showTag = false;   // le mot du cadenas ne s'écrit que s'il tient à côté du libellé
         ParamView view;
         bool gesturing = false;
+        bool onSteps = false;   // le geste en cours pose sur la sélection (partielle) plutôt que la base
     };
 
     class PlugControls : public juce::Component

@@ -92,6 +92,14 @@ namespace plug::ui
         void setTransition (int slot1, const juce::String& paramName, bool glide);
         void setStepOn (int slot1, int step1, bool on);
         void setStepExplicit (int slot1, int step1, const juce::String& paramName, float value);
+        // Correction 4 de la phase 2 (geste A, 18/09) : une MÊME valeur explicite sur tous
+        // les pas de la sélection, qui passent en mode figé — comme « Figer », mais avec
+        // une valeur posée par le pilote. Une transaction : « Coupure à 333 Hz sur 16 pas ».
+        void setStepsExplicit (int slot1, int first1, int last1, const juce::String& paramName, float value);
+        // Un mouvement continu (knob, curseur) sur la sélection : UNE transaction de la
+        // prise au relâché, renommée à chaque valeur — l'historique dit la dernière posée.
+        void beginStepsGesture (int slot1, int first1, int last1, const juce::String& paramName);
+        void endStepsGesture();
         void generate (int slot1, int first1, int last1, float density);
         void capture (int slot1, int first1, int last1);
         void setMasterSeed (juce::uint32 seed);
@@ -117,6 +125,11 @@ namespace plug::ui
         void selectSteps (int first1, int last1);
         int firstSelectedStep() const noexcept { return stepFirst; }
         int lastSelectedStep() const noexcept { return stepLast; }
+        // Décision pilote du 18/09 (correction 4) : la ligne ENTIÈRE sélectionnée (1–32,
+        // le défaut) → les contrôles règlent la base ; une sélection PARTIELLE → ils
+        // posent leur valeur sur ces pas et les figent. Une règle, partout : knob,
+        // curseurs du panneau, colonne « Pas » de l'inspecteur.
+        bool selectionIsPartial() const noexcept { return stepFirst != 1 || stepLast != kSteps; }
         void setLineModeB (int slot1, bool modeB);
         void setShownParam (int slot1, const juce::String& paramName);
         void toggleRatio();
@@ -161,6 +174,7 @@ namespace plug::ui
             ~Command();
             Presenter& presenter;
         };
+        std::unique_ptr<Command> stepsGesture;   // ouvert par beginStepsGesture, fermé par endStepsGesture
 
         PlugProcessor& proc;
         Prefs preferences;

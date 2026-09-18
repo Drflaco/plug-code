@@ -131,7 +131,20 @@ namespace plug::ui::v1
             owner.refresh();
             return;
         }
-        if (valueArea().contains (e.getPosition()))  { grab = Grab::Value; return; }
+        grabRaw = view.raw; grabMin = view.min; grabMax = view.max; grabProb = view.prob;
+
+        if (valueArea().contains (e.getPosition()))
+        {
+            // Colonne « Pas » : sélection partielle → tous les pas sélectionnés (correction 4,
+            // geste A) ; ligne entière → le pas montré seul. Dans les deux cas UN geste =
+            // UNE transaction, de la prise au relâché.
+            const bool partial = presenter.selectionIsPartial();
+            grabFirst = partial ? presenter.firstSelectedStep() : step1;
+            grabLast  = partial ? presenter.lastSelectedStep()  : step1;
+            presenter.beginStepsGesture (slot1, grabFirst, grabLast, view.name);
+            grab = Grab::Value;
+            return;
+        }
         if (probArea().contains (e.getPosition()))   { grab = Grab::Prob; return; }
         if (rangeArea().contains (e.getPosition()))
         {
@@ -150,23 +163,27 @@ namespace plug::ui::v1
         switch (grab)
         {
             case Grab::Value:
-                presenter.setStepExplicit (slot1, step1, view.name, juce::jlimit (0.0f, 1.0f, view.raw + delta));
+                presenter.setStepsExplicit (slot1, grabFirst, grabLast, view.name, juce::jlimit (0.0f, 1.0f, grabRaw + delta));
                 break;
             case Grab::Min:
-                presenter.setRange (slot1, view.name, juce::jlimit (0.0f, view.max, view.min + delta), view.max);
+                presenter.setRange (slot1, view.name, juce::jlimit (0.0f, grabMax, grabMin + delta), grabMax);
                 break;
             case Grab::Max:
-                presenter.setRange (slot1, view.name, view.min, juce::jlimit (view.min, 1.0f, view.max + delta));
+                presenter.setRange (slot1, view.name, grabMin, juce::jlimit (grabMin, 1.0f, grabMax + delta));
                 break;
             case Grab::Prob:
-                presenter.setProb (slot1, view.name, juce::jlimit (0.0f, 1.0f, view.prob + delta));
+                presenter.setProb (slot1, view.name, juce::jlimit (0.0f, 1.0f, grabProb + delta));
                 break;
             case Grab::None: break;
         }
         owner.refresh();
     }
 
-    void PlugInspector::Row::mouseUp (const juce::MouseEvent&) { grab = Grab::None; }
+    void PlugInspector::Row::mouseUp (const juce::MouseEvent&)
+    {
+        if (grab == Grab::Value) presenter.endStepsGesture();
+        grab = Grab::None;
+    }
 
     //==========================================================================
     PlugInspector::PlugInspector (Presenter& p) : presenter (p)

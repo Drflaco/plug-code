@@ -37,13 +37,26 @@ namespace plug::ui::v1
     //==========================================================================
     Knob::Knob (Presenter& p) : presenter (p) {}
 
-    void Knob::setView (const ParamView& v, int slot1)
+    // La règle de la sélection (décision pilote du 18/09), dite dans l'aide : rien ne
+    // demande de mémoire au pilote, le survol lui redit ce que son geste va faire.
+    static String selectionRuleHelp (const Presenter& p)
     {
-        gridId = slotGridId (slot1, v.name.toRawUTF8());
+        if (p.selectionIsPartial())
+            return "\nPas "_fr + String (p.firstSelectedStep()) + "–"_fr + String (p.lastSelectedStep())
+                   + " sélectionnés : la valeur se pose sur ces pas et les fige (Ctrl+Z la défait d'un coup)."_fr;
+        return "\nLigne entière sélectionnée : règle la base de l'emplacement. "
+               "Sélectionne des pas pour leur poser une valeur."_fr;
+    }
+
+    void Knob::setView (const ParamView& v, int slot)
+    {
+        slot1 = slot;
+        gridId = slotGridId (slot, v.name.toRawUTF8());
         view = v;
         caption = v.label;
         value = v.valueText;                       // composé ici, jamais dans paint()
-        setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String()));
+        setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String())
+                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter)));
         repaint();
     }
 
@@ -103,7 +116,9 @@ namespace plug::ui::v1
 
     void Knob::send (float raw)
     {
-        presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, raw));
+        const float v = juce::jlimit (0.0f, 1.0f, raw);
+        if (onSteps) presenter.setStepsExplicit (slot1, presenter.firstSelectedStep(), presenter.lastSelectedStep(), view.name, v);
+        else         presenter.setParam (gridId, v);
     }
 
     void Knob::mouseDown (const juce::MouseEvent&)
@@ -111,7 +126,11 @@ namespace plug::ui::v1
         if (view.inert || view.structural) return;
         gestureStart = view.raw;
         gesturing = true;
-        presenter.beginGesture (gridId);          // un geste = UNE transaction nommée
+        // Un geste = UNE transaction nommée. Sélection partielle : elle porte sur les pas
+        // (correction 4, geste A) ; ligne entière : sur la base, comme avant.
+        onSteps = presenter.selectionIsPartial();
+        if (onSteps) presenter.beginStepsGesture (slot1, presenter.firstSelectedStep(), presenter.lastSelectedStep(), view.name);
+        else         presenter.beginGesture (gridId);
     }
 
     void Knob::mouseDrag (const juce::MouseEvent& e)
@@ -124,12 +143,14 @@ namespace plug::ui::v1
     {
         if (! gesturing) return;
         gesturing = false;
-        presenter.endGesture (gridId);
+        if (onSteps) presenter.endStepsGesture();
+        else         presenter.endGesture (gridId);
     }
 
     void Knob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& w)
     {
-        if (view.inert || view.structural) return;
+        if (view.inert || view.structural || gesturing) return;
+        onSteps = presenter.selectionIsPartial();   // hors geste : une transaction par cran
         send (view.raw + (w.deltaY >= 0.0f ? kFine : -kFine));
     }
 
@@ -157,7 +178,8 @@ namespace plug::ui::v1
             showTag = juce::GlyphArrangement::getStringWidthInt (captionFont, caption)
                         + juce::GlyphArrangement::getStringWidthInt (tagFont, lockTag) + 8 <= kCaptionW;
         }
-        setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String()));
+        setTooltip (v.help + (v.lockReason.isNotEmpty() ? "\n" + v.lockReason : String())
+                    + (v.inert || v.structural ? String() : selectionRuleHelp (presenter)));
         repaint();
     }
 
@@ -235,7 +257,9 @@ namespace plug::ui::v1
     {
         const auto s = sliderArea();
         if (s.isEmpty()) return;
-        presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, (float) (x - s.getX()) / (float) s.getWidth()));
+        const float v = juce::jlimit (0.0f, 1.0f, (float) (x - s.getX()) / (float) s.getWidth());
+        if (onSteps) presenter.setStepsExplicit (slot1, presenter.firstSelectedStep(), presenter.lastSelectedStep(), view.name, v);
+        else         presenter.setParam (gridId, v);
     }
 
     void ParamRow::mouseDown (const juce::MouseEvent& e)
@@ -252,7 +276,10 @@ namespace plug::ui::v1
         if (s.isEmpty() || ! s.expanded (0, 6).contains (e.getPosition())) return;
 
         gesturing = true;
-        presenter.beginGesture (gridId);
+        // Même règle que le knob (correction 4) : sélection partielle → les pas, sinon la base.
+        onSteps = presenter.selectionIsPartial();
+        if (onSteps) presenter.beginStepsGesture (slot1, presenter.firstSelectedStep(), presenter.lastSelectedStep(), view.name);
+        else         presenter.beginGesture (gridId);
         sendFromX (e.x);
     }
 
@@ -262,7 +289,8 @@ namespace plug::ui::v1
     {
         if (! gesturing) return;
         gesturing = false;
-        presenter.endGesture (gridId);
+        if (onSteps) presenter.endStepsGesture();
+        else         presenter.endGesture (gridId);
     }
 
     //==========================================================================

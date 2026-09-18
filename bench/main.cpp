@@ -333,6 +333,36 @@ int main (int argc, char* argv[])
                    + sq.divisionChoices[sq.division] + ", annuler « " + view.undoView().undoName + " »)", log);
         view.setSeqLength (16);
         view.setSeqDivision (6);
+
+        // Correction 4 de la phase 2 (geste A, 18/09) : une valeur explicite sur les pas
+        // 5 à 12 de core.filter, qui passent en mode figé ; le pas 4 ne bouge pas ; la
+        // transaction porte le libellé de la skill, sa valeur affichée et le compte.
+        view.setStepsExplicit (2, 5, 12, "main", 0.25f);
+        const auto counts = view.stepCountsView (2, 5, 12);
+        const auto ligne = view.lineView (2);
+        const bool figes = counts.explicitCount == 8 && counts.generated == 0
+                        && ligne.steps[4].mode == plug::ui::StepModeView::Explicit
+                        && ligne.steps[11].mode == plug::ui::StepModeView::Explicit
+                        && ligne.steps[3].mode == plug::ui::StepModeView::Base
+                        && std::abs (ligne.steps[4].value - 0.25f) < 1e-6f;
+        check (figes && view.undoView().undoName.endsWith (juce::String::fromUTF8 ("sur 8 pas"))
+                     && view.undoView().undoName.startsWith (juce::String::fromUTF8 ("Coupure à ")),
+               "geste A : 8 pas figés à une même valeur, transaction « " + view.undoView().undoName + " »", log);
+
+        // Un geste continu sur la sélection = UNE transaction, nommée par la dernière
+        // valeur ; un seul Ctrl+Z la défait, un second rend la ligne à son mode de base.
+        view.beginStepsGesture (2, 5, 12, "main");
+        view.setStepsExplicit (2, 5, 12, "main", 0.5f);
+        view.setStepsExplicit (2, 5, 12, "main", 0.75f);
+        view.endStepsGesture();
+        const auto nomGeste = view.undoView().undoName;
+        view.undo();   // défait le geste entier
+        const bool retour025 = std::abs (view.lineView (2).steps[4].value - 0.25f) < 1e-6f;
+        view.undo();   // défait la pose à 0,25
+        check (retour025 && view.stepCountsView (2, 5, 12).explicitCount == 0
+                   && nomGeste.startsWith (juce::String::fromUTF8 ("Coupure à ")) && nomGeste.endsWith (juce::String::fromUTF8 ("sur 8 pas")),
+               "geste A : un mouvement = une transaction « " + nomGeste + " », deux Ctrl+Z rendent la ligne ("
+                   + juce::String (view.stepCountsView (2, 5, 12).explicitCount) + " figé(s))", log);
     }
 
     //==========================================================================
