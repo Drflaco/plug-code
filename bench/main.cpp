@@ -437,6 +437,29 @@ int main (int argc, char* argv[])
         check (protege && pasAvecValeur == 32,
                "verrou J3-6 : Résonance verrouillée après génération garde ses 32 valeurs à travers une nouvelle génération et le déverrouillage ("
                    + juce::String (pasAvecValeur) + " pas à valeur)", log);
+
+        // 6b (18/09) : dessiner = un geste sur des pas UN PAR UN, nommé à la fin ; poser une
+        // valeur sur un pas généré garde ce que ses autres paramètres jouaient ; la case
+        // survolée se lit par slotViewAt sans toucher la sélection.
+        view.setLocked (2, "paramA", false);
+        view.generate (2, 1, 32, 1.0f);
+        const float resAvant = view.lineView (2).steps[4].value;           // Résonance montrée, pas 5
+        view.beginStepsGesture (2, 5, 5, "main");
+        view.setStepsExplicit (2, 5, 5, "main", 0.1f);
+        view.setStepsExplicit (2, 6, 6, "main", 0.2f);
+        view.setStepsExplicit (2, 7, 7, "main", 0.3f);
+        view.endStepsGesture (juce::String::fromUTF8 ("Coupure dessinée · pas 5–7"));
+        const auto dessin = view.slotViewAt (2, 6);
+        view.selectSteps (9, 9);
+        view.setHover (2, 6);
+        check (view.undoView().undoName == juce::String::fromUTF8 ("Coupure dessinée · pas 5–7")
+                   && std::abs (dessin.params[0].raw - 0.2f) < 1e-6f
+                   && std::abs (view.lineView (2).steps[4].value - resAvant) < 1e-6f
+                   && view.hoverSlot() == 2 && view.hoverStep() == 6
+                   && view.firstSelectedStep() == 9 && std::abs (view.slotView (2).params[0].raw - 0.2f) > 1e-3f,
+               "dessin 6b : « " + view.undoView().undoName + " », pas 6 lu au survol à " + juce::String (dessin.params[0].raw, 2)
+                   + ", Résonance du pas 5 intacte, sélection inchangée (pas 9)", log);
+        view.setHover (0, 0);
     }
 
     //==========================================================================

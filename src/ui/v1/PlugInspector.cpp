@@ -349,16 +349,20 @@ namespace plug::ui::v1
 
     void PlugInspector::refresh()
     {
-        const int slot1 = presenter.selectedSlot();
-        const int first = presenter.firstSelectedStep();
-        const int last = presenter.lastSelectedStep();
-        const auto sv = presenter.slotView (slot1);
-        const auto counts = presenter.stepCountsView (slot1, first, last);
+        // 6b : la case SURVOLÉE prend l'affichage (emplacement et pas) ; les commandes et
+        // leurs avertissements restent sur la sélection. La souris sortie, on revient.
+        const bool hovering = presenter.hoverSlot() > 0;
+        const int slot1 = hovering ? presenter.hoverSlot() : presenter.selectedSlot();
+        const int first = hovering ? presenter.hoverStep() : presenter.firstSelectedStep();
+        const int last  = hovering ? presenter.hoverStep() : presenter.lastSelectedStep();
+        const auto sv = hovering ? presenter.slotViewAt (slot1, first) : presenter.slotView (slot1);
+        const auto counts = presenter.stepCountsView (presenter.selectedSlot(), presenter.firstSelectedStep(), presenter.lastSelectedStep());
         const auto gen = presenter.generationView();
 
         title.setText (String (slot1) + " · "_fr + (sv.present ? sv.skillLabel : "—"_fr)
                            + (first == last ? "  ·  pas "_fr + String (first)
-                                            : "  ·  pas "_fr + String (first) + "–"_fr + String (last)),
+                                            : "  ·  pas "_fr + String (first) + "–"_fr + String (last))
+                           + (hovering ? "  (survol)"_fr : String()),
                        juce::dontSendNotification);
 
         // Les entrées déclarées, puis mix et gain que le socle compose toujours.

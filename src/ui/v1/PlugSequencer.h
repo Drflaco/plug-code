@@ -32,6 +32,8 @@ namespace plug::ui::v1
         void mouseDown (const juce::MouseEvent&) override;
         void mouseDrag (const juce::MouseEvent&) override;
         void mouseUp (const juce::MouseEvent&) override;
+        void mouseMove (const juce::MouseEvent&) override;   // 6b : la case survolée, pour l'inspecteur
+        void mouseExit (const juce::MouseEvent&) override;
 
         void refresh();                                  // relit les Views, recompose les textes
         // Chemin LÉGER : la sélection a bougé, les pas n'ont pas changé. On relit trois
@@ -68,6 +70,7 @@ namespace plug::ui::v1
             juce::String label;          // « 3  FM » ou « 3 » en compact, composée à la notification
             juce::String name;           // le libellé de l'effet, gardé pour recomposer
             juce::String paramLabel;     // le paramètre montré en mode B
+            juce::String paramName;      // son nom interne : c'est lui qu'on DESSINE (6b)
             juce::Colour ink;            // sa couleur (6a) : barres, bouton B, chevron
             bool modeB = false;
             bool present = false;
@@ -101,6 +104,13 @@ namespace plug::ui::v1
         int selectedSlot = 1, selFirst = 1, selLast = 32;
         bool dragging = false;
         int dragAnchor = 1;
+        // 6b — dessiner : en mode B, glisser sur la ligne pose la valeur du paramètre
+        // montré à la hauteur du curseur, pas par pas, dans UNE transaction. Armé au clic,
+        // ouvert au premier mouvement (un simple clic ne change aucune valeur).
+        bool drawArmed = false, drawing = false;
+        int drawRow = -1, drawFirst = 0, drawLast = 0;
+        void drawAt (const juce::MouseEvent&);
+        void updateHover (const juce::MouseEvent&);
 
        #if PLUG_UI_TIMING
         juce::int64 t0 = 0;

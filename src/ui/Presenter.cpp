@@ -262,7 +262,9 @@ namespace plug::ui
     }
 
     //==========================================================================
-    SlotView Presenter::slotView (int slot1) const
+    SlotView Presenter::slotView (int slot1) const { return slotViewAt (slot1, stepFirst); }
+
+    SlotView Presenter::slotViewAt (int slot1, int step1) const
     {
         SlotView v;
         v.slot1 = juce::jlimit (1, kSlots, slot1);
@@ -289,7 +291,7 @@ namespace plug::ui
 
         const float density = (float) (double) s.getChildWithName (state::id::Generation)
                                                  .getProperty (state::id::density, 1.0);
-        const int shownStep = juce::jlimit (1, kSteps, stepFirst);
+        const int shownStep = juce::jlimit (1, kSteps, step1);
 
         for (int m = 0; m < kSlotParams; ++m)
         {
@@ -744,6 +746,11 @@ namespace plug::ui
 
         for (int i = a; i <= b; ++i)
         {
+            // Un pas GÉNÉRÉ qui passe en figé garde ce que ses AUTRES paramètres jouaient :
+            // Figer d'abord (matérialise tous les tirages du pas), puis poser la valeur.
+            // Sans ce passage, ils retombaient à la base — défaut trouvé en 6b, hérité de
+            // setStepExplicit (J4b).
+            state::capture (s, slot1, i, i, &proc.undoManager());
             state::setStepMode (s, slot1, i, StepMode::Explicit, &proc.undoManager());
             state::setExplicit (s, slot1, i, paramName, v, &proc.undoManager());
         }
@@ -757,10 +764,22 @@ namespace plug::ui
                                                              + " sur "_fr + String (n) + " pas"_fr);
     }
 
-    void Presenter::endStepsGesture()
+    void Presenter::endStepsGesture (const String& finalName)
     {
         JUCE_ASSERT_MESSAGE_THREAD
+        if (stepsGesture != nullptr && finalName.isNotEmpty())
+            proc.undoManager().setCurrentTransactionName (finalName);
         stepsGesture.reset();
+    }
+
+    void Presenter::setHover (int slot1, int step1)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const int s = juce::isPositiveAndNotGreaterThan (slot1, kSlots) ? slot1 : 0;
+        const int p = s > 0 && juce::isPositiveAndNotGreaterThan (step1, kSteps) ? step1 : 0;
+        if (s == hovSlot && p == hovStep) return;
+        hovSlot = s; hovStep = p;
+        mark (ViewMask::Hover);          // chemin le plus léger : l'inspecteur seul se relit
     }
 
     void Presenter::generate (int slot1, int first1, int last1, float density)

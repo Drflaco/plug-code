@@ -144,6 +144,13 @@ namespace plug::ui::v1
             edition.refreshSelection();
             return;
         }
+        // 6b : la case survolée n'intéresse que l'inspecteur — à 60 Hz de souris, on ne
+        // relit ni le panneau ni les lignes.
+        if ((mask.bits & kStateBits) == 0 && mask.has (ViewMask::Hover))
+        {
+            edition.refreshHover();
+            return;
+        }
 
         // Étape 2 : la barre (nom du preset, « * », historique) et les onglets (effets,
         // activité, sélection). Les widgets des étapes suivantes filtreront le masque ;

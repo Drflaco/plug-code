@@ -35,7 +35,9 @@ namespace plug::ui::v1
     PlugSequencer::PlugSequencer (Presenter& p) : presenter (p)
     {
         setTooltip ("Séquenceur : une ligne par emplacement, 32 pas.\n"
-                    "Clic = sélectionner un pas · Maj+clic ou glisser = une plage\n"
+                    "Clic = sélectionner un pas · Maj+clic = étendre la plage · glisser = une plage (mode A)\n"
+                    "Mode B : glisser DESSINE la valeur du paramètre montré, pas par pas (Ctrl+glisser sélectionne)\n"
+                    "Survoler une case : l'inspecteur montre ce pas\n"
                     "Clic droit = activer ou éteindre le pas\n"
                     "A/B au bout de la ligne = motif ou valeurs ; le chevron choisit le paramètre montré.\n"
                     "Clic droit sur le numéro de ligne = Reset, Enregistrer ou Charger la séquence (.seqline)."_fr);
@@ -168,6 +170,7 @@ namespace plug::ui::v1
 
             const int shownIndex = juce::jlimit (0, kSlotParams - 1, lv.shownIndex);
             row.paramLabel = sv.params[(size_t) shownIndex].label;
+            row.paramName = lv.shownParam;
             row.ink = glyph::paramColour (shownIndex);   // la couleur du paramètre montré (6a)
 
             for (int s = 0; s < kSteps; ++s)
@@ -360,12 +363,44 @@ namespace plug::ui::v1
             dragAnchor = step + 1;
             presenter.selectSteps (dragAnchor, dragAnchor);
         }
-        dragging = ! e.mods.isShiftDown();
+
+        // Mode B : le glisser DESSINE (6b) ; Ctrl+glisser sélectionne quand même. Mode A :
+        // le glisser sélectionne. Le clic seul ne pose aucune valeur.
+        const bool modeB = rows[(size_t) row].modeB;
+        drawArmed = modeB && ! e.mods.isShiftDown() && ! e.mods.isCtrlDown();
+        drawing = false;
+        drawRow = row;
+        dragging = ! e.mods.isShiftDown() && ! drawArmed;
         refreshSelection();
+    }
+
+    void PlugSequencer::drawAt (const juce::MouseEvent& e)
+    {
+        const int step = stepAt (e.x);
+        if (step < 0 || drawRow < 0 || drawRow >= (int) rows.size()) return;
+        const int slot1 = drawRow + 1;
+        const auto& row = rows[(size_t) drawRow];
+
+        if (! drawing)
+        {
+            drawing = true;
+            drawFirst = drawLast = step + 1;
+            presenter.beginStepsGesture (slot1, step + 1, step + 1, row.paramName);
+        }
+        drawFirst = juce::jmin (drawFirst, step + 1);
+        drawLast  = juce::jmax (drawLast, step + 1);
+
+        // La hauteur dans la case DIT la valeur — la même lecture que la barre du mode B.
+        const auto b = cellBounds (drawRow, step);
+        if (b.getHeight() <= 0) return;
+        const float v = juce::jlimit (0.0f, 1.0f, 1.0f - (float) (e.y - b.getY()) / (float) b.getHeight());
+        presenter.setStepsExplicit (slot1, step + 1, step + 1, row.paramName, v);
     }
 
     void PlugSequencer::mouseDrag (const juce::MouseEvent& e)
     {
+        updateHover (e);
+        if (drawArmed) { drawAt (e); return; }
         if (! dragging) return;
         const int step = stepAt (e.x);
         if (step < 0) return;
@@ -374,7 +409,30 @@ namespace plug::ui::v1
         refreshSelection();
     }
 
-    void PlugSequencer::mouseUp (const juce::MouseEvent&) { dragging = false; }
+    void PlugSequencer::mouseUp (const juce::MouseEvent&)
+    {
+        dragging = false;
+        if (drawing && drawRow >= 0 && drawRow < (int) rows.size())
+        {
+            const auto& row = rows[(size_t) drawRow];
+            presenter.endStepsGesture (row.paramLabel + " dessinée"_fr
+                                       + (drawFirst == drawLast ? " · pas "_fr + String (drawFirst)
+                                                                : " · pas "_fr + String (drawFirst) + "–"_fr + String (drawLast)));
+        }
+        drawArmed = drawing = false;
+        drawRow = -1;
+    }
+
+    void PlugSequencer::updateHover (const juce::MouseEvent& e)
+    {
+        const int row = rowAt (e.y);
+        const int step = stepAt (e.x);
+        if (row >= 0 && step >= 0) presenter.setHover (row + 1, step + 1);
+        else                       presenter.setHover (0, 0);
+    }
+
+    void PlugSequencer::mouseMove (const juce::MouseEvent& e) { updateHover (e); }
+    void PlugSequencer::mouseExit (const juce::MouseEvent&)  { presenter.setHover (0, 0); }
 
     //==========================================================================
     void PlugSequencer::showLineMenu (int row)

@@ -248,6 +248,7 @@ namespace plug::ui
             Presets    = 1u << 7,
             Prefs      = 1u << 8,
             Session    = 1u << 9,   // sélection, mode A/B, paramètre montré : hors état
+            Hover      = 1u << 10,  // case survolée dans le séquenceur (6b) : l'inspecteur seul la suit
             All        = 0xffffffffu
         };
 

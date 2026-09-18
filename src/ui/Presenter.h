@@ -51,7 +51,8 @@ namespace plug::ui
 
         //======================================================================
         // Les vues — des valeurs, calculées à la demande depuis l'arbre et le registre.
-        SlotView slotView (int slot1) const;
+        SlotView slotView (int slot1) const;                  // valeurs du premier pas sélectionné (c-6)
+        SlotView slotViewAt (int slot1, int step1) const;     // valeurs d'un pas donné : la case survolée (6b)
         LineView lineView (int slot1) const;
         TransportView transportView() const;
         SequencerView sequencerView() const;
@@ -99,7 +100,8 @@ namespace plug::ui
         // Un mouvement continu (knob, curseur) sur la sélection : UNE transaction de la
         // prise au relâché, renommée à chaque valeur — l'historique dit la dernière posée.
         void beginStepsGesture (int slot1, int first1, int last1, const juce::String& paramName);
-        void endStepsGesture();
+        // `finalName` non vide : la transaction prend ce nom en fermant — « Coupure dessinée · pas 4–12 » (6b).
+        void endStepsGesture (const juce::String& finalName = {});
         void generate (int slot1, int first1, int last1, float density);
         void capture (int slot1, int first1, int last1);
         void setMasterSeed (juce::uint32 seed);
@@ -143,6 +145,12 @@ namespace plug::ui
         // posent leur valeur sur ces pas et les figent. Une règle, partout : knob,
         // curseurs du panneau, colonne « Pas » de l'inspecteur.
         bool selectionIsPartial() const noexcept { return stepFirst != 1 || stepLast != kSteps; }
+        // 6b (pilote, 18/09) : la case SURVOLÉE dans le séquenceur. L'inspecteur l'affiche ;
+        // rien d'autre ne la lit — les commandes (Générer, Figer, valeurs) visent toujours
+        // la sélection. (0, 0) = aucune ; la souris qui sort de la grille l'efface.
+        void setHover (int slot1, int step1);
+        int hoverSlot() const noexcept { return hovSlot; }
+        int hoverStep() const noexcept { return hovStep; }
         void setLineModeB (int slot1, bool modeB);
         void setShownParam (int slot1, const juce::String& paramName);
         // Point 6a (pilote, 18/09) : cliquer un paramètre dans le panneau de l'effet ou
@@ -220,6 +228,7 @@ namespace plug::ui
 
         int selection = 1;
         int stepFirst = 1, stepLast = 32;
+        int hovSlot = 0, hovStep = 0;                  // case survolée (6b), 0 = aucune
         std::array<bool, kSlots> lineModeB {};
         std::array<juce::String, kSlots> shownParam;
 

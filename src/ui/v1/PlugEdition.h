@@ -30,6 +30,7 @@ namespace plug::ui::v1
         void resized() override;
         void refresh();
         void refreshSelection();     // chemin léger : seule la sélection a bougé
+        void refreshHover();         // plus léger encore : la case survolée a bougé, l'inspecteur seul se relit (6b)
         void setTransport (const TransportView&);
 
     private:

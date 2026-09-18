@@ -183,6 +183,11 @@ namespace plug::ui::v1
         inspector.refresh();          // lui DOIT relire : il montre le pas sélectionné
     }
 
+    void PlugEdition::refreshHover()
+    {
+        inspector.refresh();          // il montre la case survolée, ou la sélection si la souris est sortie
+    }
+
     void PlugEdition::setTransport (const TransportView& t)
     {
         sequencer.setTransport (t);
