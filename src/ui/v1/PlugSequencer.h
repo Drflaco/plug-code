@@ -16,6 +16,7 @@
 #include "../Presenter.h"
 #include "../ViewTypes.h"
 #include "PlugGlyphs.h"
+#include <memory>
 #include <vector>
 
 namespace plug::ui::v1
@@ -83,8 +84,12 @@ namespace plug::ui::v1
         juce::Rectangle<int> modeButtonBounds (int row) const;
         juce::Rectangle<int> paramButtonBounds (int row) const;
         void showParamMenu (int row);
+        // Correction 5 : clic droit sur le NUMÉRO de ligne — Reset, Enregistrer, Charger la séquence.
+        void showLineMenu (int row);
+        void chooseLineFile (int slot1, bool save);
 
         Presenter& presenter;
+        std::unique_ptr<juce::FileChooser> chooser;   // vivant le temps du dialogue (asynchrone)
 
         std::vector<Row> rows;
         std::vector<Cell> cells;          // rows.size() * kSteps, à plat

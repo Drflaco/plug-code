@@ -798,6 +798,134 @@ namespace plug::ui
         state::setParam (proc.stateTree(), "seq.division", grid::divisionValueFor (k), &proc.undoManager());
     }
 
+    //==========================================================================
+    // Correction 5 : la ligne comme motif (.seqline).
+    namespace
+    {
+        const juce::Identifier kSeqLine { "SeqLine" };
+        constexpr const char* kSeqLineExtension = ".seqline";
+
+        // « Décalage stéréo » → « DECALAGE_STEREO » : un nom de fichier sans accent ni
+        // espace, lisible dans l'explorateur. Les diacritiques du français, et rien de plus.
+        String fileToken (const String& label)
+        {
+            static const juce::juce_wchar from[] = { 0xE9, 0xE8, 0xEA, 0xEB, 0xE0, 0xE2, 0xE4, 0xF9, 0xFB, 0xFC, 0xEE, 0xEF, 0xF4, 0xF6, 0xE7, 0 };
+            static const char to[] = "eeeeaaauuuiiooc";
+            String out;
+            for (auto c : label)
+            {
+                juce::juce_wchar r = c;
+                for (int i = 0; from[i] != 0; ++i) if (c == from[i]) { r = (juce::juce_wchar) to[i]; break; }
+                out += String::charToString (r);
+            }
+            out = out.toUpperCase().replaceCharacter (' ', '_').retainCharacters ("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+            return out.isEmpty() ? String ("LIGNE") : out;
+        }
+    }
+
+    juce::File Presenter::defaultLineFile (int slot1) const
+    {
+        const auto sv = slotView (slot1);
+        const String token = sv.present && ! sv.unknown ? fileToken (sv.skillLabel) : String ("LIGNE");
+        return PresetLibrary::userDir().getChildFile ("SEQ_" + token + "_" + String (juce::jlimit (1, kSlots, slot1)) + kSeqLineExtension);
+    }
+
+    void Presenter::resetLine (int slot1)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        auto& s = proc.stateTree();
+        auto sl = state::slot (s, slot1);
+        if (! sl.isValid()) return;
+        Command c (*this, "Reset séquence "_fr + slotView (slot1).skillLabel);
+        auto* um = &proc.undoManager();
+
+        for (int i = 1; i <= kSteps; ++i)
+        {
+            auto st = state::step (sl, i);
+            if (! st.isValid()) continue;
+            st.setProperty (state::id::on, true, um);
+            st.setProperty (state::id::mode, stepModeName (StepMode::Base), um);
+            st.removeProperty (state::id::seed, um);
+            st.removeProperty (state::id::density, um);
+            st.removeAllChildren (um);                     // les V : aucune valeur explicite
+        }
+        for (int m = 0; m < kSlotParams; ++m)
+        {
+            const String name (grid::kModulableName[(size_t) m]);
+            state::setRange (s, slot1, name, 0.0f, 1.0f, um);
+            state::setProb (s, slot1, name, 1.0f, um);
+        }
+    }
+
+    bool Presenter::saveLine (int slot1, const juce::File& f) const
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        auto sl = state::slot (proc.stateTree(), slot1);
+        auto line = sl.getChildWithName (state::id::Line);
+        if (! line.isValid()) return false;
+
+        ValueTree out (kSeqLine);
+        out.setProperty (state::id::schemaVersion, state::kSchemaVersion, nullptr);
+        out.setProperty (state::id::skill, sl.getProperty (state::id::skill, ""), nullptr);   // d'où vient le motif : information, pas contrainte
+        out.setProperty (state::id::slot, slot1, nullptr);
+        out.addChild (line.createCopy(), -1, nullptr);
+        for (int m = 0; m < kSlotParams; ++m)
+        {
+            const String name (grid::kModulableName[(size_t) m]);
+            auto p = state::param (sl, name);
+            if (! p.isValid()) continue;
+            ValueTree q (state::id::Param);
+            q.setProperty (state::id::name, name, nullptr);
+            q.setProperty (state::id::min, p.getProperty (state::id::min, 0.0), nullptr);
+            q.setProperty (state::id::max, p.getProperty (state::id::max, 1.0), nullptr);
+            q.setProperty (state::id::prob, p.getProperty (state::id::prob, 1.0), nullptr);
+            q.setProperty (state::id::transition, p.getProperty (state::id::transition, "step"), nullptr);
+            out.addChild (q, -1, nullptr);   // pas de `locked` : le verrou appartient à la skill en place, pas au motif
+        }
+
+        auto target = f.withFileExtension (kSeqLineExtension);
+        target.getParentDirectory().createDirectory();
+        auto xml = out.createXml();
+        return xml != nullptr && xml->writeTo (target);
+    }
+
+    bool Presenter::loadLine (int slot1, const juce::File& f)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        auto xml = juce::XmlDocument::parse (f);
+        if (xml == nullptr) return false;
+        auto in = ValueTree::fromXml (*xml);
+        if (! in.hasType (kSeqLine)) return false;
+        if ((int) in.getProperty (state::id::schemaVersion, 0) > state::kSchemaVersion) return false;   // écrit par un plugin plus récent
+
+        auto fileLine = in.getChildWithName (state::id::Line);
+        if (! fileLine.isValid()) return false;
+        for (int i = 1; i <= kSteps; ++i)                  // un motif complet, ou rien
+            if (! fileLine.getChildWithProperty (state::id::i, i).isValid()) return false;
+
+        auto& s = proc.stateTree();
+        auto sl = state::slot (s, slot1);
+        auto line = sl.getChildWithName (state::id::Line);
+        if (! sl.isValid() || ! line.isValid()) return false;
+
+        Command c (*this, "Charger séquence "_fr + slotView (slot1).skillLabel);
+        auto* um = &proc.undoManager();
+        line.copyPropertiesAndChildrenFrom (fileLine, um);   // le nœud Line reste le même : les écouteurs le suivent
+        for (const auto& q : in)
+        {
+            if (! q.hasType (state::id::Param)) continue;
+            const String name = q.getProperty (state::id::name, "").toString();
+            auto p = state::param (sl, name);
+            if (! p.isValid()) continue;
+            // Plages, probabilités, transitions : du fichier. Le verrou : de la skill en place.
+            p.setProperty (state::id::min, q.getProperty (state::id::min, 0.0), um);
+            p.setProperty (state::id::max, q.getProperty (state::id::max, 1.0), um);
+            p.setProperty (state::id::prob, q.getProperty (state::id::prob, 1.0), um);
+            p.setProperty (state::id::transition, q.getProperty (state::id::transition, "step"), um);
+        }
+        return true;
+    }
+
     void Presenter::setDensity (float density)
     {
         Command c (*this, "Densité du tirage"_fr);

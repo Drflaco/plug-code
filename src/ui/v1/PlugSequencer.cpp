@@ -37,7 +37,8 @@ namespace plug::ui::v1
         setTooltip ("Séquenceur : une ligne par emplacement, 32 pas.\n"
                     "Clic = sélectionner un pas · Maj+clic ou glisser = une plage\n"
                     "Clic droit = activer ou éteindre le pas\n"
-                    "A/B au bout de la ligne = motif ou valeurs ; le chevron choisit le paramètre montré."_fr);
+                    "A/B au bout de la ligne = motif ou valeurs ; le chevron choisit le paramètre montré.\n"
+                    "Clic droit sur le numéro de ligne = Reset, Enregistrer ou Charger la séquence (.seqline)."_fr);
         refresh();
     }
 
@@ -330,7 +331,17 @@ namespace plug::ui::v1
         if (paramButtonBounds (row).contains (e.getPosition())) { showParamMenu (row); return; }
 
         const int step = stepAt (e.x);
-        if (step < 0) return;
+        if (step < 0)
+        {
+            // À gauche des pas : le numéro et le nom de la ligne. Clic droit = le menu de
+            // la séquence (correction 5) ; clic gauche = sélectionner l'emplacement.
+            if (! columnX.empty() && e.x < columnX[0])
+            {
+                if (e.mods.isPopupMenu()) showLineMenu (row);
+                else if (slot1 != selectedSlot) { presenter.selectSlot (slot1); selectedSlot = slot1; refreshSelection(); }
+            }
+            return;
+        }
 
         if (e.mods.isPopupMenu())
         {
@@ -366,6 +377,49 @@ namespace plug::ui::v1
     void PlugSequencer::mouseUp (const juce::MouseEvent&) { dragging = false; }
 
     //==========================================================================
+    void PlugSequencer::showLineMenu (int row)
+    {
+        const int slot1 = row + 1;
+        const auto sv = presenter.slotView (slot1);
+        const String who = sv.present ? sv.skillLabel : "ligne "_fr + String (slot1);
+
+        juce::PopupMenu menu;
+        menu.addSectionHeader ("Séquence "_fr + String (slot1) + " · "_fr + who);
+        menu.addItem (1, "Reset la séquence"_fr);
+        menu.addItem (2, "Enregistrer la séquence…"_fr);
+        menu.addItem (3, "Charger une séquence…"_fr);
+
+        const auto label = juce::Rectangle<int> (0, rowY[(size_t) row], columnX.empty() ? labelWidth() : columnX[0],
+                                                 rowY[(size_t) row + 1] - rowY[(size_t) row]);
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
+                                .withTargetScreenArea (localAreaToGlobal (label)),
+                            [this, slot1] (int result)
+                            {
+                                if (result == 1)      { presenter.resetLine (slot1); refresh(); }
+                                else if (result == 2) chooseLineFile (slot1, true);
+                                else if (result == 3) chooseLineFile (slot1, false);
+                            });
+    }
+
+    void PlugSequencer::chooseLineFile (int slot1, bool save)
+    {
+        const auto suggested = presenter.defaultLineFile (slot1);
+        suggested.getParentDirectory().createDirectory();
+        chooser = std::make_unique<juce::FileChooser> (save ? "Enregistrer la séquence"_fr : "Charger une séquence"_fr,
+                                                        save ? suggested : suggested.getParentDirectory(), "*.seqline");
+        const int browse = save ? (juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
+                                   | juce::FileBrowserComponent::warnAboutOverwriting)
+                                : (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles);
+        chooser->launchAsync (browse, [this, slot1, save] (const juce::FileChooser& fc)
+        {
+            const auto f = fc.getResult();
+            if (f == juce::File()) return;
+            if (save) presenter.saveLine (slot1, f);
+            else      presenter.loadLine (slot1, f);
+            refresh();
+        });
+    }
+
     void PlugSequencer::showParamMenu (int row)
     {
         const int slot1 = row + 1;

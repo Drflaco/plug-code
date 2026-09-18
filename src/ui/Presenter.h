@@ -109,6 +109,19 @@ namespace plug::ui
         // un geste continu sur « seq.swing » : beginGesture / setParam / endGesture.
         void setSeqLength (int steps);          // 2..32, transaction « Longueur 32 pas »
         void setSeqDivision (int index);        // 0..14, transaction « Division 1/16 »
+
+        // Correction 5 de la phase 2 (18/09) : la ligne d'un emplacement comme MOTIF,
+        // indépendant de l'effet (un preset sauve tout l'état ; un .seqline ne sauve
+        // qu'une ligne). Reset remet une séquence neutre : 32 pas actifs, mode base,
+        // aucune valeur explicite ni générée, plages et probabilités à leurs défauts —
+        // l'effet reste chargé et actif, les verrous restent ceux de la skill.
+        // Enregistrer / Charger : le sous-arbre Line (les Step et leurs V) plus les plages,
+        // probabilités et transitions des Param, même sérialisation que le .plugstate.
+        // Charger ne change JAMAIS la skill de l'emplacement : on charge un motif.
+        void resetLine (int slot1);                              // transaction « Reset séquence Filtre »
+        bool saveLine (int slot1, const juce::File& f) const;    // hors undo, comme savePreset
+        bool loadLine (int slot1, const juce::File& f);          // transaction « Charger séquence Filtre »
+        juce::File defaultLineFile (int slot1) const;            // dossier des presets, SEQ_FILTRE_1.seqline
         bool loadPreset (const juce::File& f);
         // Charge une entrée de la bibliothèque (même route que loadPreset : un fichier).
         bool loadPresetIndex (int index);

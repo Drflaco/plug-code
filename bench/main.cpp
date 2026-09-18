@@ -372,6 +372,45 @@ int main (int argc, char* argv[])
                    && filtre.params[1].index == 1 && filtre.params[9].index == 9,
                "lien 6a : showParam (paramA) → mode B, paramètre montré « " + lb.shownParam + " », indice "
                    + juce::String (lb.shownIndex), log);
+
+        // Correction 5 (18/09) : la ligne comme motif. On génère, on fige une plage, on
+        // éteint un pas, on resserre une plage ; on enregistre ; on reset ; on recharge.
+        // Le motif revient à l'identique, la skill n'a pas bougé, chaque étape est nommée.
+        view.generate (2, 1, 32, 0.6f);
+        view.setStepsExplicit (2, 3, 6, "main", 0.9f);
+        view.setStepOn (2, 8, false);
+        view.setRange (2, "paramA", 0.2f, 0.7f);
+        const auto avant = view.lineView (2);
+        const auto plageAvant = view.slotView (2).params[1];
+        const auto fichier = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("plug_bench_ligne.seqline");
+        const bool ecrit = view.saveLine (2, fichier) && fichier.existsAsFile();
+
+        view.resetLine (2);
+        const auto apresReset = view.stepCountsView (2, 1, 32);
+        const auto ligneReset = view.lineView (2);
+        const bool neutre = apresReset.generated == 0 && apresReset.explicitCount == 0 && apresReset.off == 0
+                         && ligneReset.steps[7].on
+                         && std::abs (view.slotView (2).params[1].min) < 1e-6f && std::abs (view.slotView (2).params[1].max - 1.0f) < 1e-6f;
+        const auto nomReset = view.undoView().undoName;
+        check (ecrit && neutre && nomReset == juce::String::fromUTF8 ("Reset séquence Filtre") && view.slotView (2).skillId == "core.filter",
+               "séquence : enregistrée (" + juce::String ((int) fichier.getSize()) + " octets), puis « " + nomReset
+                   + " » : 32 pas actifs en mode base, plages à 0–1, l'effet toujours en place", log);
+
+        const bool lu = view.loadLine (2, fichier);
+        const auto apres = view.lineView (2);
+        const auto plageApres = view.slotView (2).params[1];
+        bool identique = lu;
+        for (int i = 0; i < 32 && identique; ++i)
+            identique = apres.steps[(size_t) i].on == avant.steps[(size_t) i].on
+                     && apres.steps[(size_t) i].mode == avant.steps[(size_t) i].mode
+                     && std::abs (apres.steps[(size_t) i].value - avant.steps[(size_t) i].value) < 1e-6f;
+        check (identique && std::abs (plageApres.min - plageAvant.min) < 1e-6f && std::abs (plageApres.max - plageAvant.max) < 1e-6f
+                   && view.undoView().undoName == juce::String::fromUTF8 ("Charger séquence Filtre")
+                   && view.slotView (2).skillId == "core.filter"
+                   && view.defaultLineFile (2).getFileName() == "SEQ_FILTRE_2.seqline",
+               "séquence : rechargée à l'identique (32 pas, modes, valeurs, plage 0,2–0,7), « " + view.undoView().undoName
+                   + " », skill inchangée, nom par défaut " + view.defaultLineFile (2).getFileName(), log);
+        fichier.deleteFile();
     }
 
     //==========================================================================
