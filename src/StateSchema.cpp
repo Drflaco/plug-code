@@ -1,6 +1,7 @@
 #include "StateSchema.h"
 #include "GridMap.h"
 #include "Skill.h"
+#include <algorithm>
 
 namespace plug::state
 {
@@ -197,7 +198,32 @@ namespace plug::state
     }
 
     void setProb (ValueTree& s, int slot1, const String& name, float prob, Undo um)      { param (slot (s, slot1), name).setProperty (id::prob, (double) juce::jlimit (0.0f, 1.0f, prob), um); }
-    void setLocked (ValueTree& s, int slot1, const String& name, bool locked, Undo um)   { param (slot (s, slot1), name).setProperty (id::locked, locked, um); }
+    // J3-6 : matérialiser ce qu'un paramètre JOUE sur ses pas générés — un V par pas où
+    // le tirage donne une valeur — pour que le verrou protège ce qui s'entendait, et que
+    // la prochaine graine ne le change pas. Ne touche ni les pas de base ni les V existants.
+    static void materialise (ValueTree& sl, const String& name, Undo um)
+    {
+        const int m = grid::modulableIndex (name);
+        if (m < 0) return;
+        auto p = readParamSpec (sl, name);
+        if (p.structural) return;
+        p.locked = false;                                       // le tirage tel qu'il joue AVANT le verrou
+        for (int i = 1; i <= kSteps; ++i)
+        {
+            auto st = step (sl, i);
+            const auto spec = readStepSpec (st);
+            if (spec.mode != StepMode::Generated || readExplicit (st, name)) continue;
+            if (auto v = stepTarget (p, spec, m, std::nullopt))
+                childWith (st, id::V, id::name, name, um).setProperty (id::value, (double) *v, um);
+        }
+    }
+
+    void setLocked (ValueTree& s, int slot1, const String& name, bool locked, Undo um)
+    {
+        auto sl = slot (s, slot1);
+        if (locked && ! readParamSpec (sl, name).locked) materialise (sl, name, um);   // J3-6 : le verrou fige ce qui joue
+        param (sl, name).setProperty (id::locked, locked, um);
+    }
     void setTransition (ValueTree& s, int slot1, const String& name, bool glide, Undo um){ param (slot (s, slot1), name).setProperty (id::transition, glide ? "glide" : "step", um); }
     void setStepOn (ValueTree& s, int slot1, int step1, bool on, Undo um)                { step (slot (s, slot1), step1).setProperty (id::on, on, um); }
     void setStepMode (ValueTree& s, int slot1, int step1, StepMode mode, Undo um)        { step (slot (s, slot1), step1).setProperty (id::mode, stepModeName (mode), um); }
@@ -223,15 +249,32 @@ namespace plug::state
         auto counter = (uint32_t) (juce::int64) gen.getProperty (id::counter);
         auto sl = slot (s, slot1);
 
+        // J3-6 : la génération ne touche JAMAIS un paramètre verrouillé (§3.3.1). Ce qu'il
+        // joue est matérialisé avant le nouveau tirage, et ses V survivent au nettoyage.
+        std::vector<String> lockedNames;
+        for (int m = 0; m < grid::kModulableCount; ++m)
+        {
+            const String name (grid::kModulableName[(size_t) m]);
+            const auto p = readParamSpec (sl, name);
+            if (p.locked && ! p.structural) { lockedNames.push_back (name); materialise (sl, name, um); }
+        }
+
         for (int i = juce::jmax (1, firstStep1); i <= juce::jmin (kSteps, lastStep1); ++i)
         {
             auto st = step (sl, i);
             st.setProperty (id::seed, (juce::int64) seedForDraw (master, counter++), um);
             st.setProperty (id::density, (double) juce::jlimit (0.0f, 1.0f, density), um);
             st.setProperty (id::mode, stepModeName (StepMode::Generated), um);
-            // Une génération remplace d'anciennes valeurs explicites : le pas repart du tirage.
+            // Une génération remplace d'anciennes valeurs explicites : le pas repart du tirage —
+            // sauf pour les paramètres verrouillés, dont la valeur posée reste.
             for (int c = st.getNumChildren(); --c >= 0;)
-                if (st.getChild (c).hasType (id::V)) st.removeChild (c, um);
+            {
+                auto v = st.getChild (c);
+                if (! v.hasType (id::V)) continue;
+                const auto name = v.getProperty (id::name, "").toString();
+                if (std::find (lockedNames.begin(), lockedNames.end(), name) != lockedNames.end()) continue;
+                st.removeChild (c, um);
+            }
         }
         gen.setProperty (id::counter, (juce::int64) counter, um);
         gen.setProperty (id::density, (double) density, um);

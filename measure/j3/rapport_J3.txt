@@ -1,4 +1,4 @@
-PlugRender — matrice J3 — 18 Sep 2026 7:42:02pm
+PlugRender — matrice J3 — 18 Sep 2026 8:08:53pm
 
 [OK]   T1 rendu dÃ©terministe : deux passes, fichiers identiques octet par octet
 [OK]   T1 Ã©tat relu depuis XML : fichier identique
@@ -20,7 +20,7 @@ PlugRender — matrice J3 — 18 Sep 2026 7:42:02pm
 [OK]   T7 nÅud inconnu conservÃ©
 [OK]   T7 32 pas par emplacement
 [OK]   T7 aller-retour XML Ã©quivalent
-[OK]   T8 paramÃ¨tre verrouillÃ© : valeur composÃ©e = base sur tout le rendu
+[OK]   T8 paramÃ¨tre verrouillÃ© : ses valeurs de pas jouent (15 matérialisées), sans macro, et une génération ne les touche pas (J3-6)
 [OK]   T9 loi -6 dB : 0.5 / 0.5
 [OK]   T9 loi -3 dB : 0.7071 / 0.7071
 [OK]   T9 loi 0 dB : 1 / 1

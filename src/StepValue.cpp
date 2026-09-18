@@ -47,7 +47,7 @@ namespace plug
     std::optional<float> stepTarget (const ParamSpec& p, const StepSpec& s, int paramIndex,
                                      std::optional<float> explicitValue) noexcept
     {
-        if (p.locked || p.structural)          // J3-2 : rien d'interne ne bouge un paramètre verrouillé
+        if (p.structural)                      // §3.3.1 : jamais par pas
             return std::nullopt;
 
         switch (s.mode)
@@ -60,6 +60,12 @@ namespace plug
 
             case StepMode::Generated:
             {
+                // J3-6 : une valeur POSÉE (V) prime sur le tirage — c'est ce que le verrou
+                // matérialise pour protéger ce qui jouait. Verrouillé sans V : la base, jamais
+                // un tirage, sinon la prochaine graine le ferait bouger.
+                if (explicitValue) return explicitValue;
+                if (p.locked) return std::nullopt;
+
                 const float gate = unitDraw (s.seed, paramIndex, 1);
                 if (gate > p.prob * juce::jlimit (0.0f, 1.0f, s.density))
                     return std::nullopt;                            // ce paramètre reste à la base sur ce pas

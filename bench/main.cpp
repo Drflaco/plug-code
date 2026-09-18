@@ -411,6 +411,32 @@ int main (int argc, char* argv[])
                "séquence : rechargée à l'identique (32 pas, modes, valeurs, plage 0,2–0,7), « " + view.undoView().undoName
                    + " », skill inchangée, nom par défaut " + view.defaultLineFile (2).getFileName(), log);
         fichier.deleteFile();
+
+        // Amendement J3-6 (pilote, 18/09) : le verrou PROTÈGE. Résonance générée sur 1–32,
+        // puis verrouillée : ce que la ligne montre ne bouge pas d'un pas ; une nouvelle
+        // génération ne la touche pas ; déverrouillée, elle ne bouge toujours pas.
+        view.generate (2, 1, 32, 1.0f);
+        view.setShownParam (2, "paramA");
+        const auto genere = view.lineView (2);
+        view.setLocked (2, "paramA", true);
+        const auto verrou = view.lineView (2);
+        view.generate (2, 1, 32, 1.0f);
+        const auto regenere = view.lineView (2);
+        view.setLocked (2, "paramA", false);
+        const auto libere = view.lineView (2);
+        bool protege = true;
+        int pasAvecValeur = 0;
+        for (int i = 0; i < 32; ++i)
+        {
+            const float g = genere.steps[(size_t) i].value;
+            protege = protege && std::abs (verrou.steps[(size_t) i].value - g) < 1e-6f
+                              && std::abs (regenere.steps[(size_t) i].value - g) < 1e-6f
+                              && std::abs (libere.steps[(size_t) i].value - g) < 1e-6f;
+            if (genere.steps[(size_t) i].hasValue) ++pasAvecValeur;
+        }
+        check (protege && pasAvecValeur == 32,
+               "verrou J3-6 : Résonance verrouillée après génération garde ses 32 valeurs à travers une nouvelle génération et le déverrouillage ("
+                   + juce::String (pasAvecValeur) + " pas à valeur)", log);
     }
 
     //==========================================================================

@@ -511,7 +511,8 @@ namespace plug
                             const float vpas = (spec.glide && rt.rampLen > 0)
                                              ? rt.rampStart[(size_t) mIdx] + (tgt - rt.rampStart[(size_t) mIdx])
                                              : tgt;
-                            const float v = locked ? base : juce::jlimit (0.0f, 1.0f, vpas + macroOff[(size_t) i][(size_t) mIdx]);
+                            // J3-6 : verrouillé = la valeur de pas joue, sans macro ni modulation.
+                            const float v = locked ? vpas : juce::jlimit (0.0f, 1.0f, vpas + macroOff[(size_t) i][(size_t) mIdx]);
                             std::fill (out + seg.offset, out + seg.offset + seg.len, v);
                             sv.skip (seg.len);                       // lissage arrivé : skip et getNextValue rendent la même valeur
                             rt.current[(size_t) mIdx] = vpas;
@@ -535,7 +536,7 @@ namespace plug
 
                             float v;
                             if (locked)
-                                v = base;                                    // J3-2 : rien d'interne ne bouge
+                                v = vpas;                                    // J3-6 : la valeur de pas joue, rien d'autre ne la bouge
                             else
                             {
                                 float mod = 0.0f;

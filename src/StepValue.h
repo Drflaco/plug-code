@@ -21,7 +21,11 @@ namespace plug
     {
         float min = 0.0f, max = 1.0f;   // plage de génération
         float prob = 1.0f;              // probabilité de variation
-        bool locked = false;            // amendement J3-2 : verrouillé = base(t), rien d'interne ne bouge
+        // Amendement J3-6 (pilote, 18/09, remplace J3-2) : verrouillé = PROTÉGÉ. Les
+        // valeurs de pas posées ou matérialisées (V) continuent de jouer ; le verrou
+        // interdit seulement le tirage, les macros et la modulation. Un pas généré sans
+        // V reste à la base : c'est setLocked et generate qui matérialisent le tirage.
+        bool locked = false;
         bool glide = false;             // transition : saut (false) ou glissement (true)
         bool structural = false;        // §3.3.1 : jamais par pas, jamais modulé
     };

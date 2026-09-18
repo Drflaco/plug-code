@@ -22,10 +22,14 @@ namespace plug::ui::Format
     {
         if (structural)
             return "Structurel, jamais par pas ni modulé"_fr + (help.isNotEmpty() ? " : " + help : String());
+        // J3-6 : un verrou PROTÈGE — ce que le paramètre joue sur ses pas reste et joue ;
+        // la génération, les macros et la modulation ne le touchent plus.
         if (locked && lockedByDefault)
-            return "Verrouillé par la skill"_fr + (help.isNotEmpty() ? " : " + help : String());
+            return "Verrouillé par la skill"_fr + (help.isNotEmpty() ? " : " + help : String())
+                   + "\nSes valeurs de pas restent et jouent ; génération, macros et modulation ne le touchent plus."_fr;
         if (locked)
-            return "Verrouillé par toi — la skill le laisse libre"_fr;
+            return "Verrouillé par toi — la skill le laisse libre.\n"
+                   "Ses valeurs de pas restent et jouent ; génération, macros et modulation ne le touchent plus."_fr;
         if (lockedByDefault)
             return "Déverrouillé par toi — la skill le verrouille par défaut"_fr
                        + (help.isNotEmpty() ? " : " + help : String());

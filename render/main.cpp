@@ -418,17 +418,42 @@ namespace
             check (back.isEquivalentTo (s), "T7 aller-retour XML équivalent");
         }
 
-        // T8 — verrou : la valeur composée = base, quelles que soient les sources internes (amendement J3-2).
+        // T8 — verrou = protection (amendement J3-6, pilote 18/09 ; remplace J3-2 « = base »).
+        // main porte des pas générés, une macro et du glide. Verrouillé APRÈS la génération :
+        // ses valeurs de pas sont matérialisées et jouent ; la macro ne le bouge plus ; une
+        // nouvelle génération ne le touche pas. Le rendu verrouillé doit être identique,
+        // échantillon par échantillon, au rendu libre SANS macro.
         {
             auto s = makeReferenceState();
-            state::setLocked (s, 1, "main", true, nullptr);      // main porte des pas générés, une macro et du glide
+            state::setLocked (s, 1, "main", true, nullptr);
             state::setParam (s, "slot01.main", 0.42f);
-            std::vector<float> trace;
+            // Matérialisé = un V là où le tirage donnait une valeur ; un pas dont la porte de
+            // probabilité était fermée reste à la base, sans V — c'est juste.
+            int materialised = 0;
+            for (int st = 1; st <= 16; ++st)
+                if (state::readExplicit (state::step (state::slot (s, 1), st), "main")) ++materialised;
+            state::generate (s, 1, 1, 16, 0.3f, nullptr);          // ne doit rien changer à main
+
+            auto f = makeReferenceState();                          // libre, macro retirée
+            f.getChildWithName (state::id::Macros).getChildWithProperty (state::id::index, 1).removeAllChildren (nullptr);
+            state::setParam (f, "slot01.main", 0.42f);
+
+            std::vector<float> traceLocked, traceFree;
             RenderOptions o;
-            render (s, input, o, nullptr, &trace, 0, grid::modulableIndex ("main"));
-            bool allBase = ! trace.empty();
-            for (auto v : trace) allBase &= (std::abs (v - 0.42f) < 1e-6f);
-            check (allBase, "T8 paramètre verrouillé : valeur composée = base sur tout le rendu");
+            render (s, input, o, nullptr, &traceLocked, 0, grid::modulableIndex ("main"));
+            render (f, input, o, nullptr, &traceFree, 0, grid::modulableIndex ("main"));
+            bool same = ! traceLocked.empty() && traceLocked.size() == traceFree.size();
+            bool notAllBase = false;
+            for (size_t k = 0; same && k < traceLocked.size(); ++k)
+            {
+                same &= std::abs (traceLocked[k] - traceFree[k]) < 1e-6f;
+                notAllBase |= std::abs (traceLocked[k] - 0.42f) > 1e-4f;
+            }
+            check (materialised > 0 && same && notAllBase,
+                   "T8 paramètre verrouillé : ses valeurs de pas jouent (" + juce::String (materialised)
+                       + " matérialisées), sans macro, et une génération ne les touche pas (J3-6)"
+                       + (same ? juce::String() : juce::String (" — rendu verrouillé ≠ rendu libre sans macro"))
+                       + (notAllBase ? juce::String() : juce::String (" — tout à la base")));
         }
 
         // T9 — lois de mélange au point milieu (§3.7).
