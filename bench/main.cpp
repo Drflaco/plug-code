@@ -319,6 +319,20 @@ int main (int argc, char* argv[])
         check (faux.isEmpty() && inertes == 7 && actifs2 == 6,
                "vue : core.filter — 7 entrées non déclarées inertes au tiret, 6 actives ("
                    + juce::String (inertes) + " inertes" + (faux.isEmpty() ? juce::String() : ", faux :" + faux) + ")", log);
+
+        // Correction 3 de la phase 2 (18/09) : les réglages de la grille passent par le
+        // Presenter, en unités lisibles, et reviennent tels quels dans les deux vues
+        // (SequencerView et LineView::length), avec une transaction nommée.
+        view.setSeqLength (32);
+        view.setSeqDivision (0);
+        const auto sq = view.sequencerView();
+        check (sq.length == 32 && view.lineView (1).length == 32 && sq.division == 0
+                   && sq.divisionChoices.size() == 15 && sq.divisionChoices[0] == "1/4" && sq.divisionChoices[14] == "1/64D"
+                   && view.undoView().undoName == juce::String::fromUTF8 ("Division 1/4"),
+               "séquenceur : longueur 32 et division 1/4 posées et relues (" + juce::String (sq.length) + " pas, "
+                   + sq.divisionChoices[sq.division] + ", annuler « " + view.undoView().undoName + " »)", log);
+        view.setSeqLength (16);
+        view.setSeqDivision (6);
     }
 
     //==========================================================================
@@ -464,6 +478,7 @@ int main (int argc, char* argv[])
         view.setPrefDefaultMixLaw (initial.defaultMixLaw);
         if (view.prefsView().ratioTwoThirds != initial.ratioTwoThirds) view.toggleRatio();
     }
+
 
     //==========================================================================
     log << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";

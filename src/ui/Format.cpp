@@ -142,4 +142,29 @@ namespace plug::ui::Format
         return "Effet inconnu (" + skillId + " v" + String (version) + ") : l'audio traverse, "
                "les données sont conservées (§3.9)."_fr;
     }
+
+    //==========================================================================
+    String divisionLabel (int index)
+    {
+        static const char* const base[5] = { "1/4", "1/8", "1/16", "1/32", "1/64" };
+        static const char* const kind[3] = { "", "T", "D" };
+        const int k = juce::jlimit (0, 14, index);
+        return String (base[k / 3]) + kind[k % 3];
+    }
+
+    String swingText (float raw)
+    {
+        return String (juce::roundToInt (juce::jlimit (0.0f, 1.0f, raw) * 100.0f)) + " %";
+    }
+
+    String seqSettingHelp (const String& which)
+    {
+        if (which == "length")   return "Longueur de la boucle, de 2 à 32 pas (§3.3.3). Les pas au-delà "
+                                        "restent dans la grille, grisés : ils ne jouent pas."_fr;
+        if (which == "division") return "Durée d'un pas : de la noire (1/4) à la quadruple croche (1/64), "
+                                        "binaire, ternaire (T) ou pointée (D)."_fr;
+        if (which == "swing")    return "Swing : le second pas de chaque paire recule, jusqu'au triolet "
+                                        "à 100 %. Il s'applique à toute la grille (§3.3.3)."_fr;
+        return {};
+    }
 }

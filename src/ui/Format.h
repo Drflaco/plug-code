@@ -54,4 +54,12 @@ namespace plug::ui::Format
     // Emplacement vide, et skill absente du registre (§3.9).
     juce::String emptySlotText();
     juce::String unknownSkillHelp (const juce::String& skillId, int version);
+
+    // Les réglages de la grille (§3.3.3, correction 3 de la phase 2).
+    // L'ORDRE des divisions est celui de grid::divisionBeats : base (1/4 … 1/64) par
+    // trois, et dans chaque triplet binaire, ternaire (T), pointé (D). Un indice, un
+    // libellé — la vérité rythmique reste dans GridMap.h, le texte ici.
+    juce::String divisionLabel (int index);      // 0..14 : « 1/4 », « 1/4T », « 1/4D », … « 1/64D »
+    juce::String swingText (float raw);          // « 0 % » … « 100 % »
+    juce::String seqSettingHelp (const juce::String& which);   // length, division, swing
 }

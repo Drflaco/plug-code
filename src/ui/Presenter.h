@@ -54,6 +54,7 @@ namespace plug::ui
         SlotView slotView (int slot1) const;
         LineView lineView (int slot1) const;
         TransportView transportView() const;
+        SequencerView sequencerView() const;
         MasterView masterView() const;
         std::array<MacroView, kMacros> macroViews() const;
         AboutView aboutView() const;
@@ -95,6 +96,11 @@ namespace plug::ui
         void capture (int slot1, int first1, int last1);
         void setMasterSeed (juce::uint32 seed);
         void setDensity (float density);
+        // Les réglages de la grille (§3.3.3), en unités lisibles : la conversion vers
+        // seq.length / seq.division vit ici, pas dans le widget. Le swing, lui, est
+        // un geste continu sur « seq.swing » : beginGesture / setParam / endGesture.
+        void setSeqLength (int steps);          // 2..32, transaction « Longueur 32 pas »
+        void setSeqDivision (int index);        // 0..14, transaction « Division 1/16 »
         bool loadPreset (const juce::File& f);
         // Charge une entrée de la bibliothèque (même route que loadPreset : un fichier).
         bool loadPresetIndex (int index);

@@ -47,13 +47,36 @@ namespace plug::ui::v1
             Presenter& presenter;
         };
 
+        // Le bandeau du séquenceur (correction 3 de la phase 2, 18/09) : Longueur,
+        // Division, Swing — les trois réglages de la grille du §3.3.3, qui n'avaient
+        // aucun widget. Ce sont des paramètres de l'état, automatisables : le bandeau
+        // relit SequencerView et renvoie des commandes, il ne convertit rien.
+        class SeqBar : public juce::Component
+        {
+        public:
+            explicit SeqBar (Presenter&);
+            void resized() override;
+            void refresh();
+
+        private:
+            void showDivisionMenu();
+
+            Presenter& presenter;
+            juce::Label lengthLabel, divisionLabel, swingLabel;
+            juce::Slider length, swing;
+            juce::TextButton division;
+            juce::StringArray divisionChoices;
+        };
+
         Presenter& presenter;
+        SeqBar seqBar;
         PlugSequencer sequencer;
         Handle handle;
         PlugInspector inspector;
         juce::Label freeRunning;
 
         static constexpr int kHandleWidth = 12;
+        static constexpr int kBannerHeight = 24;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlugEdition)
     };

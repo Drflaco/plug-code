@@ -116,6 +116,21 @@ namespace plug::ui
         bool freeRunning = false;       // bandeau « 120 BPM de secours » (§3.3.3)
     };
 
+    // Les trois réglages de la grille (§3.3.3 : longueur, division, swing) — des
+    // paramètres de l'état, automatisables, que le bandeau du séquenceur règle
+    // (correction 3 de la phase 2, 18/09). Le widget reçoit des valeurs LISIBLES
+    // (pas, indice de division, libellés) ; les conversions vers la grille 0..1
+    // restent dans la couche de présentation.
+    struct SequencerView
+    {
+        int length = 16;                // 2..32 pas
+        int lengthMin = 2, lengthMax = 32;
+        int division = 6;               // indice dans divisionChoices (6 = 1/16)
+        juce::StringArray divisionChoices;   // « 1/4 », « 1/4T », « 1/4D », … « 1/64D »
+        float swing = 0.0f;             // 0..1, échelle de la grille
+        juce::String swingText;         // « 0 % » … « 100 % »
+    };
+
     struct MasterEntryView
     {
         juce::String id;

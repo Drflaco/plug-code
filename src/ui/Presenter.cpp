@@ -354,6 +354,18 @@ namespace plug::ui
         return v;
     }
 
+    SequencerView Presenter::sequencerView() const
+    {
+        auto& s = proc.stateTree();
+        SequencerView v;
+        v.length   = grid::seqLength (state::readParam (s, "seq.length"));
+        v.division = grid::divisionIndex (state::readParam (s, "seq.division"));
+        for (int i = 0; i < grid::kDivisionCount; ++i) v.divisionChoices.add (Format::divisionLabel (i));
+        v.swing = state::readParam (s, "seq.swing");
+        v.swingText = Format::swingText (v.swing);
+        return v;
+    }
+
     MasterView Presenter::masterView() const
     {
         auto& s = proc.stateTree();
@@ -714,6 +726,21 @@ namespace plug::ui
         // sinon deux tirages successifs sont indiscernables (schéma §2).
         Command c (*this, "Graine "_fr + String ((juce::int64) seed));
         state::setMasterSeed (proc.stateTree(), seed, &proc.undoManager());
+    }
+
+    void Presenter::setSeqLength (int steps)
+    {
+        const int n = juce::jlimit (2, kSteps, steps);
+        Command c (*this, "Longueur "_fr + String (n) + " pas"_fr);
+        // Inverse exact de grid::seqLength : (n − 2) / 30, que seqLength arrondit sur n.
+        state::setParam (proc.stateTree(), "seq.length", (float) (n - 2) / 30.0f, &proc.undoManager());
+    }
+
+    void Presenter::setSeqDivision (int index)
+    {
+        const int k = juce::jlimit (0, grid::kDivisionCount - 1, index);
+        Command c (*this, "Division "_fr + Format::divisionLabel (k));
+        state::setParam (proc.stateTree(), "seq.division", grid::divisionValueFor (k), &proc.undoManager());
     }
 
     void Presenter::setDensity (float density)
