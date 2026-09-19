@@ -1,4 +1,5 @@
 #include "PlugTabs.h"
+#include <cmath>
 
 namespace plug::ui::v1
 {
@@ -15,6 +16,22 @@ namespace plug::ui::v1
         constexpr int kBannerMs = 3000;    // durée du rappel « Annuler (Ctrl+Z) » après un dépôt
 
         constexpr int kClearSlot = 1, kSkillBase = 100, kCopyToBase = 200;
+
+        // La respiration de la lampe : 25 images par seconde, un cycle en 1,8 s. Assez
+        // lent pour être un fondu, pas un clignotement ; assez peu d'images pour que le
+        // coût soit celui de dix petits repaints, pas d'une interface.
+        constexpr int kPulseMs = 40;
+        constexpr float kPulsePeriodS = 1.8f;
+        constexpr float kMixWheelStep = 0.02f;   // un cran de molette sur le Dry / Wet
+        constexpr int kMixParamIndex = 7;        // mix parmi les entrées modulables : sa couleur (6a)
+
+        const juce::Colour kLampOn (0xff5fd08a);    // vert : l'emplacement traite
+
+        // Le même identifiant que la grille, composé UNE fois par curseur — jamais dans paint().
+        String slotMixId (int slot1)
+        {
+            return "slot" + String (slot1).paddedLeft ('0', 2) + ".mix";
+        }
     }
 
     //==========================================================================
@@ -23,6 +40,11 @@ namespace plug::ui::v1
     juce::Rectangle<int> PlugTabs::Tab::lamp() const
     {
         return juce::Rectangle<int> (6, getHeight() / 2 - 5, 10, 10);
+    }
+
+    juce::Rectangle<int> PlugTabs::Tab::lampHalo() const
+    {
+        return lamp().expanded (5, 5);
     }
 
     juce::Rectangle<int> PlugTabs::Tab::arrow() const
@@ -41,10 +63,32 @@ namespace plug::ui::v1
                                  : juce::Colours::white.withAlpha (selected ? 0.55f : 0.20f));
         g.drawRoundedRectangle (r, 3.0f, highlighted ? 2.0f : 1.0f);
 
-        // Indicateur d'activité : plein = l'emplacement traite, creux = contourné (§3.3.2).
+        // Indicateur d'activité (§3.3.2) : vert plein = l'emplacement traite, creux =
+        // contourné. Avec un effet posé, la lampe respire (pilote, 20/09) — un halo et
+        // un fondu lents, au rythme du minuteur de la rangée ; vide et actif, elle reste
+        // verte mais immobile : rien n'y traite, rien n'a à respirer.
         const auto l = lamp().toFloat();
-        g.setColour (active ? juce::Colours::white.withAlpha (0.8f) : juce::Colours::white.withAlpha (0.25f));
-        if (active) g.fillEllipse (l); else g.drawEllipse (l, 1.0f);
+        if (active)
+        {
+            if (present)
+            {
+                const float k = tabs.pulse;   // 0..1, calculé par Pulse::timerCallback
+                g.setColour (kLampOn.withAlpha (0.08f + 0.20f * k));
+                g.fillEllipse (l.expanded (2.0f + 2.0f * k));
+                g.setColour (kLampOn.withAlpha (0.60f + 0.40f * k));
+                g.fillEllipse (l);
+            }
+            else
+            {
+                g.setColour (kLampOn.withAlpha (0.45f));
+                g.fillEllipse (l);
+            }
+        }
+        else
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.25f));
+            g.drawEllipse (l, 1.0f);
+        }
 
         auto textArea = getLocalBounds().withTrimmedLeft (20).withTrimmedRight (18);
 
@@ -71,6 +115,80 @@ namespace plug::ui::v1
     void PlugTabs::Tab::mouseUp   (const juce::MouseEvent& e) { tabs.tabMouseUp   (*this, e); }
 
     //==========================================================================
+    PlugTabs::MixSlider::MixSlider (PlugTabs& owner, int slotNumber)
+        : slot1 (slotNumber), tabs (owner), gridId (slotMixId (slotNumber))
+    {
+        setWantsKeyboardFocus (false);
+    }
+
+    void PlugTabs::MixSlider::paint (juce::Graphics& g)
+    {
+        const auto r = getLocalBounds().toFloat();
+        const auto track = r.withSizeKeepingCentre (juce::jmax (4.0f, r.getWidth() - 4.0f), 5.0f);
+
+        g.setColour (juce::Colours::white.withAlpha (enabled ? 0.10f : 0.05f));
+        g.fillRoundedRectangle (track, 2.5f);
+        if (! enabled) return;
+
+        // La barre porte la couleur du paramètre mix, la même que sa pastille, ses
+        // barres et son bouton B (6a) ; le repère blanc dit la valeur.
+        const float x = track.getX() + track.getWidth() * juce::jlimit (0.0f, 1.0f, base);
+        g.setColour (glyph::paramColour (kMixParamIndex).withAlpha (selected ? 0.85f : 0.6f));
+        g.fillRoundedRectangle (track.withRight (x), 2.5f);
+        g.setColour (juce::Colours::white.withAlpha (selected ? 0.95f : 0.75f));
+        g.fillRect (juce::Rectangle<float> (x - 1.0f, r.getY() + 1.0f, 2.0f, r.getHeight() - 2.0f));
+    }
+
+    void PlugTabs::MixSlider::sendFromX (int x)
+    {
+        const float w = (float) juce::jmax (1, getWidth() - 4);
+        tabs.presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, (float) (x - 2) / w));
+    }
+
+    void PlugTabs::MixSlider::mouseDown (const juce::MouseEvent& e)
+    {
+        if (! enabled || e.mods.isPopupMenu()) return;
+        gesturing = true;
+        tabs.presenter.beginGesture (gridId);   // UNE transaction de la prise au relâché
+        sendFromX (e.x);
+    }
+
+    void PlugTabs::MixSlider::mouseDrag (const juce::MouseEvent& e) { if (gesturing) sendFromX (e.x); }
+
+    void PlugTabs::MixSlider::mouseUp (const juce::MouseEvent&)
+    {
+        if (! gesturing) return;
+        gesturing = false;
+        tabs.presenter.endGesture (gridId);
+    }
+
+    void PlugTabs::MixSlider::mouseDoubleClick (const juce::MouseEvent&)
+    {
+        if (! enabled || gesturing) return;
+        tabs.presenter.setParam (gridId, 1.0f);   // le défaut de la grille : tout mouillé
+    }
+
+    void PlugTabs::MixSlider::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& w)
+    {
+        if (! enabled || gesturing) return;        // hors geste : une transaction par cran
+        tabs.presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, base + (w.deltaY >= 0.0f ? kMixWheelStep : -kMixWheelStep)));
+    }
+
+    //==========================================================================
+    void PlugTabs::Pulse::timerCallback()
+    {
+        tabs.pulsePhase += juce::MathConstants<float>::twoPi * ((float) kPulseMs / 1000.0f) / kPulsePeriodS;
+        if (tabs.pulsePhase >= juce::MathConstants<float>::twoPi)
+            tabs.pulsePhase -= juce::MathConstants<float>::twoPi;
+        tabs.pulse = 0.5f - 0.5f * std::cos (tabs.pulsePhase);
+
+        // Seules les lampes qui respirent sont repeintes : jamais l'onglet, jamais la rangée.
+        for (auto& t : tabs.tabs)
+            if (t->active && t->present)
+                t->repaint (t->lampHalo());
+    }
+
+    //==========================================================================
     PlugTabs::PlugTabs (Presenter& p) : presenter (p)
     {
         banner.setJustificationType (juce::Justification::centredLeft);
@@ -89,12 +207,20 @@ namespace plug::ui::v1
         refresh();
     }
 
-    PlugTabs::~PlugTabs() = default;
+    PlugTabs::~PlugTabs()
+    {
+        pulseTimer.stopTimer();
+    }
 
     //==========================================================================
+    juce::Rectangle<int> PlugTabs::mixArea() const
+    {
+        return getLocalBounds().removeFromTop (kMixHeight);
+    }
+
     juce::Rectangle<int> PlugTabs::rowArea() const
     {
-        return getLocalBounds().removeFromTop (kRowHeight);
+        return getLocalBounds().withTrimmedTop (kMixHeight + kMixGap).removeFromTop (kRowHeight);
     }
 
     void PlugTabs::refresh()
@@ -106,18 +232,26 @@ namespace plug::ui::v1
         if ((int) tabs.size() != wanted)
         {
             tabs.clear();
+            mixes.clear();
             for (int s = 1; s <= wanted; ++s)
             {
                 auto tab = std::make_unique<Tab> (*this, s);
                 addAndMakeVisible (*tab);
                 tabs.push_back (std::move (tab));
+
+                auto mix = std::make_unique<MixSlider> (*this, s);
+                addAndMakeVisible (*mix);
+                mixes.push_back (std::move (mix));
             }
             resized();
         }
 
         const int selected = presenter.selectedSlot();
-        for (auto& t : tabs)
+        bool anyBreathing = false;
+        for (size_t i = 0; i < tabs.size(); ++i)
         {
+            auto& t = tabs[i];
+            auto& m = mixes[i];
             const auto v = presenter.slotView (t->slot1);
 
             // Le titre est composé ICI, une fois par notification. paint() ne fabrique
@@ -129,6 +263,7 @@ namespace plug::ui::v1
             t->active = v.active;
             t->unknown = v.unknown;
             t->present = v.present;
+            anyBreathing = anyBreathing || (v.active && v.present);
 
             String help;
             if (v.unknown)
@@ -141,6 +276,7 @@ namespace plug::ui::v1
                      << "\nLoi de mélange naturelle : "_fr << v.mixLaw
                      << "\nLatence : non affichée en v1."_fr;
             help << "\nClic = sélectionner · clic droit ou chevron = changer d'effet."_fr
+                 << "\nLampe verte = l'emplacement traite (clic = contourner)."_fr
                  << "\nGlisser = réordonner : sur un onglet pour échanger, entre deux pour insérer, "
                     "Alt pour copier. Au-delà du dernier onglet, l'effet va à la fin des "
                     "emplacements affichés."_fr;
@@ -148,21 +284,47 @@ namespace plug::ui::v1
                 help << "\nDes valeurs sont arrivées de l'hôte sur cet emplacement."_fr;
             t->setTooltip (help);
             t->repaint();
+
+            // Le curseur Dry / Wet : la BASE du mix de l'emplacement, jamais la valeur
+            // d'un pas. Un effet inconnu ne compose rien (§3.9) : curseur inerte.
+            const auto& mixParam = v.params[(size_t) kMixParamIndex];
+            m->base = mixParam.base;
+            m->enabled = v.present && ! v.unknown;
+            m->selected = t->selected;
+            String mixHelp;
+            if (m->enabled)
+                mixHelp << "Dry / Wet · "_fr << t->slot1 << " · "_fr << v.skillLabel << " : "
+                        << (int) std::lround (100.0f * mixParam.base) << " %"_fr
+                        << "\nIntensité globale de l'effet dans la chaîne : la base du mélange de "
+                           "l'emplacement (loi "_fr << v.mixLaw << "), quelle que soit la sélection de pas."_fr
+                        << "\nGlisser ou molette · double clic = 100 % · Ctrl+Z annule."_fr;
+            else if (v.unknown)
+                mixHelp << "Dry / Wet — effet inconnu : l'audio traverse, le mélange ne s'applique pas (§3.9)."_fr;
+            else
+                mixHelp << "Dry / Wet — aucun effet sur l'emplacement "_fr << t->slot1 << "."_fr;
+            m->setTooltip (mixHelp);
+            m->repaint();
         }
+
+        // Le minuteur ne tourne que s'il y a quelque chose à faire respirer.
+        if (anyBreathing && ! pulseTimer.isTimerRunning()) pulseTimer.startTimer (kPulseMs);
+        if (! anyBreathing && pulseTimer.isTimerRunning()) { pulseTimer.stopTimer(); pulse = 0.0f; }
     }
 
     void PlugTabs::resized()
     {
         auto row = rowArea();
+        auto mixRow = mixArea();
         const int n = (int) tabs.size();
         if (n > 0)
         {
             const int available = row.getWidth() - (n - 1) * kGap;
             const int w = juce::jlimit (kMinTabWidth, kMaxTabWidth, available / juce::jmax (1, n));
             int x = row.getX();
-            for (auto& t : tabs)
+            for (int i = 0; i < n; ++i)
             {
-                t->setBounds (x, row.getY(), w, row.getHeight());
+                tabs[(size_t) i]->setBounds (x, row.getY(), w, row.getHeight());
+                mixes[(size_t) i]->setBounds (x, mixRow.getY(), w, mixRow.getHeight());
                 x += w + kGap;
             }
         }

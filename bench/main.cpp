@@ -502,6 +502,18 @@ int main (int argc, char* argv[])
                 << "  p99     " << juce::String (s.p99Us, 1) << " us\n"
                 << "  max     " << juce::String (s.maxUs, 1) << " us\n";
 
+            // Diagnostic visuel hors hôte (méthode qui a trouvé le « caret fantôme » le
+            // 18/09) : si PLUG_EDITOR_PNG nomme un fichier, la dernière image rendue y
+            // est écrite. L'agent constructeur ne voit jamais Live ; ceci est son œil.
+            if (const auto png = juce::SystemStats::getEnvironmentVariable ("PLUG_EDITOR_PNG", {}); png.isNotEmpty())
+            {
+                const auto f = juce::File::getCurrentWorkingDirectory().getChildFile (png);
+                f.deleteFile();
+                juce::FileOutputStream os (f);
+                if (os.openedOk() && juce::PNGImageFormat().writeImageToStream (img, os))
+                    log << "  image : " << f.getFullPathName() << "\n";
+            }
+
             // 16,7 ms = une frame à 60 Hz. Ici on redessine TOUTE l'interface à chaque
             // tour, là où l'affichage réel ne repeint que ce qui a changé : tenir sous
             // la moitié d'une frame dans ce cas défavorable est la marge visée.
