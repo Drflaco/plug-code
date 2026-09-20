@@ -28,6 +28,10 @@ namespace plug
         {
             bool present = false;            // une skill connue occupe l'emplacement
             bool tailRing = true;
+            // Dry / Wet général de l'emplacement (phase 3, 20/09) : FACTEUR sur la courbe
+            // de mix séquencée, jamais un second étage de mélange. À 1, rien ne change
+            // (T13 intact) ; à 0, l'emplacement est sec quel que soit son mix par pas.
+            float wet = 1.0f;
             // Entrées réellement composées : celles que la skill déclare, plus mix et gain
             // (lus par le moteur). Composer les 13 systématiquement coûtait l'essentiel des
             // 8 µs par emplacement du J3 (MESURES_J3) ; ParamCurves porte nullptr ailleurs.
@@ -254,6 +258,7 @@ namespace plug
                 const auto* info = SkillRegistry::instance().info (skillId);
                 sm.present = info != nullptr;
                 sm.tailRing = slotTree.getProperty (id::tail, "ring").toString() != "cut";
+                sm.wet = readWet (slotTree);
                 sm.law = info ? info->mixLaw : MixLaw::Minus6;
 
                 // Changement de skill : instance préparée ici, échangée au prochain bloc (§4.2).
@@ -600,7 +605,7 @@ namespace plug
                 float cad = 0.0f, caw = 0.0f, cDryGain = 0.0f, cWetGain = 0.0f, cGain = 0.0f;
                 if (flat)
                 {
-                    mixGains (sm.law, mixCurve[0], cad, caw);
+                    mixGains (sm.law, mixCurve[0] * sm.wet, cad, caw);   // surcouche Dry / Wet de l'emplacement
                     const float a = actBuf[0];
                     const float wetInactive = sm.tailRing ? caw : 0.0f;
                     cDryGain = 1.0f + a * (cad - 1.0f);
@@ -624,7 +629,7 @@ namespace plug
                     for (int k = 0; k < n; ++k)
                     {
                         float ad, aw;
-                        mixGains (sm.law, mixCurve[k], ad, aw);
+                        mixGains (sm.law, mixCurve[k] * sm.wet, ad, aw);
                         const float a = actBuf[(size_t) k];
                         const float wetInactive = sm.tailRing ? aw : 0.0f;     // coupée : le traité se tait
                         const float dryGain = 1.0f + a * (ad - 1.0f);           // inactif : le sec passe entier

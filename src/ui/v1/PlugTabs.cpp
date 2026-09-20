@@ -22,16 +22,9 @@ namespace plug::ui::v1
         // coût soit celui de dix petits repaints, pas d'une interface.
         constexpr int kPulseMs = 40;
         constexpr float kPulsePeriodS = 1.8f;
-        constexpr float kMixWheelStep = 0.02f;   // un cran de molette sur le Dry / Wet
-        constexpr int kMixParamIndex = 7;        // mix parmi les entrées modulables : sa couleur (6a)
+        constexpr float kWetWheelStep = 0.02f;   // un cran de molette sur le Dry / Wet
 
         const juce::Colour kLampOn (0xff5fd08a);    // vert : l'emplacement traite
-
-        // Le même identifiant que la grille, composé UNE fois par curseur — jamais dans paint().
-        String slotMixId (int slot1)
-        {
-            return "slot" + String (slot1).paddedLeft ('0', 2) + ".mix";
-        }
     }
 
     //==========================================================================
@@ -116,7 +109,7 @@ namespace plug::ui::v1
 
     //==========================================================================
     PlugTabs::MixSlider::MixSlider (PlugTabs& owner, int slotNumber)
-        : slot1 (slotNumber), tabs (owner), gridId (slotMixId (slotNumber))
+        : slot1 (slotNumber), tabs (owner)
     {
         setWantsKeyboardFocus (false);
     }
@@ -130,10 +123,10 @@ namespace plug::ui::v1
         g.fillRoundedRectangle (track, 2.5f);
         if (! enabled) return;
 
-        // La barre porte la couleur du paramètre mix, la même que sa pastille, ses
-        // barres et son bouton B (6a) ; le repère blanc dit la valeur.
-        const float x = track.getX() + track.getWidth() * juce::jlimit (0.0f, 1.0f, base);
-        g.setColour (glyph::paramColour (kMixParamIndex).withAlpha (selected ? 0.85f : 0.6f));
+        // Blanc, et non la couleur du paramètre mix (6a) : la surcouche N'EST PAS le mix,
+        // elle ne doit pas en porter la pastille. Le repère blanc dit la valeur.
+        const float x = track.getX() + track.getWidth() * juce::jlimit (0.0f, 1.0f, wet);
+        g.setColour (juce::Colours::white.withAlpha (selected ? 0.55f : 0.35f));
         g.fillRoundedRectangle (track.withRight (x), 2.5f);
         g.setColour (juce::Colours::white.withAlpha (selected ? 0.95f : 0.75f));
         g.fillRect (juce::Rectangle<float> (x - 1.0f, r.getY() + 1.0f, 2.0f, r.getHeight() - 2.0f));
@@ -142,14 +135,14 @@ namespace plug::ui::v1
     void PlugTabs::MixSlider::sendFromX (int x)
     {
         const float w = (float) juce::jmax (1, getWidth() - 4);
-        tabs.presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, (float) (x - 2) / w));
+        tabs.presenter.setWet (slot1, juce::jlimit (0.0f, 1.0f, (float) (x - 2) / w));
     }
 
     void PlugTabs::MixSlider::mouseDown (const juce::MouseEvent& e)
     {
         if (! enabled || e.mods.isPopupMenu()) return;
         gesturing = true;
-        tabs.presenter.beginGesture (gridId);   // UNE transaction de la prise au relâché
+        tabs.presenter.beginWetGesture (slot1);   // UNE transaction de la prise au relâché
         sendFromX (e.x);
     }
 
@@ -159,19 +152,19 @@ namespace plug::ui::v1
     {
         if (! gesturing) return;
         gesturing = false;
-        tabs.presenter.endGesture (gridId);
+        tabs.presenter.endWetGesture();
     }
 
     void PlugTabs::MixSlider::mouseDoubleClick (const juce::MouseEvent&)
     {
         if (! enabled || gesturing) return;
-        tabs.presenter.setParam (gridId, 1.0f);   // le défaut de la grille : tout mouillé
+        tabs.presenter.setWet (slot1, 1.0f);       // transparent : le mix séquencé joue entier
     }
 
     void PlugTabs::MixSlider::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& w)
     {
         if (! enabled || gesturing) return;        // hors geste : une transaction par cran
-        tabs.presenter.setParam (gridId, juce::jlimit (0.0f, 1.0f, base + (w.deltaY >= 0.0f ? kMixWheelStep : -kMixWheelStep)));
+        tabs.presenter.setWet (slot1, juce::jlimit (0.0f, 1.0f, wet + (w.deltaY >= 0.0f ? kWetWheelStep : -kWetWheelStep)));
     }
 
     //==========================================================================
@@ -285,23 +278,23 @@ namespace plug::ui::v1
             t->setTooltip (help);
             t->repaint();
 
-            // Le curseur Dry / Wet : la BASE du mix de l'emplacement, jamais la valeur
-            // d'un pas. Un effet inconnu ne compose rien (§3.9) : curseur inerte.
-            const auto& mixParam = v.params[(size_t) kMixParamIndex];
-            m->base = mixParam.base;
+            // Le curseur Dry / Wet général : la surcouche de l'emplacement, jamais le mix
+            // séquencé ni sa base. Un effet inconnu ne compose rien (§3.9) : curseur inerte.
+            m->wet = v.wet;
             m->enabled = v.present && ! v.unknown;
             m->selected = t->selected;
             String mixHelp;
             if (m->enabled)
-                mixHelp << "Dry / Wet · "_fr << t->slot1 << " · "_fr << v.skillLabel << " : "
-                        << (int) std::lround (100.0f * mixParam.base) << " %"_fr
-                        << "\nIntensité globale de l'effet dans la chaîne : la base du mélange de "
-                           "l'emplacement (loi "_fr << v.mixLaw << "), quelle que soit la sélection de pas."_fr
+                mixHelp << "Dry / Wet général · "_fr << t->slot1 << " · "_fr << v.skillLabel << " : "
+                        << (int) std::lround (100.0f * v.wet) << " %"_fr
+                        << "\nSurcouche sur l'emplacement : dose l'effet dans la chaîne en facteur du mix "
+                           "séquencé (loi "_fr << v.mixLaw << "), sans toucher au mix ni à ses pas. "
+                           "Hors grille : non automatisable par l'hôte, sauvé dans le preset."_fr
                         << "\nGlisser ou molette · double clic = 100 % · Ctrl+Z annule."_fr;
             else if (v.unknown)
-                mixHelp << "Dry / Wet — effet inconnu : l'audio traverse, le mélange ne s'applique pas (§3.9)."_fr;
+                mixHelp << "Dry / Wet général — effet inconnu : l'audio traverse, rien à doser (§3.9)."_fr;
             else
-                mixHelp << "Dry / Wet — aucun effet sur l'emplacement "_fr << t->slot1 << "."_fr;
+                mixHelp << "Dry / Wet général — aucun effet sur l'emplacement "_fr << t->slot1 << "."_fr;
             m->setTooltip (mixHelp);
             m->repaint();
         }

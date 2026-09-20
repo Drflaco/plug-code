@@ -460,6 +460,25 @@ int main (int argc, char* argv[])
                "dessin 6b : « " + view.undoView().undoName + " », pas 6 lu au survol à " + juce::String (dessin.params[0].raw, 2)
                    + ", Résonance du pas 5 intacte, sélection inchangée (pas 9)", log);
         view.setHover (0, 0);
+
+        // Phase 3 (20/09) : le Dry / Wet général d'un emplacement — surcouche hors
+        // grille. Un geste = une transaction renommée à la dernière valeur ; Ctrl+Z
+        // la défait entière ; la grille n'a pas bougé (aucun PARAM ajouté).
+        const float mixAvant = view.slotView (2).params[7].base;
+        view.beginWetGesture (2);
+        view.setWet (2, 0.6f);
+        view.setWet (2, 0.4f);
+        view.endWetGesture();
+        const auto wetView = view.slotView (2);
+        const auto wetName = view.undoView().undoName;
+        view.undo();
+        check (std::abs (wetView.wet - 0.4f) < 1e-6f
+                   && wetName == juce::String::fromUTF8 ("Dry / Wet 40 % · emplacement 2")
+                   && std::abs (wetView.params[7].base - mixAvant) < 1e-6f
+                   && std::abs (view.slotView (2).wet - 1.0f) < 1e-6f
+                   && p.getParameters().size() == 284,
+               "Dry / Wet général : geste de deux valeurs = une transaction « " + wetName
+                   + " », le mix de l'emplacement intact, un Ctrl+Z rend 100 %, grille toujours à 284", log);
     }
 
     //==========================================================================

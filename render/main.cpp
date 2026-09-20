@@ -801,6 +801,61 @@ namespace
                    "T21 uiSnapshot : roue libre signalée quand l'hôte ne donne pas de position");
         }
 
+        // T23 — Dry / Wet général de l'emplacement (phase 3, pilote 20/09) : une SURCOUCHE
+        // en facteur du mix séquencé, hors grille. Trois propriétés, mesurées et non
+        // supposées : à 0 l'emplacement est sec (sortie = entrée, la skill a 0 de
+        // latence) ; la surcouche à w sur un mix à 1 rend exactement le mix à w sur une
+        // surcouche à 1 (c'est un facteur, pas un second étage) ; elle reste sur
+        // l'emplacement quand l'effet déménage, comme la queue (§3.2).
+        {
+            ScopedRate sr (48000.0);
+            const int n = 24000;
+            juce::AudioBuffer<float> in (2, n);
+            juce::Random rng (2309);
+            for (int i = 0; i < n; ++i)
+            {
+                const float v = 0.7f * (rng.nextFloat() * 2 - 1);
+                in.setSample (0, i, v);
+                in.setSample (1, i, -0.5f * v);
+            }
+
+            auto base = state::createDefault();
+            state::ensureParams (base);
+            state::setSkill (base, 1, "core.gain", nullptr);
+            state::setParam (base, "slot01.main", 0.85f);         // un gain franc : le traité diffère du sec
+            RenderOptions o;
+
+            check (std::abs (state::readWet (state::slot (base, 1)) - 1.0f) < 1.0e-6f,
+                   "T23 Dry / Wet : défaut 1 (transparent) sur un état neuf");
+
+            auto wet1 = render (base, in, o);
+            check (firstDifference (wet1, in) >= 0,
+                   "T23 Dry / Wet : témoin — à 1, le gain à 0,85 change bien le signal");
+
+            auto dry = base.createCopy();
+            state::setWet (dry, 1, 0.0f, nullptr);
+            auto out0 = render (dry, in, o);
+            const int d0 = firstDifference (out0, in);
+            check (d0 < 0, "T23 Dry / Wet : à 0, l'emplacement est sec — sortie identique à l'entrée"
+                             + (d0 < 0 ? juce::String() : " (1re différence à " + juce::String (d0) + ")"));
+
+            auto viaWet = base.createCopy();
+            state::setWet (viaWet, 1, 0.35f, nullptr);             // mix 1 × surcouche 0,35
+            auto viaMix = base.createCopy();
+            state::setParam (viaMix, "slot01.mix", 0.35f);           // mix 0,35 × surcouche 1
+            auto a = render (viaWet, in, o);
+            auto b = render (viaMix, in, o);
+            const int dab = firstDifference (a, b);
+            check (dab < 0, "T23 Dry / Wet : surcouche 0,35 sur mix 1 = mix 0,35 sur surcouche 1 (un facteur, pas un étage)"
+                              + (dab < 0 ? juce::String() : " (1re différence à " + juce::String (dab) + ")"));
+
+            auto moved = viaWet.createCopy();
+            StateEdit::moveSlot (moved, 1, 3, StateEdit::Mode::Swap, nullptr);
+            check (std::abs (state::readWet (state::slot (moved, 1)) - 0.35f) < 1.0e-6f
+                       && std::abs (state::readWet (state::slot (moved, 3)) - 1.0f) < 1.0e-6f,
+                   "T23 Dry / Wet : Swap — la surcouche reste sur l'emplacement, l'effet part seul");
+        }
+
         report << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
     }
 

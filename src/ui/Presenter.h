@@ -87,6 +87,13 @@ namespace plug::ui
         void moveSlot (int from1, int to1, MoveMode mode);
         void setActive (int slot1, bool on);
         void setTail (int slot1, bool ring);
+        // Phase 3 (pilote, 20/09) : le Dry / Wet GÉNÉRAL de l'emplacement, surcouche sur
+        // le mix séquencé — attribut du Slot, hors grille, hors automation hôte. Seul,
+        // setWet ouvre sa transaction « Dry / Wet 65 % · emplacement 3 » ; dans un geste
+        // (begin / end), une seule transaction renommée à chaque valeur.
+        void setWet (int slot1, float wet);
+        void beginWetGesture (int slot1);
+        void endWetGesture();
         void setLocked (int slot1, const juce::String& paramName, bool locked);
         void setRange (int slot1, const juce::String& paramName, float min, float max);
         void setProb (int slot1, const juce::String& paramName, float prob);
@@ -200,6 +207,7 @@ namespace plug::ui
             Presenter& presenter;
         };
         std::unique_ptr<Command> stepsGesture;   // ouvert par beginStepsGesture, fermé par endStepsGesture
+        std::unique_ptr<Command> wetGesture;     // ouvert par beginWetGesture, fermé par endWetGesture
 
         PlugProcessor& proc;
         Prefs preferences;

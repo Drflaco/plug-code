@@ -11,12 +11,13 @@
 //     offert trois secondes ;
 //   · l'ordre de la chaîne EST l'indice de l'emplacement : déplacer un onglet
 //     déplace l'effet, pas la ligne, pas les plages, pas les automations ;
-//   · phase 3 (pilote, 20/09) : au-dessus de chaque onglet, un curseur Dry / Wet qui
-//     règle la BASE du mélange de l'emplacement (slotNN.mix) — l'intensité globale
-//     de l'effet dans la chaîne, quelle que soit la sélection de pas. Il ne pose
-//     jamais de valeur par pas : c'est le panneau qui fait cela (geste A). La lampe
-//     d'activité est verte quand l'emplacement traite, et respire (fondu lent) quand
-//     un effet y est posé ; le minuteur ne repeint que les lampes, jamais l'onglet.
+//   · phase 3 (pilote, 20/09) : au-dessus de chaque onglet, un curseur Dry / Wet
+//     GÉNÉRAL de l'emplacement — une surcouche (attribut `wet` du Slot, hors grille,
+//     hors automation hôte) que le moteur applique en facteur sur le mix séquencé.
+//     Ce n'est ni la base du mix ni un raccourci vers lui : le mix pas à pas reste
+//     intact, la surcouche le dose. La lampe d'activité est verte quand l'emplacement
+//     traite, et respire (fondu lent) quand un effet y est posé ; le minuteur ne
+//     repeint que les lampes, jamais l'onglet.
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "../Presenter.h"
@@ -82,10 +83,10 @@ namespace plug::ui::v1
             PlugTabs& tabs;
         };
 
-        // Le curseur Dry / Wet d'un emplacement. Un geste = UNE transaction sur la base
-        // de slotNN.mix (beginGesture / setParam / endGesture) ; la molette pose un cran
-        // par transaction ; un double clic remet 100 % (le défaut de la grille). Il ne
-        // lit que `base`, posée au refresh : paint() n'alloue rien.
+        // Le curseur Dry / Wet général d'un emplacement. Un geste = UNE transaction
+        // (beginWetGesture / setWet / endWetGesture) ; la molette pose un cran par
+        // transaction ; un double clic remet 100 % (transparent). Il ne lit que `wet`,
+        // posé au refresh : paint() n'alloue rien.
         class MixSlider : public juce::Component,
                           public juce::SettableTooltipClient
         {
@@ -100,7 +101,7 @@ namespace plug::ui::v1
             void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
             int slot1 = 1;
-            float base = 1.0f;           // base de slotNN.mix, 0..1, relue au refresh
+            float wet = 1.0f;            // la surcouche, 0..1, relue au refresh
             bool enabled = false;        // un effet connu est posé : sinon grisé, inerte
             bool selected = false;
 
@@ -108,7 +109,6 @@ namespace plug::ui::v1
             void sendFromX (int x);
 
             PlugTabs& tabs;
-            const juce::String gridId;   // « slot03.mix », composé une fois
             bool gesturing = false;
         };
 

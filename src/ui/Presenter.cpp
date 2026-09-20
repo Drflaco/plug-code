@@ -284,6 +284,7 @@ namespace plug::ui
 
         v.active = state::readParam (s, slotGridId (v.slot1, "active")) >= 0.5f;
         v.tailRing = sl.getProperty (state::id::tail, "ring").toString() != "cut";
+        v.wet = state::readWet (sl);
         v.glide = state::readParam (s, slotGridId (v.slot1, "glide"));
         v.fade  = state::readParam (s, slotGridId (v.slot1, "fade"));
         v.hasPattern = StateQuery::lineHasPattern (s, v.slot1);
@@ -683,6 +684,33 @@ namespace plug::ui
     {
         Command c (*this, fr (ring ? "Laisser la queue" : "Couper la queue") + " · emplacement "_fr + String (slot1));
         state::setTail (proc.stateTree(), slot1, ring, &proc.undoManager());
+    }
+
+    void Presenter::setWet (int slot1, float wet)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const float w = juce::jlimit (0.0f, 1.0f, wet);
+        const String name = "Dry / Wet "_fr + String ((int) std::lround (100.0f * w)) + " % · emplacement "_fr + String (slot1);
+
+        // Seul, la commande ouvre sa transaction ; dans un geste, elle prend celle du geste
+        // et la renomme avec la valeur posée — même discipline que setStepsExplicit.
+        std::unique_ptr<Command> own;
+        if (wetGesture == nullptr) own = std::make_unique<Command> (*this, name);
+        else                       proc.undoManager().setCurrentTransactionName (name);
+
+        state::setWet (proc.stateTree(), slot1, w, &proc.undoManager());
+    }
+
+    void Presenter::beginWetGesture (int slot1)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        wetGesture = std::make_unique<Command> (*this, "Dry / Wet · emplacement "_fr + String (slot1));
+    }
+
+    void Presenter::endWetGesture()
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        wetGesture.reset();
     }
 
     void Presenter::setLocked (int slot1, const String& paramName, bool locked)

@@ -38,6 +38,7 @@ namespace plug::state
             setDefault (slotTree, id::skill, "", um);
             setDefault (slotTree, id::skillVersion, 0, um);
             setDefault (slotTree, id::tail, "ring", um);
+            setDefault (slotTree, id::wet, 1.0, um);
             for (int m = 0; m < grid::kModulableCount; ++m)
             {
                 auto p = childWith (slotTree, id::Param, id::name, String (grid::kModulableName[(size_t) m]), um);
@@ -189,6 +190,16 @@ namespace plug::state
     }
 
     void setTail (ValueTree& s, int slot1, bool ring, Undo um) { slot (s, slot1).setProperty (id::tail, ring ? "ring" : "cut", um); }
+
+    void setWet (ValueTree& s, int slot1, float wet, Undo um)
+    {
+        slot (s, slot1).setProperty (id::wet, (double) juce::jlimit (0.0f, 1.0f, wet), um);
+    }
+
+    float readWet (const ValueTree& slotTree)
+    {
+        return juce::jlimit (0.0f, 1.0f, (float) (double) slotTree.getProperty (id::wet, 1.0));
+    }
 
     void setRange (ValueTree& s, int slot1, const String& name, float min, float max, Undo um)
     {

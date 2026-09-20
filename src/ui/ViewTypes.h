@@ -85,6 +85,7 @@ namespace plug::ui
         bool tailRing = true;           // queue laissée mourir (vrai) ou coupée
         float glide = 0.0f;
         float fade = 0.0f;
+        float wet = 1.0f;               // Dry / Wet général de l'emplacement (phase 3) : surcouche, hors grille
         std::array<ParamView, kSlotParams> params {};
         bool hasPattern = false;        // la ligne porte un motif (c-8)
         bool hostDriven = false;        // des valeurs sont arrivées de l'hôte (heuristique d-1)

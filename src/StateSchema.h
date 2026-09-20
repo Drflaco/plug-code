@@ -24,7 +24,7 @@ namespace plug::state
         PLUG_ID (PlugState) PLUG_ID (schemaVersion) PLUG_ID (pluginVersion)
         PLUG_ID (PARAM) PLUG_ID (value)
         PLUG_ID (Generation) PLUG_ID (masterSeed) PLUG_ID (counter) PLUG_ID (density)
-        PLUG_ID (Slots) PLUG_ID (Slot) PLUG_ID (index) PLUG_ID (skill) PLUG_ID (skillVersion) PLUG_ID (tail)
+        PLUG_ID (Slots) PLUG_ID (Slot) PLUG_ID (index) PLUG_ID (skill) PLUG_ID (skillVersion) PLUG_ID (tail) PLUG_ID (wet)
         PLUG_ID (Param) PLUG_ID (name) PLUG_ID (min) PLUG_ID (max) PLUG_ID (prob) PLUG_ID (locked) PLUG_ID (transition)
         PLUG_ID (Line) PLUG_ID (Step) PLUG_ID (i) PLUG_ID (on) PLUG_ID (mode) PLUG_ID (seed) PLUG_ID (V)
         PLUG_ID (Mod) PLUG_ID (Env1) PLUG_ID (Source2) PLUG_ID (Point) PLUG_ID (Route)
@@ -59,6 +59,13 @@ namespace plug::state
     void setParam       (juce::ValueTree& s, const juce::String& gridId, float raw, Undo um = nullptr);
     void setSkill       (juce::ValueTree& s, int slot1, const juce::String& skillId, Undo um);   // J3-5 : pose les verrous déclarés
     void setTail        (juce::ValueTree& s, int slot1, bool ring, Undo um);
+    // Phase 3 (pilote, 20/09) : le Dry / Wet GÉNÉRAL de l'emplacement — une surcouche,
+    // attribut du nœud Slot comme `tail`, hors grille (aucun PARAM, non automatisable
+    // par l'hôte), 0..1, défaut 1 (transparent). Le moteur en multiplie la courbe de
+    // slotNN.mix ; il ne remplace ni ne copie le mix séquencé pas à pas. Complété par
+    // ensureSlot à son défaut : un état antérieur se lit sans migration.
+    void setWet         (juce::ValueTree& s, int slot1, float wet, Undo um);
+    float readWet       (const juce::ValueTree& slotTree);
     void setRange       (juce::ValueTree& s, int slot1, const juce::String& name, float min, float max, Undo um);
     void setProb        (juce::ValueTree& s, int slot1, const juce::String& name, float prob, Undo um);
     void setLocked      (juce::ValueTree& s, int slot1, const juce::String& name, bool locked, Undo um);
