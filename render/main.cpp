@@ -856,6 +856,75 @@ namespace
                    "T23 Dry / Wet : Swap — la surcouche reste sur l'emplacement, l'effet part seul");
         }
 
+        // T24 — Amortissement (phase 3, pilote 20/09) : rampe minimale sur TOUTE transition
+        // de valeur entre deux pas, lue sur la courbe même (valueCurve), pas supposée.
+        // Un filtre dont la coupure saute de 0,1 à 0,9 à chaque pas, en transition « saut ».
+        {
+            ScopedRate sr (48000.0);
+            const int n = 48000;
+            juce::AudioBuffer<float> in (2, n);
+            juce::Random rng (2409);
+            for (int i = 0; i < n; ++i) { const float v = 0.5f * (rng.nextFloat() * 2 - 1); in.setSample (0, i, v); in.setSample (1, i, v); }
+
+            auto s = state::createDefault();
+            state::ensureParams (s);
+            state::setSkill (s, 1, "core.filter", nullptr);
+            for (int st = 1; st <= 32; ++st)
+            {
+                state::setStepMode (s, 1, st, StepMode::Explicit, nullptr);
+                state::setExplicit (s, 1, st, "main", (st % 2) ? 0.1f : 0.9f, nullptr);
+                state::setExplicit (s, 1, st, "mix",  (st % 2) ? 1.0f : 0.0f, nullptr);
+            }
+            RenderOptions o;
+
+            auto maxDelta = [] (const std::vector<float>& t)
+            {
+                float d = 0.0f;
+                for (size_t i = 1; i < t.size(); ++i) d = juce::jmax (d, std::abs (t[i] - t[i - 1]));
+                return d;
+            };
+            auto span = [] (const std::vector<float>& t)
+            {
+                float lo = 1.0f, hi = 0.0f;
+                for (float v : t) { lo = juce::jmin (lo, v); hi = juce::jmax (hi, v); }
+                return std::make_pair (lo, hi);
+            };
+
+            std::vector<float> raw;
+            render (s, in, o, nullptr, &raw, 0, 0);
+            const float jump = maxDelta (raw);
+            check (jump > 0.79f, "T24 amortissement 0 : témoin — la coupure saute de 0,8 en un échantillon (" + juce::String (jump, 3) + ")");
+
+            auto damped = s.createCopy();
+            state::setDamp (damped, 1, 0.2f, nullptr);                          // 10 ms = 480 échantillons
+            const int dampSamples = (int) std::lround (grid::dampSeconds (0.2f) * 48000.0);
+            std::vector<float> cut, mix;
+            render (damped, in, o, nullptr, &cut, 0, 0);
+            render (damped, in, o, nullptr, &mix, 0, 7);
+            const float bound = 0.8f / (float) dampSamples + 1.0e-4f;
+            const auto [lo, hi] = span (cut);
+            check (maxDelta (cut) <= bound && lo <= 0.1f + 1.0e-4f && hi >= 0.9f - 1.0e-4f,
+                   "T24 amortissement 0,2 : la coupure rampe sur " + juce::String (dampSamples) + " échantillons (pas max "
+                       + juce::String (maxDelta (cut), 5) + " <= " + juce::String (bound, 5) + ") et atteint ses deux cibles");
+            check (maxDelta (mix) <= 1.0f / (float) dampSamples + 1.0e-4f,
+                   "T24 amortissement 0,2 : le mix séquencé (1 vers 0) rampe aussi (pas max " + juce::String (maxDelta (mix), 5) + ")");
+
+            // Un glissement plus long l'emporte : transition « glide » à 0,25 (un pas, bien
+            // plus que 10 ms) sur les DEUX entrées qui sautent (coupure et mix) — avec ou
+            // sans amortissement, le rendu est le même octet.
+            auto glideOnly = s.createCopy();
+            state::setTransition (glideOnly, 1, "main", true, nullptr);
+            state::setTransition (glideOnly, 1, "mix",  true, nullptr);
+            state::setParam (glideOnly, "slot01.glide", 0.25f);
+            auto glideDamp = glideOnly.createCopy();
+            state::setDamp (glideDamp, 1, 0.2f, nullptr);
+            auto a = render (glideOnly, in, o);
+            auto b = render (glideDamp, in, o);
+            const int dg = firstDifference (a, b);
+            check (dg < 0, "T24 glissement d'un pas + amortissement 10 ms = glissement seul, octet par octet (le plus long gagne)"
+                             + (dg < 0 ? juce::String() : " (1re différence à " + juce::String (dg) + ")"));
+        }
+
         report << "\nRésultat : " << (failures == 0 ? "TOUT PASSE" : juce::String (failures) + " ÉCHEC(S)") << "\n";
     }
 

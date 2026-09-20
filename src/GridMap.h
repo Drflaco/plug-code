@@ -66,6 +66,11 @@ namespace plug::grid
     // Fondu d'activation : 0..500 ms, quadratique pour de la finesse près de zéro.
     inline double fadeSeconds (float v) noexcept { const double c = juce::jlimit (0.0f, 1.0f, v); return 0.5 * c * c; }
 
+    // Amortissement (phase 3, 20/09) : rampe minimale entre deux pas, 0..250 ms, quadratique
+    // — 0,2 = 10 ms (le clic disparaît), 0,5 = 63 ms, 1 = 250 ms (un fondu musical).
+    // Hors grille : c'est l'attribut `damp` du Slot, pas un PARAM.
+    inline double dampSeconds (float v) noexcept { const double c = juce::jlimit (0.0f, 1.0f, v); return 0.25 * c * c; }
+
     // Gain et volume : 0,5 = unité, 1 = +6 dB, 0 = silence.
     inline float gainLinear (float v) noexcept { return 2.0f * juce::jlimit (0.0f, 1.0f, v); }
 }

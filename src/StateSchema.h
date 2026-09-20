@@ -24,7 +24,7 @@ namespace plug::state
         PLUG_ID (PlugState) PLUG_ID (schemaVersion) PLUG_ID (pluginVersion)
         PLUG_ID (PARAM) PLUG_ID (value)
         PLUG_ID (Generation) PLUG_ID (masterSeed) PLUG_ID (counter) PLUG_ID (density)
-        PLUG_ID (Slots) PLUG_ID (Slot) PLUG_ID (index) PLUG_ID (skill) PLUG_ID (skillVersion) PLUG_ID (tail) PLUG_ID (wet)
+        PLUG_ID (Slots) PLUG_ID (Slot) PLUG_ID (index) PLUG_ID (skill) PLUG_ID (skillVersion) PLUG_ID (tail) PLUG_ID (wet) PLUG_ID (damp)
         PLUG_ID (Param) PLUG_ID (name) PLUG_ID (min) PLUG_ID (max) PLUG_ID (prob) PLUG_ID (locked) PLUG_ID (transition)
         PLUG_ID (Line) PLUG_ID (Step) PLUG_ID (i) PLUG_ID (on) PLUG_ID (mode) PLUG_ID (seed) PLUG_ID (V)
         PLUG_ID (Mod) PLUG_ID (Env1) PLUG_ID (Source2) PLUG_ID (Point) PLUG_ID (Route)
@@ -66,6 +66,13 @@ namespace plug::state
     // ensureSlot à son défaut : un état antérieur se lit sans migration.
     void setWet         (juce::ValueTree& s, int slot1, float wet, Undo um);
     float readWet       (const juce::ValueTree& slotTree);
+    // Phase 3 (pilote, 20/09) : l'AMORTISSEMENT de l'emplacement — même logement que
+    // `wet`, 0..1, défaut 0 (aucun effet, rendu inchangé). Le moteur en fait une rampe
+    // minimale sur TOUTE transition de valeur entre deux pas, y compris les paramètres
+    // en « saut » et mix / gain : le clic d'un écart franc disparaît sans que le pilote
+    // passe chaque paramètre en glissement. Échelle : grid::dampSeconds.
+    void setDamp        (juce::ValueTree& s, int slot1, float damp, Undo um);
+    float readDamp      (const juce::ValueTree& slotTree);
     void setRange       (juce::ValueTree& s, int slot1, const juce::String& name, float min, float max, Undo um);
     void setProb        (juce::ValueTree& s, int slot1, const juce::String& name, float prob, Undo um);
     void setLocked      (juce::ValueTree& s, int slot1, const juce::String& name, bool locked, Undo um);

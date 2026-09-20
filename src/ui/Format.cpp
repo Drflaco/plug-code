@@ -96,6 +96,7 @@ namespace plug::ui::Format
         if (which == "active") return "Actif"_fr;
         if (which == "glide")  return "Glissement"_fr;
         if (which == "fade")   return "Fondu"_fr;
+        if (which == "damp")   return "Amortissement"_fr;
         if (which == "tail")   return "Queue"_fr;
         return which;
     }
@@ -105,9 +106,16 @@ namespace plug::ui::Format
         if (which == "active") return "Contournement doux de l'emplacement : la latence ne change pas, "
                                       "le fondu adoucit l'entrée et la sortie (§3.3.2)."_fr;
         if (which == "glide")  return "Durée de glissement entre deux valeurs de pas, de 0 à 4 pas. "
-                                      "Au-delà d'un pas, la valeur n'atteint plus sa cible avant la suivante."_fr;
+                                      "Au-delà d'un pas, la valeur n'atteint plus sa cible avant la suivante."
+                                      "\nNe joue que sur les paramètres dont la transition (inspecteur) est « glide » ; "
+                                      "ceux en « saut » sautent net. Pour retirer les clics de tous : Amortissement."_fr;
         if (which == "fade")   return "Fondu d'activation, de 0 à 500 ms, course quadratique : "
-                                      "il retire le clic à l'allumage comme à l'extinction (§3.3.2)."_fr;
+                                      "il retire le clic à l'allumage comme à l'extinction (§3.3.2). "
+                                      "Il ne touche pas aux valeurs entre deux pas : voir Amortissement."_fr;
+        if (which == "damp")   return "Amortissement : rampe minimale imposée à TOUTE transition de valeur entre "
+                                      "deux pas — paramètres en « saut » compris, mix et gain compris — de 0 à 250 ms, "
+                                      "course quadratique (0,2 = 10 ms). Un glissement plus long l'emporte. "
+                                      "Hors grille : sauvé dans le preset, non automatisable par l'hôte."_fr;
         if (which == "tail")   return "Ce que devient la queue quand l'emplacement s'éteint : "
                                       "laissée mourir, ou coupée net (§3.3.2)."_fr;
         return {};

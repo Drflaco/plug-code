@@ -111,8 +111,8 @@ namespace plug::ui::v1
         Knob main;
         std::vector<std::unique_ptr<ParamRow>> rows;      // paramA..F, stereo, res1..3
         std::unique_ptr<ParamRow> mixRow, gainRow;
-        juce::Slider glide, fade;
-        juce::Label glideLabel, fadeLabel, title, emptyHint;
+        juce::Slider glide, fade, damp;          // damp : l'amortissement (phase 3), attribut du Slot
+        juce::Label glideLabel, fadeLabel, dampLabel, title, emptyHint;
         juce::TextButton activeButton, tailRing, tailCut, chooseButton;
 
         void applySlotSettings (const SlotView&);

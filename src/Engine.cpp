@@ -32,6 +32,10 @@ namespace plug
             // de mix séquencée, jamais un second étage de mélange. À 1, rien ne change
             // (T13 intact) ; à 0, l'emplacement est sec quel que soit son mix par pas.
             float wet = 1.0f;
+            // Amortissement (phase 3, 20/09) : rampe MINIMALE sur toute transition de valeur
+            // entre deux pas — paramètres en « saut » compris, mix et gain compris. Le
+            // glissement d'un paramètre, s'il est plus long, l'emporte. À 0, rien ne change.
+            float damp = 0.0f;
             // Entrées réellement composées : celles que la skill déclare, plus mix et gain
             // (lus par le moteur). Composer les 13 systématiquement coûtait l'essentiel des
             // 8 µs par emplacement du J3 (MESURES_J3) ; ParamCurves porte nullptr ailleurs.
@@ -140,7 +144,8 @@ namespace plug
             std::array<float, kM> target {};
             std::array<bool, kM> hasTarget {};
             std::array<int, kM> rampPos {};
-            int rampLen = 0;
+            std::array<int, kM> rampLen {};              // par entrée : glissement, amortissement, ou 0 (saut)
+            bool primed = false;                         // un premier pas a démarré depuis prepare() : `current` est vrai
             bool stepOn = true;
             float activation = 1.0f;
 
@@ -223,7 +228,7 @@ namespace plug
             {
                 s.dry.clear();
                 s.current.fill (0.0f); s.rampStart.fill (0.0f); s.target.fill (0.0f); s.hasTarget.fill (false); s.rampPos.fill (0);
-                s.rampLen = 0; s.stepOn = true; s.activation = 1.0f;
+                s.rampLen.fill (0); s.primed = false; s.stepOn = true; s.activation = 1.0f;
                 s.env1.reset(); s.env2.reset(); s.follower.reset();
                 if (s.skill) s.skill->reset();
             }
@@ -259,6 +264,7 @@ namespace plug
                 sm.present = info != nullptr;
                 sm.tailRing = slotTree.getProperty (id::tail, "ring").toString() != "cut";
                 sm.wet = readWet (slotTree);
+                sm.damp = readDamp (slotTree);
                 sm.law = info ? info->mixLaw : MixLaw::Minus6;
 
                 // Changement de skill : instance préparée ici, échangée au prochain bloc (§4.2).
@@ -440,6 +446,7 @@ namespace plug
                 const int glideSamples = (int) std::lround (grid::glideSteps (param (grid::slotIndex (i, grid::Glide))) * stepSamples);
                 const double fadeSamples = grid::fadeSeconds (param (grid::slotIndex (i, grid::Fade))) * sr;
                 const float fadeStep = fadeSamples < 1.0 ? 1.0f : (float) (1.0 / fadeSamples);
+                const int dampSamples = (int) std::lround (grid::dampSeconds (sm.damp) * sr);
 
                 // Sources de modulation : calculées seulement si une route les lit, ou si
                 // une enveloppe se déclenche sur l'audio (le suiveur lui sert de détecteur).
@@ -484,8 +491,17 @@ namespace plug
                             rt.hasTarget[(size_t) mIdx] = sm.present && st.has[(size_t) mIdx];
                             rt.target[(size_t) mIdx] = st.target[(size_t) mIdx];
                             rt.rampPos[(size_t) mIdx] = 0;
+                            // Longueur de rampe de CETTE entrée : son glissement si elle est en
+                            // glissement, l'amortissement de l'emplacement sinon — le plus long
+                            // des deux quand elle a les deux. Sans amortissement, c'est le
+                            // contrat J3 b à l'identique (T13).
+                            // Au PREMIER départ après prepare(), `current` vaut 0 et non une
+                            // valeur jouée : l'amortissement n'y fait rien (sinon gain, résonance
+                            // et tout le reste ramperaient depuis zéro au démarrage — vu par T24).
+                            const int glideLen = sm.spec[(size_t) mIdx].glide ? glideSamples : 0;
+                            rt.rampLen[(size_t) mIdx] = rt.primed ? juce::jmax (glideLen, dampSamples) : glideLen;
                         }
-                        rt.rampLen = glideSamples;
+                        rt.primed = true;
                     }
 
                     // Une entrée par une : le chemin rapide remplit la tranche d'une seule
@@ -503,7 +519,8 @@ namespace plug
                         const auto& spec = sm.spec[(size_t) mIdx];
                         auto& sv = rt.base[(size_t) mIdx];
                         const bool locked = spec.locked || spec.structural;
-                        const bool gliding = spec.glide && rt.rampLen > 0 && rt.rampPos[(size_t) mIdx] < rt.rampLen;
+                        const int rampLen = rt.rampLen[(size_t) mIdx];
+                        const bool gliding = rampLen > 0 && rt.rampPos[(size_t) mIdx] < rampLen;
                         const bool modded = sm.hasMod[(size_t) mIdx] && ! locked;
                         float* out = values[(size_t) i][(size_t) mIdx].data();
 
@@ -513,7 +530,7 @@ namespace plug
                             const float tgt = rt.hasTarget[(size_t) mIdx] ? rt.target[(size_t) mIdx] : base;
                             // Rampe finie : le chemin général évalue rampStart + (tgt − rampStart) × 1,
                             // qui n'est pas toujours tgt au bit près. On garde la même écriture.
-                            const float vpas = (spec.glide && rt.rampLen > 0)
+                            const float vpas = (rampLen > 0)
                                              ? rt.rampStart[(size_t) mIdx] + (tgt - rt.rampStart[(size_t) mIdx])
                                              : tgt;
                             // J3-6 : verrouillé = la valeur de pas joue, sans macro ni modulation.
@@ -529,9 +546,9 @@ namespace plug
                             const float base = sv.getNextValue();
                             const float tgt = rt.hasTarget[(size_t) mIdx] ? rt.target[(size_t) mIdx] : base;
                             float vpas;
-                            if (spec.glide && rt.rampLen > 0)
+                            if (rampLen > 0)
                             {
-                                const float phase = juce::jmin (1.0f, (float) rt.rampPos[(size_t) mIdx] / (float) rt.rampLen);
+                                const float phase = juce::jmin (1.0f, (float) rt.rampPos[(size_t) mIdx] / (float) rampLen);
                                 vpas = rt.rampStart[(size_t) mIdx] + (tgt - rt.rampStart[(size_t) mIdx]) * phase;
                                 ++rt.rampPos[(size_t) mIdx];
                             }

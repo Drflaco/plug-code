@@ -94,6 +94,10 @@ namespace plug::ui
         void setWet (int slot1, float wet);
         void beginWetGesture (int slot1);
         void endWetGesture();
+        // L'amortissement (phase 3) : même logement, même discipline de transaction.
+        void setDamp (int slot1, float damp);
+        void beginDampGesture (int slot1);
+        void endDampGesture();
         void setLocked (int slot1, const juce::String& paramName, bool locked);
         void setRange (int slot1, const juce::String& paramName, float min, float max);
         void setProb (int slot1, const juce::String& paramName, float prob);
@@ -207,7 +211,7 @@ namespace plug::ui
             Presenter& presenter;
         };
         std::unique_ptr<Command> stepsGesture;   // ouvert par beginStepsGesture, fermé par endStepsGesture
-        std::unique_ptr<Command> wetGesture;     // ouvert par beginWetGesture, fermé par endWetGesture
+        std::unique_ptr<Command> slotGesture;    // Dry / Wet ou amortissement : begin…Gesture / end…Gesture
 
         PlugProcessor& proc;
         Prefs preferences;

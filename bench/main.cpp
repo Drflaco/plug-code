@@ -479,6 +479,23 @@ int main (int argc, char* argv[])
                    && p.getParameters().size() == 284,
                "Dry / Wet général : geste de deux valeurs = une transaction « " + wetName
                    + " », le mix de l'emplacement intact, un Ctrl+Z rend 100 %, grille toujours à 284", log);
+
+        // L'amortissement (phase 3) : même logement, même discipline. Le texte en ms vient
+        // de la couche de présentation (grid::dampSeconds), jamais du widget.
+        view.beginDampGesture (2);
+        view.setDamp (2, 0.9f);
+        view.setDamp (2, 0.5f);
+        view.endDampGesture();
+        const auto dampView = view.slotView (2);
+        const auto dampName = view.undoView().undoName;
+        view.undo();
+        check (std::abs (dampView.damp - 0.5f) < 1e-6f
+                   && dampName == juce::String::fromUTF8 ("Amortissement 63 ms · emplacement 2")   // 0,25 × 0,5² = 62,5 ms, arrondi
+                   && dampView.dampText == juce::String::fromUTF8 ("63 ms")
+                   && std::abs (view.slotView (2).damp) < 1e-6f
+                   && p.getParameters().size() == 284,
+               "Amortissement : geste de deux valeurs = une transaction « " + dampName
+                   + " », texte « " + dampView.dampText + " », un Ctrl+Z rend 0, grille toujours à 284", log);
     }
 
     //==========================================================================

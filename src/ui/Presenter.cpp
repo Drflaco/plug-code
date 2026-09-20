@@ -285,6 +285,8 @@ namespace plug::ui
         v.active = state::readParam (s, slotGridId (v.slot1, "active")) >= 0.5f;
         v.tailRing = sl.getProperty (state::id::tail, "ring").toString() != "cut";
         v.wet = state::readWet (sl);
+        v.damp = state::readDamp (sl);
+        v.dampText = String ((int) std::lround (1000.0 * grid::dampSeconds (v.damp))) + " ms"_fr;
         v.glide = state::readParam (s, slotGridId (v.slot1, "glide"));
         v.fade  = state::readParam (s, slotGridId (v.slot1, "fade"));
         v.hasPattern = StateQuery::lineHasPattern (s, v.slot1);
@@ -695,8 +697,8 @@ namespace plug::ui
         // Seul, la commande ouvre sa transaction ; dans un geste, elle prend celle du geste
         // et la renomme avec la valeur posée — même discipline que setStepsExplicit.
         std::unique_ptr<Command> own;
-        if (wetGesture == nullptr) own = std::make_unique<Command> (*this, name);
-        else                       proc.undoManager().setCurrentTransactionName (name);
+        if (slotGesture == nullptr) own = std::make_unique<Command> (*this, name);
+        else                        proc.undoManager().setCurrentTransactionName (name);
 
         state::setWet (proc.stateTree(), slot1, w, &proc.undoManager());
     }
@@ -704,13 +706,39 @@ namespace plug::ui
     void Presenter::beginWetGesture (int slot1)
     {
         JUCE_ASSERT_MESSAGE_THREAD
-        wetGesture = std::make_unique<Command> (*this, "Dry / Wet · emplacement "_fr + String (slot1));
+        slotGesture = std::make_unique<Command> (*this, "Dry / Wet · emplacement "_fr + String (slot1));
     }
 
     void Presenter::endWetGesture()
     {
         JUCE_ASSERT_MESSAGE_THREAD
-        wetGesture.reset();
+        slotGesture.reset();
+    }
+
+    void Presenter::setDamp (int slot1, float damp)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        const float d = juce::jlimit (0.0f, 1.0f, damp);
+        const String name = "Amortissement "_fr + String ((int) std::lround (1000.0 * grid::dampSeconds (d)))
+                          + " ms · emplacement "_fr + String (slot1);
+
+        std::unique_ptr<Command> own;
+        if (slotGesture == nullptr) own = std::make_unique<Command> (*this, name);
+        else                        proc.undoManager().setCurrentTransactionName (name);
+
+        state::setDamp (proc.stateTree(), slot1, d, &proc.undoManager());
+    }
+
+    void Presenter::beginDampGesture (int slot1)
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        slotGesture = std::make_unique<Command> (*this, "Amortissement · emplacement "_fr + String (slot1));
+    }
+
+    void Presenter::endDampGesture()
+    {
+        JUCE_ASSERT_MESSAGE_THREAD
+        slotGesture.reset();
     }
 
     void Presenter::setLocked (int slot1, const String& paramName, bool locked)

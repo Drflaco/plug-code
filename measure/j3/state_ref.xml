@@ -3,7 +3,8 @@
 <PlugState schemaVersion="2" pluginVersion="0.3.0">
   <Generation masterSeed="20260916" counter="16" density="0.800000011920929"/>
   <Slots>
-    <Slot index="1" skill="factice.gain" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="1" skill="factice.gain" skillVersion="0" tail="ring" wet="1.0"
+          damp="0.0">
       <Param name="main" min="0.2000000029802322" max="0.8999999761581421"
              prob="1.0" locked="0" transition="glide"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="1" transition="step"/>
@@ -63,7 +64,8 @@
         <Route src="env1" dst="paramB" depth="0.5"/>
       </Mod>
     </Slot>
-    <Slot index="2" skill="factice.delay" skillVersion="0" tail="cut" wet="1.0">
+    <Slot index="2" skill="factice.delay" skillVersion="0" tail="cut" wet="1.0"
+          damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -121,7 +123,7 @@
       </Mod>
     </Slot>
     <Slot index="3" skill="factice.latent" skillVersion="0" tail="ring"
-          wet="1.0">
+          wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -175,7 +177,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="4" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="4" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -229,7 +231,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="5" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="5" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -283,7 +285,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="6" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="6" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -337,7 +339,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="7" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="7" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -391,7 +393,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="8" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="8" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -445,7 +447,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="9" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="9" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -499,7 +501,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="10" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="10" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -553,7 +555,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="11" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="11" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -607,7 +609,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="12" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="12" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -661,7 +663,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="13" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="13" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -715,7 +717,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="14" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="14" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -769,7 +771,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="15" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="15" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
@@ -823,7 +825,7 @@
                  release="0.1"/>
       </Mod>
     </Slot>
-    <Slot index="16" skill="" skillVersion="0" tail="ring" wet="1.0">
+    <Slot index="16" skill="" skillVersion="0" tail="ring" wet="1.0" damp="0.0">
       <Param name="main" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramA" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>
       <Param name="paramB" min="0.0" max="1.0" prob="1.0" locked="0" transition="step"/>

@@ -350,7 +350,7 @@ namespace plug::ui::v1
         addAndMakeVisible (*mixRow);
         addAndMakeVisible (*gainRow);
 
-        for (auto* s : { &glide, &fade })
+        for (auto* s : { &glide, &fade, &damp })
         {
             s->setSliderStyle (juce::Slider::LinearHorizontal);
             s->setTextBoxStyle (juce::Slider::TextBoxRight, false, 72, 18);
@@ -366,8 +366,13 @@ namespace plug::ui::v1
         fade.onDragEnd    = [this] { presenter.endGesture (slotGridId (presenter.selectedSlot(), "fade")); };
         glide.onValueChange = [this] { presenter.setParam (slotGridId (presenter.selectedSlot(), "glide"), (float) glide.getValue()); };
         fade.onValueChange  = [this] { presenter.setParam (slotGridId (presenter.selectedSlot(), "fade"),  (float) fade.getValue()); };
+        // L'amortissement n'est pas un PARAM : il passe par le Presenter, pas par la grille.
+        damp.setTooltip (Format::slotSettingHelp ("damp"));
+        damp.onDragStart   = [this] { presenter.beginDampGesture (presenter.selectedSlot()); };
+        damp.onDragEnd     = [this] { presenter.endDampGesture(); };
+        damp.onValueChange = [this] { presenter.setDamp (presenter.selectedSlot(), (float) damp.getValue()); };
 
-        for (auto* l : { &glideLabel, &fadeLabel })
+        for (auto* l : { &glideLabel, &fadeLabel, &dampLabel })
         {
             l->setJustificationType (juce::Justification::centredLeft);
             l->setInterceptsMouseClicks (false, false);
@@ -376,6 +381,7 @@ namespace plug::ui::v1
         }
         glideLabel.setText (Format::slotSettingLabel ("glide"), juce::dontSendNotification);
         fadeLabel.setText (Format::slotSettingLabel ("fade"), juce::dontSendNotification);
+        dampLabel.setText (Format::slotSettingLabel ("damp"), juce::dontSendNotification);
 
         activeButton.setClickingTogglesState (true);
         activeButton.setButtonText (Format::slotSettingLabel ("active"));
@@ -415,7 +421,7 @@ namespace plug::ui::v1
         title.setBounds (r.removeFromTop (20));
         r.removeFromTop (4);
 
-        auto bottom = r.removeFromBottom (58);
+        auto bottom = r.removeFromBottom (84);
         auto settings = bottom.removeFromTop (26);
         activeButton.setBounds (settings.removeFromLeft (80));
         settings.removeFromLeft (8);
@@ -423,12 +429,17 @@ namespace plug::ui::v1
         settings.removeFromLeft (4);
         tailRing.setBounds (settings.removeFromLeft (130));
 
-        auto times = bottom;
+        auto times = bottom.removeFromTop (29);
         auto left = times.removeFromLeft (times.getWidth() / 2);
         glideLabel.setBounds (left.removeFromLeft (90));
         glide.setBounds (left);
         fadeLabel.setBounds (times.removeFromLeft (70));
         fade.setBounds (times);
+
+        // L'amortissement (phase 3) sur sa propre ligne : il concerne tous les paramètres.
+        auto dampRow = bottom;
+        dampLabel.setBounds (dampRow.removeFromLeft (135));   // « Amortissement  250 ms » sans écrasement
+        damp.setBounds (dampRow);
 
         auto dial = r.removeFromLeft (150);
         main.setBounds (dial.removeFromTop (juce::jmin (170, dial.getHeight())));
@@ -454,6 +465,8 @@ namespace plug::ui::v1
         tailRing.setToggleState (v.tailRing, juce::dontSendNotification);
         glide.setValue (v.glide, juce::dontSendNotification);
         fade.setValue (v.fade, juce::dontSendNotification);
+        damp.setValue (v.damp, juce::dontSendNotification);
+        dampLabel.setText (Format::slotSettingLabel ("damp") + "  "_fr + v.dampText, juce::dontSendNotification);
     }
 
     void PlugControls::refresh()

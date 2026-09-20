@@ -86,6 +86,8 @@ namespace plug::ui
         float glide = 0.0f;
         float fade = 0.0f;
         float wet = 1.0f;               // Dry / Wet général de l'emplacement (phase 3) : surcouche, hors grille
+        float damp = 0.0f;              // Amortissement (phase 3) : rampe minimale entre deux pas, hors grille
+        juce::String dampText;          // « 62 ms » — composé par la couche de présentation
         std::array<ParamView, kSlotParams> params {};
         bool hasPattern = false;        // la ligne porte un motif (c-8)
         bool hostDriven = false;        // des valeurs sont arrivées de l'hôte (heuristique d-1)
